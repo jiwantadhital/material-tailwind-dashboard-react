@@ -5,25 +5,64 @@ import {
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { authService } from "../../services/apiService";
 
 export function SignIn() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    phone: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    try {
+      await authService.signIn(formData.phone, formData.password);
+      navigate('/dashboard/home', { replace: true }); // Redirect after successful login and remove sign-in from stack
+    } catch (err) {
+      setError(err.message || 'Failed to sign in');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
         <div className="text-center">
           <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Enter your email and password to Sign In.</Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Enter your Phone Number and password to Sign In.</Typography>
         </div>
-        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+          {error && (
+            <Typography variant="small" color="red" className="mb-4 text-center">
+              {error}
+            </Typography>
+          )}
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Your email
+              Your Phone Number
             </Typography>
             <Input
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
               size="lg"
-              placeholder="name@mail.com"
+              placeholder="98......."
               className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
               labelProps={{
                 className: "before:content-none after:content-none",
@@ -33,7 +72,10 @@ export function SignIn() {
               Password
             </Typography>
             <Input
+              name="password"
               type="password"
+              value={formData.password}
+              onChange={handleChange}
               size="lg"
               placeholder="********"
               className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
@@ -60,8 +102,8 @@ export function SignIn() {
             }
             containerProps={{ className: "-ml-2.5" }}
           />
-          <Button className="mt-6" fullWidth>
-            Sign In
+          <Button type="submit" className="mt-6" fullWidth disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
 
           <div className="flex items-center justify-between gap-2 mt-6">

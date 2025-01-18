@@ -6,4 +6,13 @@ export default defineConfig({
   resolve: {
     alias: [{ find: "@", replacement: "/src" }],
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://10.3.4.221:8000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 });
