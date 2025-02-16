@@ -5,15 +5,20 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
+  GlobeAltIcon,
+  BriefcaseIcon,
+  DocumentIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/solid";
-import { Home,Users,Profile, Tables, Notifications } from "@/pages/dashboard";
+import { Home,Users,Profile, Tables, Notifications, Create_admin } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
-import { Carousel } from "@/pages/mobile";
-import { UserDocuments } from "@/pages/documents";
-import { Countries } from "@/pages/basic_settings";
+import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/documents";
+import { Countries, Services } from "@/pages/basic_settings";
+import { ReportList } from "@/pages/reports";
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
+const token = localStorage.getItem('token');
 
 export const routes = [
   {
@@ -30,53 +35,45 @@ export const routes = [
           name: "users",
           path: "/users",
           element: <Users />,
-          },
-      //     {
-      //       icon: <UserCircleIcon {...icon} />,
-      //       name: "profile",
-      //       path: "/profile",
-      //       element: <Profile />,
-      //       },
-      // {
-      //   icon: <TableCellsIcon {...icon} />,
-      //   name: "tables",
-      //   path: "/tables",
-      //   element: <Tables />,
-      // },
-      // {
-      //   icon: <InformationCircleIcon {...icon} />,
-      //   name: "notifications",
-      //   path: "/notifications",
-      //   element: <Notifications />,
-      // },
+      },
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Create Admin",
+        path: "/create-admin",
+        element: <Create_admin />,
+    },
     ],
   },
-  // {
-  //   title: "Mobile Dashboard",
-  //   layout: "mobile",
-  //   pages: [
-  //     {
-  //       icon: <ServerStackIcon {...icon} />,
-  //       name: "Carousel",
-  //       path: "/carousel",
-  //       element: <Carousel />,
-  //     },
-      
-     
-  //   ],
-  // },
   {
     title: "Basic Settings",
     layout: "basicSettings",
     pages: [
      
       {
-        icon: <ServerStackIcon {...icon} />,
+        icon: <GlobeAltIcon {...icon} />,
         name: "Countries",
         path: "/countries",
         element: <Countries />,
       },
+      {
+        icon: <BriefcaseIcon {...icon} />,
+        name: "Services",
+        path: "/services",
+        element: <Services />,
+      },
+    ],
+  },
+  {
+    title: "Problem Reports",
+    layout: "reports",
+    pages: [
      
+      {
+        icon: <GlobeAltIcon {...icon} />,
+        name: "Report List",
+        path: "/reports/report_list",
+        element: <ReportList />,
+      }
     ],
   },
   {
@@ -84,31 +81,44 @@ export const routes = [
     layout: "documents",
     pages: [
       {
-        icon: <ServerStackIcon {...icon} />,
-        name: "User Documents",
+        icon: <DocumentIcon {...icon} />,
+        name: "Notary Documents",
         path: "/user_documents",
-        element: <UserDocuments />,
+        element: <NotaryDocuments />,
       },
+      {
+        icon: <DocumentTextIcon {...icon} />,
+        name: "SOP Documents",
+        path: "/sop_documents",
+        element: <SopDocuments />,
+      },
+      {
+        icon: <HomeIcon {...icon} />,
+        name: "Property Documents",
+        path: "/property_documents",
+        element: <PropertyDocuments />,
+      }
     ],
   },
+  
 
   
   {
     title: "auth pages",
     layout: "auth",
     pages: [
-      {
+     token == null ? {
         icon: <ServerStackIcon {...icon} />,
         name: "sign in",
         path: "/sign-in",
         element: <SignIn />,
+      } : {
+        icon: <ServerStackIcon {...icon} />,
+        name: "Logout",
+        path: "/sign-in",
+        element: <SignIn />,
       },
-      {
-        icon: <RectangleStackIcon {...icon} />,
-        name: "sign up",
-        path: "/sign-up",
-        element: <SignUp />,
-      },
+     
     ],
   },
 ];

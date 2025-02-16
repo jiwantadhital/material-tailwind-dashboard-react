@@ -17,7 +17,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-  export default function UserDocuments() {
+export default function UserDocuments({ code }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,20 +27,16 @@ function classNames(...classes) {
   const [categories, setCategories] = useState({
     'Pending': [],
     'Cost Estimated': [],
-    'Paid': [],
     'In Progress': [],
-    'Completed': [],
-    'Rejected': []
+    'Completed': []
   });
 
   const getCategoryStyle = (status) => {
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800',
       cost_estimated: 'bg-purple-100 text-purple-800',
-      paid: 'bg-blue-100 text-blue-800',
       in_progress: 'bg-indigo-100 text-indigo-800',
       completed: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800'
     };
     return styles[status] || 'bg-gray-100 text-gray-800';
   };
@@ -65,10 +61,10 @@ function classNames(...classes) {
           <p className="mt-2 text-sm text-gray-600 leading-relaxed">{document.description}</p>
           
           <div className="mt-5 grid grid-cols-2 gap-5">
-            {document.cost && (
+            {document.payment.total_payment_amount && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                 <BanknotesIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">${document.cost}</span>
+                <span className="font-medium">${document.payment.total_payment_amount}</span>
               </div>
             )}
             
@@ -99,9 +95,7 @@ function classNames(...classes) {
               <div className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide ${getCategoryStyle(document.status)}`}>
                 {document.status.replace('_', ' ').toUpperCase()}
               </div>
-              <div className="px-4 py-1.5 rounded-full text-xs font-medium tracking-wide bg-gray-100 text-gray-800">
-                {document.category.toUpperCase()}
-              </div>
+             
             </div>
             
             <Button
@@ -123,19 +117,17 @@ function classNames(...classes) {
     </div>
   );
 
-  const fetchDocuments = async (page = 1, selectedStatus = null) => {
+  const fetchDocuments = async (page = 1, selectedStatus = null,code) => {
     try {
       setLoading(true);
       const apiStatus = selectedStatus?.toLowerCase().replace(' ', '_');
-      const response = await authService.getDocuments(page, apiStatus);
+      const response = await authService.getDocuments(page, apiStatus, code);
       
       const documentsByStatus = {
         'Pending': [],
         'Cost Estimated': [],
-        'Paid': [],
         'In Progress': [],
-        'Completed': [],
-        'Rejected': []
+        'Completed': []
       };
 
       const documents = response.data.data;
@@ -174,7 +166,7 @@ function classNames(...classes) {
   };
 
   useEffect(() => {
-    fetchDocuments(currentPage);
+    fetchDocuments(currentPage,null, code);
   }, [currentPage]);
 
   const PaginationControls = () => (
@@ -231,7 +223,7 @@ function classNames(...classes) {
       <Tab.Group onChange={(index) => {
         setCurrentPage(1);
         const selectedStatus = Object.keys(categories)[index];
-        fetchDocuments(1, selectedStatus);
+        fetchDocuments(1, selectedStatus,code);
       }}>
         <Tab.List className="flex space-x-1 rounded-2xl bg-gray-100/80 p-1.5">
           {Object.keys(categories).map((category) => (

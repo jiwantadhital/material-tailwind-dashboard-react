@@ -19,10 +19,12 @@ export default function Users() {
     const fetchUsers = async () => {
       try {
         const response = await authService.getAllUsers();
-        const getAllUsers = response.data.users.map((user) => ({
-          ...user,
-          kycStatus: user.kyc ? user.kyc.kyc_status : "Not Submitted",
-        }));
+        const getAllUsers = response.data.users
+          .filter(user => user.role === 'user')
+          .map((user) => ({
+            ...user,
+            kycStatus: user.kyc ? user.kyc.kyc_status : "Not Submitted",
+          }));
         setUsers(getAllUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error);

@@ -8,6 +8,8 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { authService } from "../../services/apiService";
+import { toast } from "react-toastify";
+
 
 export function SignIn() {
   const navigate = useNavigate();
@@ -29,10 +31,29 @@ export function SignIn() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    const fcmToken = localStorage.getItem('fcm_token');
+    if (fcmToken) {
+      console.log("FCM Token:", fcmToken);
+    } else {
+      console.error("Failed to request notification permission");
+    }
     
     try {
-      await authService.signIn(formData.phone, formData.password);
-      navigate('/dashboard/home', { replace: true }); // Redirect after successful login and remove sign-in from stack
+    const response  = await authService.signIn(formData.phone, formData.password, fcmToken);
+      if(response.role !== "user"){
+        navigate('/dashboard/home', { replace: true });
+      }
+      else{
+        toast.info(`"Error": "You are not authorized to access this application"`, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      }
     } catch (err) {
       setError(err.message || 'Failed to sign in');
     } finally {

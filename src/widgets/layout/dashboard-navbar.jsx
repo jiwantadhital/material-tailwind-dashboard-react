@@ -83,23 +83,7 @@ export function DashboardNavbar() {
           >
             <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
           </IconButton>
-          <Link to="/auth/sign-in">
-            <Button
-              variant="text"
-              color="blue-gray"
-              className="hidden items-center gap-1 px-4 xl:flex normal-case"
-            >
-              <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-              Sign In
-            </Button>
-            <IconButton
-              variant="text"
-              color="blue-gray"
-              className="grid xl:hidden"
-            >
-              <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-            </IconButton>
-          </Link>
+         
           <Menu>
             <MenuHandler>
               <IconButton variant="text" color="blue-gray">
@@ -175,6 +159,11 @@ export function DashboardNavbar() {
                     <ClockIcon className="h-3.5 w-3.5" /> 2 days ago
                   </Typography>
                 </div>
+              </MenuItem>
+              <MenuItem className="flex items-center gap-4">
+                <Link to="/notifications" className="text-blue-500 hover:text-blue-700 flex items-center justify-center w-full py-2">
+                  See All Notifications
+                </Link>
               </MenuItem>
             </MenuList>
           </Menu>

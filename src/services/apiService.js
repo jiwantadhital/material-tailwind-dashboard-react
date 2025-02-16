@@ -40,10 +40,10 @@ export const authService = {
     },
 
 
-    signIn: async (phone, password) => {
+    signIn: async (phone, password,ftoken) => {
       try {
         // Login request
-        const response = await apiService.post('/api/login', { phone, password });
+        const response = await apiService.post('/api/login', { phone, password ,ftoken});
         const { token, ...userData } = response.data.data;
         
         if (token) {
@@ -84,6 +84,26 @@ export const authService = {
   
       // Optionally decode the token for user info
       return token;
+    },
+
+    //create admin
+    createAdmin: async (data) => {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('photo', data.photo);
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('phone', data.phone);
+      formData.append('dob', data.dob);
+      formData.append('address', data.address);
+      formData.append('gender', data.gender);
+      formData.append('password', data.password);
+      formData.append('password_confirmation', data.password);
+      
+      const response = await apiService.post('/api/create-admin', formData, {
+        headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
+      });
+      return response.data;
     },
     
     getAllUsers: async () => {
@@ -192,13 +212,18 @@ export const authService = {
 
 
       //get documents
-      getDocuments: async (page = 1, status = "pending") => {
-        const token = localStorage.getItem('token');
-        const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        return response.data;
-      },
+      getDocuments: async (page = 1, status = "pending", code) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}&code=${code}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching documents:", error);
+            throw error; // Rethrow the error for further handling
+        }
+    },
 
       //get documents by id
       getDocumentById: async (documentId) => {
@@ -221,6 +246,32 @@ export const authService = {
         return response.data;
       },
 
+      //payment
+      paymentForDocument: async (documentId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/payment-for-document/${documentId}`, data, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      },
+
+
+      //upload recheck
+      uploadRecheckAndFinalFile: async (documentId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/upload-recheck-file/${documentId}`, data, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      },
+
+      
 
       //chat section
       sendMessage: async (formData) => {
@@ -274,6 +325,49 @@ export const authService = {
       deleteCountry: async (countryId) => {
         const token = localStorage.getItem('token');
         const response = await apiService.delete(`/api/delete-country/${countryId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //services
+      createService: async (data) => {
+        const token = localStorage.getItem('token');
+        console.log("this is data",data);
+        const response = await apiService.post('/api/create-service', data, {
+          headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
+        });
+        return response.data;
+      },
+
+      getServices: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-services', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateService: async (serviceId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/update-service/${serviceId}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteService: async (serviceId) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/delete-service/${serviceId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //activate/deactivate service
+      activateService: async (serviceId,isActive) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/activate-service/${serviceId}/${isActive}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

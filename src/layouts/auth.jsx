@@ -31,15 +31,18 @@ export function Auth() {
       icon: ArrowRightOnRectangleIcon,
     },
   ];
-
+const token = localStorage.getItem('token');
   return (
     <div className="relative min-h-screen w-full">
       <Routes>
         {routes.map(
           ({ layout, pages }) =>
             layout === "auth" &&
-            pages.map(({ path, element }) => (
+            pages.map(({ path, element }) => token == null ? (
               <Route exact path={path} element={element} />
+            ) : (
+              localStorage.removeItem('token'),
+              <Navigate to="/auth/sign-in" replace />
             ))
         )}
       </Routes>

@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 const LandingPage = () => {
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      window.location.href = '/dashboard/home';
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0B1121] text-white">
       {/* Navigation */}
@@ -10,7 +17,7 @@ const LandingPage = () => {
           <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
           </svg>
-          <span className="text-2xl font-bold">ampire</span>
+          <span className="text-2xl font-bold">Sajilo Notary</span>
         </div>
         <div className="flex items-center space-x-8">
           <a href="#" className="text-gray-400 hover:text-white transition-colors">Solution</a>
@@ -50,7 +57,7 @@ const LandingPage = () => {
               <p className="text-sm text-gray-400 mb-4">From the most talented team</p>
               <div className="flex -space-x-2">
                 {[1,2,3,4,5].map((i) => (
-                  <img key={i} src="/api/placeholder/32/32" alt={`Team member ${i}`} className="w-8 h-8 rounded-full border-2 border-[#0B1121]" />
+                  <img key={i} src="/img/prof.jpg" alt={`Team member ${i}`} className="w-8 h-8 rounded-full border-2 border-[#0B1121]" />
                 ))}
               </div>
             </div>
@@ -66,12 +73,16 @@ const LandingPage = () => {
         <p className="text-center text-gray-500 mb-12 uppercase tracking-wider text-sm">
           Trusted by your favored top techs companies
         </p>
-        <div className="flex justify-between items-center opacity-50">
-          <img src="/api/placeholder/120/40" alt="Airbnb" className="h-8" />
-          <img src="/api/placeholder/120/40" alt="COTY" className="h-8" />
-          <img src="/api/placeholder/120/40" alt="GE" className="h-8" />
-          <img src="/api/placeholder/120/40" alt="Lilly" className="h-8" />
-          <img src="/api/placeholder/120/40" alt="Microsoft" className="h-8" />
+        <div className="flex justify-between items-center ">
+          {['Airbnb', 'COTY', 'GE', 'Lilly', 'Microsoft'].map((company) => (
+            <div key={company} className="bg-white rounded-xl p-6 shadow-lg hover:bg-gray-50 transition-colors">
+              <img 
+                src="/img/comp.png" 
+                alt={company} 
+                className="h-8 opacity-50 text-white" 
+              />
+            </div>
+          ))}
         </div>
       </section>
 

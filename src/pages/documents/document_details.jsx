@@ -21,13 +21,13 @@ const DocumentDetails = () => {
   });
   const [newMessage, setNewMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [sendingStatus, setSendingStatus] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const messagesEndRef = useRef(null);
   const [recheckFile, setRecheckFile] = useState(null);
   const [uploadingRecheck, setUploadingRecheck] = useState(false);
   const [uploadingFinal, setUploadingFinal] = useState(false);
   const [finalDocument, setFinalDocument] = useState(null);
+  const [sendingStatus, setSendingStatus] = useState(null);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -35,7 +35,7 @@ const DocumentDetails = () => {
         const response = await authService.getDocumentById(documentId);
         setDocument(response.data);
         // Initialize form values with existing data
-        setCost(response.data.cost || '');
+        setCost(response.data.payment.total_payment_amount || '');
         setEstimatedTime(response.data.estimated_time || '');
       } catch (error) {
         console.error('Error fetching document:', error);
@@ -112,11 +112,14 @@ const DocumentDetails = () => {
     };
   }, [documentId]);
 
-  const handleUpdateDocument = async () => {
+
+
+
+  const handlePaymentForDocument = async () => {
     setUpdating(true);
     try {
-      await authService.updateDocument(documentId, {
-        cost: cost,
+      await authService.paymentForDocument(documentId, {
+        total_payment_amount: cost,
         estimated_time: estimatedTime,
         clearAccepted: true,
         status: 'cost_estimated'
@@ -157,39 +160,49 @@ const DocumentDetails = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedFile) return;
 
+    const messageToSend = newMessage; // Store the message to send
+    setNewMessage(''); // Clear the input field immediately
+    setSelectedFile(null);
+
+    // Add the message to the messages array with a temporary status
+    setMessages(prevMessages => [
+        ...prevMessages,
+        { id: Date.now(), message: messageToSend, user_id: currentUser.id, created_at: new Date() }
+    ]);
+
     setSendingStatus('Sending Message...');
     try {
-      const formData = new FormData();
-      formData.append('document_id', documentId);
-      formData.append('message', newMessage);
-      if (selectedFile) {
-        formData.append('file', selectedFile);
-      }
+        const formData = new FormData();
+        formData.append('document_id', documentId);
+        formData.append('message', messageToSend);
+        formData.append('web', '');
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
 
-      await authService.sendMessage(formData);
-      
-      // Refresh messages
-      const response = await authService.getMessages(documentId);
-      // Sort messages by created_at in ascending order (oldest first)
-      const sortedMessages = (response.data.data || []).sort((a, b) => 
-        new Date(a.created_at) - new Date(b.created_at)
-      );
-      setMessages(sortedMessages);
-      setMessagePagination({
-        currentPage: response.data.current_page,
-        lastPage: response.data.last_page,
-        total: response.data.total
-      });
-      
-      setNewMessage('');
-      setSelectedFile(null);
-      setSendingStatus('Message Sent');
+        await authService.sendMessage(formData);
+        
+        // Refresh messages
+        const response = await authService.getMessages(documentId);
+        // Sort messages by created_at in ascending order (oldest first)
+        const sortedMessages = (response.data.data || []).sort((a, b) => 
+            new Date(a.created_at) - new Date(b.created_at)
+        );
+        setMessages(sortedMessages);
+        setMessagePagination({
+            currentPage: response.data.current_page,
+            lastPage: response.data.last_page,
+            total: response.data.total
+        });
+        
+        setSendingStatus('Message Sent');
     } catch (error) {
-      console.error('Error sending message:', error);
-      setSendingStatus('Message Failed');
+        console.error('Error sending message:', error);
+        setSendingStatus('Message Failed');
+    } finally {
+        // Clear the selected file after sending the message
+        setTimeout(() => setSendingStatus(null), 3000);
     }
-
-    setTimeout(() => setSendingStatus(null), 3000);
   };
 
   const scrollToBottom = () => {
@@ -240,7 +253,7 @@ const DocumentDetails = () => {
       formData.append('recheck_file_url', recheckFile);
       formData.append('clearAccepted', true);
       
-      await authService.updateDocument(documentId, formData);
+      await authService.uploadRecheckAndFinalFile(documentId, formData);
       
       // Refresh document data
       const response = await authService.getDocumentById(documentId);
@@ -276,7 +289,7 @@ const DocumentDetails = () => {
       formData.append('final_file_url', finalDocument);
       formData.append('status', 'completed');
       
-      await authService.updateDocument(documentId, formData);
+      await authService.uploadRecheckAndFinalFile(documentId, formData);
       
       // Refresh document data
       const response = await authService.getDocumentById(documentId);
@@ -382,14 +395,14 @@ const DocumentDetails = () => {
           </div>
 
           {/* Admin Controls Card */}
-          {(document.status === 'pending' || document.status === 'paid') && (
+          {(document.status === 'pending' ) && (
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-8">Admin Controls</h2>
               
               {document.status === 'pending' && (
                 <div className="space-y-8">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cost</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Cost</label>
                     <div className="relative mt-1">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                         <span className="text-gray-500 sm:text-sm">$</span>
@@ -402,10 +415,12 @@ const DocumentDetails = () => {
                         placeholder="0.00"
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-gray-500 sm:text-sm">USD</span>
+                        <span className="text-gray-500 sm:text-sm">Rs</span>
                       </div>
                     </div>
                   </div>
+
+                  
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Time (hours)</label>
@@ -430,7 +445,7 @@ const DocumentDetails = () => {
                       </div>
                     )}
                     <button
-                      onClick={handleUpdateDocument}
+                      onClick={handlePaymentForDocument}
                       disabled={updating}
                       className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50"
                     >
@@ -482,14 +497,19 @@ const DocumentDetails = () => {
                 </div>
               )}
 
-              {document.isAcceptedByUser === false && (
+              {document.isAcceptedByUser !== null && (
                 <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Acceptance Status</h3>
+                  <p className="text-gray-900">
+                    {document.isAcceptedByUser ? 'Accepted' : 'Rejected'}
+                  </p>
+                  <div className="h-4"></div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Rejection Reason</h3>
                   <p className="text-gray-900">{document.rejected_reason || 'No reason provided'}</p>
                 </div>
               )}
 
-              {(document.isAcceptedByUser === false || document.isAcceptedByUser === null) && (
+              {( (document.isAcceptedByUser === null && document.recheck_file_url === null) || (document.isAcceptedByUser === false && document.recheck_file_url !== null))  && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-center w-full">
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -615,19 +635,40 @@ const DocumentDetails = () => {
                 <p className="mt-1 text-gray-900">{document.description}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Category</h3>
-                <p className="mt-1 text-gray-900 capitalize">{document.category}</p>
+                <h3 className="text-sm font-medium text-gray-500">Total Cost</h3>
+                <p className="mt-1 text-gray-900 capitalize">Rs {document.payment.total_payment_amount}</p>
               </div>
-              {document.cost && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Cost</h3>
-                  <p className="mt-1 text-gray-900">${document.cost}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Total Paid</h3>
+                <p className="mt-1 text-gray-900 capitalize">Rs {(() => {
+                  try {
+                    const partial = parseInt(document.payment.partial_payment_amount) || 0;
+                    const remaining = parseInt(document.payment.remaining_payment_amount) || 0;
+                    return partial + remaining;
+                  } catch (error) {
+                    console.error('Error calculating total paid:', error);
+                    return 0;
+                  }
+                })()}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Remaining Payment</h3>
+                <p className="mt-1 text-gray-900 capitalize">Rs {(() => {
+                  try {
+                    const total = parseInt(document.payment.total_payment_amount) || 0;
+                    const partial = parseInt(document.payment.partial_payment_amount) || 0;
+                    const remaining = parseInt(document.payment.remaining_payment_amount) || 0;
+                    return total - (partial + remaining);
+                  } catch (error) {
+                    console.error('Error calculating remaining payment:', error);
+                    return 0;
+                  }
+                })()}</p>
+              </div>
               {document.estimated_time && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Estimated Time</h3>
-                  <p className="mt-1 text-gray-900">{document.estimated_time} hours</p>
+                    <p className="mt-1 text-gray-900">{document.estimated_time} hours</p>
                 </div>
               )}
               {document.assigned_to && (
