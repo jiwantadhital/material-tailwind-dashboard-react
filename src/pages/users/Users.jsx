@@ -14,6 +14,7 @@ import { authService } from "../../services/apiService";
 export default function Users() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -28,6 +29,8 @@ export default function Users() {
         setUsers(getAllUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -46,91 +49,97 @@ export default function Users() {
           </Typography>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <table className="w-full min-w-[640px] table-auto">
-            <thead>
-              <tr>
-                {["Image", "Name", "Phone", "Status", "KYC Status", ""].map((el) => (
-                  <th
-                    key={el}
-                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                  >
-                    <Typography
-                      variant="small"
-                      className="text-[11px] font-bold uppercase text-blue-gray-400"
+          {isLoading ? (
+            <div className="flex justify-center items-center p-8">
+              <Typography>Loading users...</Typography>
+            </div>
+          ) : (
+            <table className="w-full min-w-[640px] table-auto">
+              <thead>
+                <tr>
+                  {["Image", "Name", "Phone", "Status", "KYC Status", ""].map((el) => (
+                    <th
+                      key={el}
+                      className="border-b border-blue-gray-50 py-3 px-5 text-left"
                     >
-                      {el}
-                    </Typography>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(({ id, name, phone, status, kycStatus, kyc }, key) => {
-                const className = `py-3 px-5 ${
-                  key === users.length - 1
-                    ? ""
-                    : "border-b border-blue-gray-50"
-                }`;
-
-                return (
-                  <tr key={id}>
-                    <td className={className}>
-                      <Avatar
-                        src={"http://localhost:8000/"+ kyc?.photo || "/default-avatar.png"}
-                        alt={name}
-                        size="sm"
-                        className="border border-blue-gray-50 bg-blue-gray-50/50"
-                      />
-                    </td>
-                    <td className={className}>
                       <Typography
                         variant="small"
-                        color="blue-gray"
-                        className="font-semibold"
+                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                       >
-                        {name}
+                        {el}
                       </Typography>
-                    </td>
-                    <td className={className}>
-                      <Typography className="text-xs font-normal text-blue-gray-500">
-                        {phone}
-                      </Typography>
-                    </td>
-                    <td className={className}>
-                      <Chip
-                        variant="gradient"
-                        color={status.toLowerCase() === "active" ? "green" : "red"}
-                        value={status}
-                        className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                      />
-                    </td>
-                    <td className={className}>
-                      <Chip
-                        variant="gradient"
-                        color={
-                          kycStatus === "approved" ? "green" : 
-                          kycStatus === "pending" ? "yellow" : "red"
-                        }
-                        value={kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
-                        className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                      />
-                    </td>
-                    <td className={className}>
-                      <Button
-                        variant="gradient"
-                        color="blue"
-                        size="sm"
-                        className="py-1 px-2 text-[11px] font-medium"
-                        onClick={() => handleViewDetails({ id, name, phone, status, kyc })}
-                      >
-                        View Details
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(({ id, name, phone, status, kycStatus, kyc }, key) => {
+                  const className = `py-3 px-5 ${
+                    key === users.length - 1
+                      ? ""
+                      : "border-b border-blue-gray-50"
+                  }`;
+
+                  return (
+                    <tr key={id}>
+                      <td className={className}>
+                        <Avatar
+                          src={"http://sajilonotary.xyz/"+ kyc?.photo || "/default-avatar.png"}
+                          alt={name}
+                          size="sm"
+                          className="border border-blue-gray-50 bg-blue-gray-50/50"
+                        />
+                      </td>
+                      <td className={className}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-semibold"
+                        >
+                          {name}
+                        </Typography>
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-normal text-blue-gray-500">
+                          {phone}
+                        </Typography>
+                      </td>
+                      <td className={className}>
+                        <Chip
+                          variant="gradient"
+                          color={status.toLowerCase() === "active" ? "green" : "red"}
+                          value={status}
+                          className="py-0.5 px-2 text-[11px] font-medium w-fit"
+                        />
+                      </td>
+                      <td className={className}>
+                        <Chip
+                          variant="gradient"
+                          color={
+                            kycStatus === "approved" ? "green" : 
+                            kycStatus === "pending" ? "yellow" : "red"
+                          }
+                          value={kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
+                          className="py-0.5 px-2 text-[11px] font-medium w-fit"
+                        />
+                      </td>
+                      <td className={className}>
+                        <Button
+                          variant="gradient"
+                          color="blue"
+                          size="sm"
+                          className="py-1 px-2 text-[11px] font-medium"
+                          onClick={() => handleViewDetails({ id, name, phone, status, kyc })}
+                        >
+                          View Details
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </CardBody>
       </Card>
     </div>

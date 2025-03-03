@@ -15,6 +15,8 @@ import { SignIn, SignUp } from "@/pages/auth";
 import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/documents";
 import { Countries, Services } from "@/pages/basic_settings";
 import { ReportList } from "@/pages/reports";
+import { Carousel } from "@/pages/documents";
+
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
@@ -42,6 +44,7 @@ export const routes = [
         path: "/create-admin",
         element: <Create_admin />,
     },
+    
     ],
   },
   {
@@ -61,6 +64,13 @@ export const routes = [
         path: "/services",
         element: <Services />,
       },
+      //carousel
+    {
+      icon: <UserCircleIcon {...icon} />,
+      name: "Carousel",
+      path: "/mobile/carousel",
+      element: <Carousel />,
+    },
     ],
   },
   {

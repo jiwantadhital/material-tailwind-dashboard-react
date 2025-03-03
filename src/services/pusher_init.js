@@ -25,7 +25,7 @@ class PusherService {
                                 throw new Error('Authentication token is missing');
                             }
 
-                            const response = await fetch(`http://localhost:8000/broadcasting/auth`, {
+                            const response = await fetch(`https://sajilonotary.xyz/broadcasting/auth`, {
                                 method: 'POST',
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
@@ -39,6 +39,7 @@ class PusherService {
                             });
 
                             if (response.ok) {
+                                console.log("response",response);
                                 const auth = await response.json();
                                 callback(null, auth);
                             } else {

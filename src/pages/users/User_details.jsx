@@ -26,6 +26,7 @@ import { authService } from "../../services/apiService";
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
   
     useEffect(() => {
       const fetchUserData = async () => {
@@ -54,6 +55,7 @@ import { authService } from "../../services/apiService";
         return;
       }
       
+      setIsApproving(true);
       try {
         const response = await authService.approveKyc(user.kyc.id, status);
   
@@ -68,6 +70,8 @@ import { authService } from "../../services/apiService";
         setAlertMessage(error.message || "Failed to update KYC status");
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 3000);
+      } finally {
+        setIsApproving(false);
       }
     };
   
@@ -166,7 +170,7 @@ import { authService } from "../../services/apiService";
             <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
               <div className="flex items-center gap-6">
                 <Avatar
-                  src={`http://localhost:8000/${user.kyc?.photo}`}
+                  src={`http://sajilonotary.xyz/${user.kyc?.photo}`}
                   alt={user.name}
                   size="xl"
                   variant="rounded"
@@ -262,7 +266,7 @@ import { authService } from "../../services/apiService";
                     </Typography>
                     <div className="flex items-center gap-2">
                       <a
-                        href={`http://localhost:8000/${user.kyc?.documents}`}
+                        href={`http://sajilonotary.xyz/${user.kyc?.documents}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 flex items-center gap-2"
@@ -314,10 +318,11 @@ import { authService } from "../../services/apiService";
                           user.kyc?.kyc_status?.toLowerCase() === 'rejected') && (
                           <div className="flex gap-2">
                             <button
-                              className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600"
+                              className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 disabled:bg-green-300"
                               onClick={() => handleKycAction('approved')}
+                              disabled={isApproving}
                             >
-                              Approve
+                              {isApproving ? 'Approving...' : 'Approve'}
                             </button>
                             {user.kyc?.kyc_status?.toLowerCase() === 'pending' && (
                               <button

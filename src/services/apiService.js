@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { pusherService } from './pusher_init';
 
-const API_BASE_URL = 'http://localhost:8000/';
+const API_BASE_URL = 'https://sajilonotary.xyz/';
+// const API_BASE_URL = 'http://localhost:8000/';
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
@@ -84,6 +85,13 @@ export const authService = {
   
       // Optionally decode the token for user info
       return token;
+    },
+
+    getCurrentUserId: () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) return null;
+
+      return user.id;
     },
 
     //create admin
@@ -271,6 +279,24 @@ export const authService = {
         return response.data;
       },
 
+
+      //mark as read
+      markAsRead: async (documentId) => {
+        const token = localStorage.getItem('token');
+         await apiService.get(`/api/mark-document-as-new/${documentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      },
+
+
+      //mark as read for admin
+      markAsReadForAdmin: async (documentId) => {
+        const token = localStorage.getItem('token');
+         await apiService.get(`/api/has-new-message/${documentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      },
+
       
 
       //chat section
@@ -332,8 +358,8 @@ export const authService = {
 
       //services
       createService: async (data) => {
-        const token = localStorage.getItem('token');
         console.log("this is data",data);
+        const token = localStorage.getItem('token');
         const response = await apiService.post('/api/create-service', data, {
           headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
         });
@@ -368,6 +394,16 @@ export const authService = {
       activateService: async (serviceId,isActive) => {
         const token = localStorage.getItem('token');
         const response = await apiService.post(`/api/activate-service/${serviceId}/${isActive}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+
+      //dashboard for admin
+      getDashboardData: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-dashboard-data-for-admin', {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

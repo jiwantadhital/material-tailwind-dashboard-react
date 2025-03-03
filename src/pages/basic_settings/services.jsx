@@ -5,17 +5,21 @@ const Services = () => {
   const [services, setServices] = useState([]);
   const [formData, setFormData] = useState({ name: '', priceRange: '', image: null ,code:'' ,isActive:true});
   const [editingId, setEditingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchServices();
   }, []);
 
   const fetchServices = async () => {
+    setIsLoading(true);
     try {
       const response = await authService.getServices();
       setServices(response.data);
     } catch (error) {
       console.error('Error fetching services:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -33,6 +37,7 @@ const Services = () => {
       return; // Prevent submission if image is missing
     }
 
+    setIsLoading(true);
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
@@ -57,6 +62,8 @@ const Services = () => {
       if (error.response) {
         console.error('Server response:', error.response.data); // Log server response for debugging
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -134,54 +141,59 @@ const Services = () => {
          
           <button 
             type="submit" 
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
+            disabled={isLoading}
           >
-            {editingId !== null ? 'Update' : 'Add'} Service
+            {isLoading ? 'Loading...' : (editingId !== null ? 'Update' : 'Add')} Service
           </button>
         </div>
       </form>
 
-      {/* Countries List */}
-      <div className="grid gap-4">
-        {services.map(service => (
-          <div 
-            key={service.id} 
-            className="flex justify-between items-center border p-3 rounded"
-          >
-            <div>
-              <span className="font-bold">{service.name}</span>
-              <span className="ml-2 text-gray-600">Rs {service.price_range}</span>
-              <span className="ml-2 text-gray-600">Code: {service.code}</span>
-              {service.image && (
-                <img src={`http://localhost:8000/${service.image}`} alt={service.name} className="w-8 h-8 ml-2" />
-              )}
-              <span className={`ml-2 ${service.is_active === true ? 'text-green-600' : 'text-red-600'}`}>
-                {service.is_active === true ? 'Active' : 'Inactive'}
-              </span>
+      {/* Services List */}
+      {isLoading ? (
+        <div className="text-center py-4">Loading...</div>
+      ) : (
+        <div className="grid gap-4">
+          {services.map(service => (
+            <div 
+              key={service.id} 
+              className="flex justify-between items-center border p-3 rounded"
+            >
+              <div>
+                <span className="font-bold">{service.name}</span>
+                <span className="ml-2 text-gray-600">Rs {service.price_range}</span>
+                <span className="ml-2 text-gray-600">Code: {service.code}</span>
+                {service.image && (
+                  <img src={`https://sajilonotary.xyz/${service.image}`} alt={service.name} className="w-8 h-8 ml-2" />
+                )}
+                <span className={`ml-2 ${service.is_active === true ? 'text-green-600' : 'text-red-600'}`}>
+                  {service.is_active === true ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(service)}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(service.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => handleToggleActive(service.id, service.is_active)}
+                  className={`px-3 py-1 rounded ${service.is_active ? 'bg-orange-500' : 'bg-green-500'} text-white`}
+                >
+                  {service.is_active ? 'Deactivate' : 'Activate'}
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(service)}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(service.id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => handleToggleActive(service.id, service.is_active)}
-                className={`px-3 py-1 rounded ${service.is_active ? 'bg-red-500' : 'bg-green-500'} text-white`}
-              >
-                {service.is_active ? 'Deactivate' : 'Activate'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

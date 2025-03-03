@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Typography,
   Card,
@@ -26,30 +26,306 @@ import {
   ordersOverviewData,
 } from "@/data";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
+import { CurrencyDollarIcon, UserGroupIcon, DocumentTextIcon, BriefcaseIcon } from "@heroicons/react/24/solid";
+import { authService } from "@/services/apiService";
 
 export function Home() {
+  const [dashboardData, setDashboardData] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await authService.getDashboardData();
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const dashboardStats = [
+    {
+      color: "blue",
+      icon: UserGroupIcon,
+      title: "Total Users",
+      value: dashboardData?.totalUsers || "0",
+      footer: null,
+    },
+    {
+      color: "pink",
+      icon: BriefcaseIcon,
+      title: "Total Lawyers",
+      value: dashboardData?.totalLawyers || "0",
+      footer: null,
+    },
+    {
+      color: "green",
+      icon: CurrencyDollarIcon,
+      title: "Total Income",
+      value: `Rs. ${dashboardData?.payments?.totalIncome || "0.00"}`,
+      footer: null,
+    },
+    {
+      color: "orange",
+      icon: DocumentTextIcon,
+      title: "Total Services",
+      value: dashboardData?.totalServices || "0",
+      footer: null,
+    },
+  ];
+
+  const documentCharts = [
+    {
+      color: "white",
+      title: "NO Documents",
+      description: "Document status distribution",
+      footer: "Updated Just Now",
+      chart: {
+        type: "bar",
+        height: 220,
+        series: [
+          {
+            name: "Documents",
+            data: [
+              dashboardData?.documentsData?.NO?.completed || 0,
+              dashboardData?.documentsData?.NO?.pending || 0,
+              dashboardData?.documentsData?.NO?.in_progress || 0,
+            ],
+          },
+        ],
+        options: {
+          chart: {
+            toolbar: {
+              show: false,
+            },
+            animations: {
+              enabled: true,
+              easing: 'easeinout',
+              speed: 800,
+            },
+          },
+          colors: ["#4CAF50", "#FF9800", "#2196f3"],
+          plotOptions: {
+            bar: {
+              borderRadius: 8,
+              columnWidth: "60%",
+              distributed: true,
+              dataLabels: {
+                position: "top",
+              },
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+              return val;
+            },
+            offsetY: -20,
+            style: {
+              fontSize: "12px",
+              colors: ["#333"],
+              fontWeight: 600
+            }
+          },
+          xaxis: {
+            categories: ['Completed', 'Pending', 'In Progress'],
+            axisBorder: {
+              show: true,
+              color: '#e0e0e0'
+            },
+            axisTicks: {
+              show: false
+            },
+            labels: {
+              style: {
+                colors: "#333",
+                fontSize: "13px",
+                fontWeight: 500
+              }
+            }
+          },
+          yaxis: {
+            labels: {
+              show: true,
+              style: {
+                colors: "#666",
+                fontSize: "12px"
+              }
+            },
+            grid: {
+              show: true
+            }
+          },
+          grid: {
+            show: true,
+            borderColor: '#f0f0f0',
+            strokeDashArray: 0,
+            position: 'back',
+            xaxis: {
+              lines: {
+                show: false
+              }
+            },
+            yaxis: {
+              lines: {
+                show: true
+              }
+            },
+            padding: {
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0
+            }
+          },
+          theme: {
+            mode: 'light',
+            palette: 'palette1',
+            monochrome: {
+              enabled: false,
+              shadeTo: 'light',
+              shadeIntensity: 0.65
+            }
+          }
+        },
+      },
+    },
+    {
+      color: "white",
+      title: "SOP Documents",
+      description: "Document status distribution",
+      footer: "Updated Just Now",
+      chart: {
+        type: "bar",
+        height: 220,
+        series: [
+          {
+            name: "Documents",
+            data: [
+              dashboardData?.documentsData?.SOP?.completed || 0,
+              dashboardData?.documentsData?.SOP?.pending || 0,
+              dashboardData?.documentsData?.SOP?.in_progress || 0,
+            ],
+          },
+        ],
+        options: {
+          chart: {
+            toolbar: {
+              show: false,
+            },
+            animations: {
+              enabled: true,
+              easing: 'easeinout',
+              speed: 800,
+            },
+          },
+          colors: ["#4CAF50", "#FF9800", "#2196f3"],
+          plotOptions: {
+            bar: {
+              borderRadius: 8,
+              columnWidth: "60%",
+              distributed: true,
+              dataLabels: {
+                position: "top",
+              },
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+              return val;
+            },
+            offsetY: -20,
+            style: {
+              fontSize: "12px",
+              colors: ["#333"],
+              fontWeight: 600
+            }
+          },
+          xaxis: {
+            categories: ['Completed', 'Pending', 'In Progress'],
+            axisBorder: {
+              show: true,
+              color: '#e0e0e0'
+            },
+            axisTicks: {
+              show: false
+            },
+            labels: {
+              style: {
+                colors: "#333",
+                fontSize: "13px",
+                fontWeight: 500
+              }
+            }
+          },
+          yaxis: {
+            labels: {
+              show: true,
+              style: {
+                colors: "#666",
+                fontSize: "12px"
+              }
+            },
+            grid: {
+              show: true
+            }
+          },
+          grid: {
+            show: true,
+            borderColor: '#f0f0f0',
+            strokeDashArray: 0,
+            position: 'back',
+            xaxis: {
+              lines: {
+                show: false
+              }
+            },
+            yaxis: {
+              lines: {
+                show: true
+              }
+            },
+            padding: {
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0
+            }
+          },
+          theme: {
+            mode: 'light',
+            palette: 'palette1',
+            monochrome: {
+              enabled: false,
+              shadeTo: 'light',
+              shadeIntensity: 0.65
+            }
+          }
+        },
+      },
+    },
+  ];
+
   return (
     <div className="mt-12">
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
+        {dashboardStats.map(({ icon, title, value, color }) => (
           <StatisticsCard
             key={title}
-            {...rest}
+            color={color}
+            value={value}
             title={title}
             icon={React.createElement(icon, {
               className: "w-6 h-6 text-white",
             })}
-            footer={
-              <Typography className="font-normal text-blue-gray-600">
-                <strong className={footer.color}>{footer.value}</strong>
-                &nbsp;{footer.label}
-              </Typography>
-            }
           />
         ))}
       </div>
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-        {statisticsChartsData.map((props) => (
+      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
+        {documentCharts.map((props) => (
           <StatisticsChart
             key={props.title}
             {...props}
@@ -64,192 +340,6 @@ export function Home() {
             }
           />
         ))}
-      </div>
-      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between p-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Projects
-              </Typography>
-              <Typography
-                variant="small"
-                className="flex items-center gap-1 font-normal text-blue-gray-600"
-              >
-                <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                <strong>30 done</strong> this month
-              </Typography>
-            </div>
-            <Menu placement="left-start">
-              <MenuHandler>
-                <IconButton size="sm" variant="text" color="blue-gray">
-                  <EllipsisVerticalIcon
-                    strokeWidth={3}
-                    fill="currenColor"
-                    className="h-6 w-6"
-                  />
-                </IconButton>
-              </MenuHandler>
-              <MenuList>
-                <MenuItem>Action</MenuItem>
-                <MenuItem>Another Action</MenuItem>
-                <MenuItem>Something else here</MenuItem>
-              </MenuList>
-            </Menu>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["companies", "members", "budget", "completion"].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {projectsTableData.map(
-                  ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
-
-                    return (
-                      <tr key={name}>
-                        <td className={className}>
-                          <div className="flex items-center gap-4">
-                            <Avatar src={img} alt={name} size="sm" />
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold"
-                            >
-                              {name}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={className}>
-                          {members.map(({ img, name }, key) => (
-                            <Tooltip key={name} content={name}>
-                              <Avatar
-                                src={img}
-                                alt={name}
-                                size="xs"
-                                variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
-                              />
-                            </Tooltip>
-                          ))}
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                            {budget}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="w-10/12">
-                            <Typography
-                              variant="small"
-                              className="mb-1 block text-xs font-medium text-blue-gray-600"
-                            >
-                              {completion}%
-                            </Typography>
-                            <Progress
-                              value={completion}
-                              variant="gradient"
-                              color={completion === 100 ? "green" : "blue"}
-                              className="h-1"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 p-6"
-          >
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Orders Overview
-            </Typography>
-            <Typography
-              variant="small"
-              className="flex items-center gap-1 font-normal text-blue-gray-600"
-            >
-              <ArrowUpIcon
-                strokeWidth={3}
-                className="h-3.5 w-3.5 text-green-500"
-              />
-              <strong>24%</strong> this month
-            </Typography>
-          </CardHeader>
-          <CardBody className="pt-0">
-            {ordersOverviewData.map(
-              ({ icon, color, title, description }, key) => (
-                <div key={title} className="flex items-start gap-4 py-3">
-                  <div
-                    className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                      key === ordersOverviewData.length - 1
-                        ? "after:h-0"
-                        : "after:h-4/6"
-                    }`}
-                  >
-                    {React.createElement(icon, {
-                      className: `!w-5 !h-5 ${color}`,
-                    })}
-                  </div>
-                  <div>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="block font-medium"
-                    >
-                      {title}
-                    </Typography>
-                    <Typography
-                      as="span"
-                      variant="small"
-                      className="text-xs font-medium text-blue-gray-500"
-                    >
-                      {description}
-                    </Typography>
-                  </div>
-                </div>
-              )
-            )}
-          </CardBody>
-        </Card>
       </div>
     </div>
   );

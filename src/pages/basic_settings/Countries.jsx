@@ -3,6 +3,7 @@ import { authService } from '@/services/apiService';
 
 const Countries = () => {
   const [countries, setCountries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({ name: '', code: '' });
   const [editingId, setEditingId] = useState(null);
 
@@ -12,10 +13,13 @@ const Countries = () => {
 
   const fetchCountries = async () => {
     try {
+      setIsLoading(true);
       const response = await authService.getCountries();
       setCountries(response.data);
     } catch (error) {
       console.error('Error fetching countries:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,31 +89,35 @@ const Countries = () => {
 
       {/* Countries List */}
       <div className="grid gap-4">
-        {countries.map(country => (
-          <div 
-            key={country.id} 
-            className="flex justify-between items-center border p-3 rounded"
-          >
-            <div>
-              <span className="font-bold">{country.name}</span>
-              <span className="ml-2 text-gray-600">({country.code})</span>
+        {isLoading ? (
+          <div className="text-center py-4">Loading countries...</div>
+        ) : (
+          countries.map(country => (
+            <div 
+              key={country.id} 
+              className="flex justify-between items-center border p-3 rounded"
+            >
+              <div>
+                <span className="font-bold">{country.name}</span>
+                <span className="ml-2 text-gray-600">({country.code})</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(country)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(country.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(country)}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(country.id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

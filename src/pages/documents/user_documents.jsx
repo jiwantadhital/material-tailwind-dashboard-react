@@ -23,6 +23,8 @@ export default function UserDocuments({ code }) {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showStartedOnly, setShowStartedOnly] = useState('all');
 
   const [categories, setCategories] = useState({
     'Pending': [],
@@ -50,6 +52,45 @@ export default function UserDocuments({ code }) {
     return icons[category] || "📎";
   };
 
+  const filterDocuments = (documents) => {
+    return documents.filter(doc => {
+      const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStartedFilter = 
+        showStartedOnly === 'all' || 
+        (showStartedOnly === 'started' && doc.started_at) || 
+        (showStartedOnly === 'not_started' && !doc.started_at);
+      return matchesSearch && matchesStartedFilter;
+    });
+  };
+
+  const formatTime = (estimatedTime) => {
+    if (!estimatedTime) return '';
+    const deadline = new Date(estimatedTime);
+    const totalHours = Math.abs(deadline - new Date()) / (1000 * 60 * 60);
+    const days = Math.floor(totalHours / 24);
+    const hours = Math.floor(totalHours % 24);
+    if (days === 0) return `${hours} hours`;
+    if (hours === 0) return `${days} days`;
+    return `${days} days, ${hours} hours`;
+  };
+
+  const getRemainingTime = (estimatedTime) => {
+    if (!estimatedTime) return '';
+    
+    const deadline = new Date(estimatedTime);
+    const now = new Date();
+    const diffInHours = (deadline - now) / (1000 * 60 * 60);
+    
+    if (diffInHours < 0) return 'Expired';
+    
+    const days = Math.floor(diffInHours / 24);
+    const hours = Math.floor(diffInHours % 24);
+    
+    if (days === 0) return `${hours} hours remaining`;
+    if (hours === 0) return `${days} days remaining`;
+    return `${days} days, ${hours} hours remaining`;
+  };
+
   const renderDocumentCard = (document) => (
     <div key={document.id} className="bg-white rounded-xl shadow-sm p-6 mb-4 hover:shadow-xl transition-all duration-200 border border-gray-100">
       <div className="flex justify-between items-start gap-4">
@@ -64,21 +105,30 @@ export default function UserDocuments({ code }) {
             {document.payment.total_payment_amount && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                 <BanknotesIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">${document.payment.total_payment_amount}</span>
+                <span className="font-medium">Rs {document.payment.total_payment_amount}</span>
               </div>
             )}
             
             {document.estimated_time && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                 <ClockIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">{document.estimated_time} hours</span>
+                <div className="flex flex-col">
+                  <span className="font-medium">
+                    {formatTime(document.estimated_time)}
+                  </span>
+                  {document.estimated_time && (
+                    <span className="text-xs text-gray-500">
+                      {getRemainingTime(document.estimated_time)}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             
-            {document.assigned_to && (
+            {document.user && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                 <UserIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">{document.assigned_to}</span>
+                <span className="font-medium">{document.user.name}</span>
               </div>
             )}
             
@@ -95,20 +145,27 @@ export default function UserDocuments({ code }) {
               <div className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide ${getCategoryStyle(document.status)}`}>
                 {document.status.replace('_', ' ').toUpperCase()}
               </div>
-             
+              {document.document_mark?.is_new && document.document_mark?.user_id !== authService.getCurrentUserId() && (
+                <div className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  NEW
+                </div>
+              )}
             </div>
             
             <Button
-                        variant="gradient"
-                        color="blue"
-                        size="sm"
-                        className="py-1 px-2 text-[11px] font-medium"
-                        onClick={() => {
-                          navigate("/document_details", { state: { document } });  ;
-                        }}
-                      >
-                        View Details
-                      </Button>
+              variant="gradient"
+              color="blue"
+              size="sm"
+              className="py-1 px-2 text-[11px] font-medium"
+              onClick={() => {
+                if(document.document_mark.is_new === true){
+                  authService.markAsRead(document.id);
+                }
+                navigate("/document_details", { state: { document } });
+              }}
+            >
+              View Details
+            </Button>
           </div>
         </div>
         
@@ -117,7 +174,7 @@ export default function UserDocuments({ code }) {
     </div>
   );
 
-  const fetchDocuments = async (page = 1, selectedStatus = null,code) => {
+  const fetchDocuments = async (page = 1, selectedStatus = "in_progress",code = 'NO') => {
     try {
       setLoading(true);
       const apiStatus = selectedStatus?.toLowerCase().replace(' ', '_');
@@ -166,7 +223,7 @@ export default function UserDocuments({ code }) {
   };
 
   useEffect(() => {
-    fetchDocuments(currentPage,null, code);
+    fetchDocuments(currentPage,"in_progress", code);
   }, [currentPage]);
 
   const PaginationControls = () => (
@@ -220,10 +277,11 @@ export default function UserDocuments({ code }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold text-gray-900 mb-10 tracking-tight">My Documents</h1>
       
-      <Tab.Group onChange={(index) => {
+      <Tab.Group defaultIndex={2} onChange={(index) => {
         setCurrentPage(1);
         const selectedStatus = Object.keys(categories)[index];
-        fetchDocuments(1, selectedStatus,code);
+        console.log(selectedStatus);
+        fetchDocuments(1, selectedStatus, code);
       }}>
         <Tab.List className="flex space-x-1 rounded-2xl bg-gray-100/80 p-1.5">
           {Object.keys(categories).map((category) => (
@@ -245,7 +303,7 @@ export default function UserDocuments({ code }) {
         </Tab.List>
         
         <Tab.Panels className="mt-8">
-          {Object.values(categories).map((documents, idx) => (
+          {Object.entries(categories).map(([category, documents], idx) => (
             <Tab.Panel
               key={idx}
               className={classNames(
@@ -253,20 +311,56 @@ export default function UserDocuments({ code }) {
                 'ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2'
               )}
             >
-              <div className="space-y-4">
-                {documents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <DocumentIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No documents</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      No documents found in this category.
-                    </p>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+                </div>
+              ) : (
+                <>
+                  {category === 'In Progress' && (
+                    <div className="mb-6 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            placeholder="Search by document name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={showStartedOnly}
+                            onChange={(e) => setShowStartedOnly(e.target.value)}
+                            className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-700"
+                          >
+                            <option value="all">All Documents</option>
+                            <option value="started">Started Only</option>
+                            <option value="not_started">Not Started Only</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-4">
+                    {documents.length === 0 ? (
+                      <div className="text-center py-12">
+                        <DocumentIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No documents</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          No documents found in this category.
+                        </p>
+                      </div>
+                    ) : (
+                      (category === 'In Progress' ? filterDocuments(documents) : documents)
+                        .map((document) => renderDocumentCard(document))
+                    )}
                   </div>
-                ) : (
-                  documents.map((document) => renderDocumentCard(document))
-                )}
-              </div>
-              {pagination && <PaginationControls />}
+                  {pagination && <PaginationControls />}
+                </>
+              )}
             </Tab.Panel>
           ))}
         </Tab.Panels>
