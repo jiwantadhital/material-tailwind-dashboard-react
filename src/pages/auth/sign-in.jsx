@@ -88,6 +88,10 @@ export function SignIn() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              type="tel"
+              pattern="[0-9]{10}"
+              maxLength={10}
+              inputMode="numeric"
             />
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               Password

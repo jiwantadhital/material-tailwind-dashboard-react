@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { authService } from '../../services/apiService';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { pusherService } from '../../services/pusher_init';
 
 const LoadingSkeleton = () => (
@@ -78,6 +78,10 @@ const DocumentDetails = () => {
   const [sendingStatus, setSendingStatus] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -378,6 +382,45 @@ const DocumentDetails = () => {
     }
   };
 
+  const handleRejectDocument = async () => {
+    try {
+      await authService.rejectDocument({
+        document_id: documentId,
+        admin_rejection_reason: reportReason,
+      });
+      // Navigate back to the previous page
+      navigate(-1);
+    } catch (error) {
+      console.error('Error rejecting document:', error);
+      setAlert({
+        show: true,
+        message: 'Failed to reject document. Please try again.',
+        type: 'error',
+      });
+    }
+    setShowRejectDialog(false);
+  };
+
+  const handleReportAndRemoveDocument = async () => {
+    try {
+      await authService.removeDocument({
+        document_id: documentId,
+        admin_rejection_reason: reportReason,
+      });
+      // Navigate back to the previous page
+      navigate(-1);
+    } catch (error) {
+      console.error('Error reporting and removing document:', error);
+      setAlert({
+        show: true,
+        message: 'Failed to report and remove document. Please try again.',
+        type: 'error',
+      });
+    }
+    setShowReportDialog(false);
+    setReportReason('');
+  };
+
   // Replace the existing loading state with the new component
   if (loading) {
     return <LoadingSkeleton />;
@@ -457,8 +500,75 @@ const DocumentDetails = () => {
           </div>
 
           {/* Admin Controls Card */}
-          {(document.status === 'pending' ) && (
+          {document.status === 'pending' && (
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
+              <button
+                onClick={() => setShowRejectDialog(true)}
+                className="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium mb-4"
+              >
+                Reject Document
+              </button>
+
+              <button
+                onClick={() => setShowReportDialog(true)}
+                className="w-full bg-yellow-600 text-white px-4 py-3 rounded-lg hover:bg-yellow-700 transition-colors duration-200 font-medium mb-4"
+              >
+                Report and Remove Document
+              </button>
+
+              {showRejectDialog && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                  <div className="bg-white rounded-lg p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Are you sure?</h2>
+                    <p className="text-sm text-gray-500">Do you really want to reject this document?</p>
+                    <div className="flex justify-end space-x-4">
+                      <button
+                        onClick={() => setShowRejectDialog(false)}
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleRejectDocument}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showReportDialog && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                  <div className="bg-white rounded-lg p-6 space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Report Document</h2>
+                    <p className="text-sm text-gray-500">Please provide a reason for reporting this document:</p>
+                    <textarea
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-2"
+                      rows="3"
+                      placeholder="Enter reason here..."
+                    />
+                    <div className="flex justify-end space-x-4">
+                      <button
+                        onClick={() => setShowReportDialog(false)}
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleReportAndRemoveDocument}
+                        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors duration-200"
+                      >
+                        Report
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <h2 className="text-xl font-semibold text-gray-900 mb-8">Admin Controls</h2>
               
               {document.status === 'pending' && (
@@ -632,6 +742,22 @@ const DocumentDetails = () => {
               </div>
             </div>
           )}
+          {document.isAcceptedByUser === true && document.status !== 'completed' && document.payment.remaining_payment_amount.toString() !== '0.00' && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <svg className="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-yellow-800">Payment Pending</h3>
+                            <p className="text-sm text-yellow-600">Full payment has not been received yet.Waiting for payment.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+          
           {document.isAcceptedByUser === true && document.status !== 'completed' && document.payment.remaining_payment_amount.toString() === '0.00' && (
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Final Document Zip Upload</h2>

@@ -52,16 +52,7 @@ export default function UserDocuments({ code }) {
     return icons[category] || "📎";
   };
 
-  const filterDocuments = (documents) => {
-    return documents.filter(doc => {
-      const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStartedFilter = 
-        showStartedOnly === 'all' || 
-        (showStartedOnly === 'started' && doc.started_at) || 
-        (showStartedOnly === 'not_started' && !doc.started_at);
-      return matchesSearch && matchesStartedFilter;
-    });
-  };
+
 
   const formatTime = (estimatedTime) => {
     if (!estimatedTime) return '';
@@ -174,11 +165,12 @@ export default function UserDocuments({ code }) {
     </div>
   );
 
-  const fetchDocuments = async (page = 1, selectedStatus = "in_progress",code = 'NO') => {
+  const fetchDocuments = async (page = 1, selectedStatus = "in_progress",code = 'NO',progress_status = 'all') => {
     try {
       setLoading(true);
       const apiStatus = selectedStatus?.toLowerCase().replace(' ', '_');
-      const response = await authService.getDocuments(page, apiStatus, code);
+      const response = await authService.getDocuments(page, apiStatus, code,progress_status);
+      console.log(response.data.data);
       
       const documentsByStatus = {
         'Pending': [],
@@ -223,7 +215,7 @@ export default function UserDocuments({ code }) {
   };
 
   useEffect(() => {
-    fetchDocuments(currentPage,"in_progress", code);
+    fetchDocuments(currentPage,"in_progress", code, showStartedOnly);
   }, [currentPage]);
 
   const PaginationControls = () => (
@@ -332,12 +324,17 @@ export default function UserDocuments({ code }) {
                         <div className="flex items-center gap-2">
                           <select
                             value={showStartedOnly}
-                            onChange={(e) => setShowStartedOnly(e.target.value)}
+                            onChange={async (e)=> {
+                              setShowStartedOnly(e.target.value);
+                              fetchDocuments(1, category, code, e.target.value);
+                            }}
                             className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-700"
                           >
                             <option value="all">All Documents</option>
-                            <option value="started">Started Only</option>
-                            <option value="not_started">Not Started Only</option>
+                            <option value="not_started">Not Started</option>
+                            <option value="rejected
+                            ">Rejected</option>
+                            <option value="full_payment_made">Full Payment Made</option>
                           </select>
                         </div>
                       </div>
@@ -354,7 +351,7 @@ export default function UserDocuments({ code }) {
                         </p>
                       </div>
                     ) : (
-                      (category === 'In Progress' ? filterDocuments(documents) : documents)
+                      (category === 'In Progress' ? documents : documents)
                         .map((document) => renderDocumentCard(document))
                     )}
                   </div>

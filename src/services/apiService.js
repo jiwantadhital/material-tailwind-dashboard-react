@@ -114,7 +114,7 @@ export const authService = {
       return response.data;
     },
     
-    getAllUsers: async () => {
+    getAllUsers: async (filter) => {
       const token = localStorage.getItem('token');
       console.log("this is token",token);
       if (!token) {
@@ -122,7 +122,7 @@ export const authService = {
       }
 
       try {
-        const response = await apiService.get('/api/get-users',{
+        const response = await apiService.get(`/api/get-users/${filter}`,{
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -220,10 +220,10 @@ export const authService = {
 
 
       //get documents
-      getDocuments: async (page = 1, status = "pending", code) => {
+      getDocuments: async (page = 1, status = "pending", code, progress_status) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}&code=${code}`, {
+            const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}&code=${code}&progress_status=${progress_status}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
@@ -252,6 +252,23 @@ export const authService = {
           },
         });
         return response.data;
+      },
+
+      //remove document
+      removeDocument: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/reject-document-with-reason`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //reject document
+      rejectDocument: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/reject-by-admin`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       },
 
       //payment
@@ -407,6 +424,22 @@ export const authService = {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
+      },
+
+
+      //get report
+      getReport: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-reports', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      },
+      //get report by id
+      getReportById: async (reportId) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get(`/api/get-report-by-id/${reportId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       },
     };
 export default apiService; 

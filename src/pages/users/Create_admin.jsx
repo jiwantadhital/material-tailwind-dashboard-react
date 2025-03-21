@@ -66,8 +66,8 @@ export default function Create_admin() {
 
   const fetchAdmins = async () => {
     try {
-      const response = await authService.getAllUsers();
-      const adminUsers = response.data.users.filter(user => user.role === 'admin');
+      const response = await authService.getAllUsers('all');
+      const adminUsers = response.data.users.filter(user => user.role === 'lawyer');
       setAdmins(adminUsers);
     } catch (error) {
       console.error("Failed to fetch admins:", error);
@@ -89,9 +89,10 @@ export default function Create_admin() {
     e.preventDefault();
     try {
       // Call the createAdmin function from authService with FormData
-      await authService.createAdmin(adminData);
-      fetchAdmins();
-      setIsFormOpen(false);
+       const response = await authService.createAdmin(adminData);
+      if(response.success){
+        fetchAdmins();
+        setIsFormOpen(false);
       setAdminData({
         name: "",
         email: "",
@@ -103,6 +104,11 @@ export default function Create_admin() {
         password: ""
       });
       setImagePreview(null);
+      }
+      else{
+        setAlertMessage(response.message);
+        setShowAlert(true);
+      }
     } catch (error) {
       console.error("Error creating admin:", error);
       // Optionally, handle the error (e.g., show a notification)
@@ -186,7 +192,9 @@ export default function Create_admin() {
                     value={adminData.phone}
                     onChange={handleChange}
                     required
-                    disabled={isFormOpen && adminData.phone !== ""}
+              maxLength={10}
+
+                    // disabled={ adminData.phone !== ""}
                     className="!border-t-blue-gray-200 focus:!border-t-gray-900"
                     labelProps={{
                       className: "before:content-none after:content-none",
@@ -205,7 +213,7 @@ export default function Create_admin() {
                     value={adminData.email}
                     onChange={handleChange}
                     required
-                    disabled={isFormOpen && adminData.email !== ""}
+                    // disabled={isFormOpen && adminData.email !== ""}
                     className="!border-t-blue-gray-200 focus:!border-t-gray-900"
                     labelProps={{
                       className: "before:content-none after:content-none",
@@ -353,7 +361,7 @@ export default function Create_admin() {
                     <tr key={index}>
                       <td className={className}>
                         <Avatar
-                          src={"http://localhost:8000/"+ admin.kyc?.photo || "/default-avatar.png"}
+                          src={"https://sajilonotary.xyz/"+ admin.kyc?.photo || "/default-avatar.png"}
                           alt={admin.photo}
                           size="sm"
                           className="border border-blue-gray-50 bg-blue-gray-50/50"

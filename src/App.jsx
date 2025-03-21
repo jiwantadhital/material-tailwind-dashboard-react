@@ -34,19 +34,22 @@ function App() {
   const { title, body } = payload.notification;
 
       const notificationOptions = {
-        body: body,
+        body: JSON.parse(body).message,
         icon: "/img/nlogo.png",
         requireInteraction: true, // Keeps the notification open until the user interacts with it
       };
       console.log("Foreground Notification Rec:", payload);
-      toast.info(`${title}: ${body}`, {
+      toast.info(`${title}: ${JSON.parse(body).message}`, {
         position: "top-right",
-        autoClose: 5000,
+        autoClose: 8000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
         progress: undefined,
+        onClick: () => {
+          window.location.href = `/document_details/${documentId}`;
+        }
       });
       
       // Show a native browser notification

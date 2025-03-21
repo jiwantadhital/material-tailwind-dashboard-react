@@ -16,6 +16,7 @@ import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/docum
 import { Countries, Services } from "@/pages/basic_settings";
 import { ReportList } from "@/pages/reports";
 import { Carousel } from "@/pages/documents";
+import { RejectedDocuments } from "@/pages/documents";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -31,20 +32,22 @@ export const routes = [
         name: "dashboard",
         path: "/home",
         element: <Home />,
+        allowedRoles: ["admin", "lawyer",]
       },
-        {
-          icon: <UserCircleIcon {...icon} />,
-          name: "users",
-          path: "/users",
-          element: <Users />,
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "users",
+        path: "/users",
+        element: <Users />,
+        allowedRoles: ["admin"]
       },
       {
         icon: <UserCircleIcon {...icon} />,
         name: "Create Admin",
         path: "/create-admin",
         element: <Create_admin />,
-    },
-    
+        allowedRoles: ["admin"]
+      },
     ],
   },
   {
@@ -57,12 +60,14 @@ export const routes = [
         name: "Countries",
         path: "/countries",
         element: <Countries />,
+        allowedRoles: ["admin"]
       },
       {
         icon: <BriefcaseIcon {...icon} />,
         name: "Services",
         path: "/services",
         element: <Services />,
+        allowedRoles: ["admin"]
       },
       //carousel
     {
@@ -70,6 +75,7 @@ export const routes = [
       name: "Carousel",
       path: "/mobile/carousel",
       element: <Carousel />,
+      allowedRoles: ["admin"]
     },
     ],
   },
@@ -83,6 +89,14 @@ export const routes = [
         name: "Report List",
         path: "/reports/report_list",
         element: <ReportList />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <GlobeAltIcon {...icon} />,
+        name: "Rejected Documents",
+        path: "/rejected_documents",
+        element: <RejectedDocuments />,
+        allowedRoles: ["admin"]
       }
     ],
   },
@@ -95,18 +109,21 @@ export const routes = [
         name: "Notary Documents",
         path: "/user_documents",
         element: <NotaryDocuments />,
+        allowedRoles: ["admin","lawyer"]
       },
       {
         icon: <DocumentTextIcon {...icon} />,
         name: "SOP Documents",
         path: "/sop_documents",
         element: <SopDocuments />,
+        allowedRoles: ["admin","lawyer"]
       },
       {
         icon: <HomeIcon {...icon} />,
         name: "Property Documents",
         path: "/property_documents",
         element: <PropertyDocuments />,
+        allowedRoles: ["admin","lawyer"]
       }
     ],
   },
@@ -133,4 +150,19 @@ export const routes = [
   },
 ];
 
-export default routes;
+const user = JSON.parse(localStorage.getItem('user')) || { role: null };
+const userRole = user.role;
+
+export const filteredRoutes = routes.map(routeGroup => {
+  const filteredPages = routeGroup.pages.filter(page => {
+    if (!page.allowedRoles) return true;
+    return page.allowedRoles.includes(userRole);
+  });
+
+  return {
+    ...routeGroup,
+    pages: filteredPages
+  };
+}).filter(routeGroup => routeGroup.pages.length > 0);
+
+export default filteredRoutes;

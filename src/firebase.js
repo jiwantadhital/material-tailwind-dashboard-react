@@ -38,7 +38,7 @@ export const requestNotificationPermission = async () => {
 
 // Listen for foreground notifications
 onMessage(messaging, (payload) => {
-  toast.info(`${title}: ${body}`, {
+  toast.info(`${title}: ${JSON.parse(body).message}`, {
     position: "top-right",
     autoClose: 5000,
     hideProgressBar: false,

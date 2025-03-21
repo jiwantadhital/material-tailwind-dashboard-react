@@ -4,3 +4,4 @@ export { default as NotaryDocuments } from "./notary_documents";  // Add this li
 export { default as SopDocuments } from "./sop_documents";  // Add this line
 export { default as PropertyDocuments } from "./property_documents";  // Add this line
 export { default as Carousel } from "../mobile/carousel";  // Add this line
+export { default as RejectedDocuments } from "./rejected_documents";  // Add this line
