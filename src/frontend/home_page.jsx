@@ -1,85 +1,154 @@
-import React, { useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronRight, Menu, X, Check, ArrowRight } from 'lucide-react';
 
 const LandingPage = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [email, setEmail] = useState('');
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       window.location.href = '/dashboard/home';
     }
+    
+    // Add scroll reveal animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fadeIn');
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    
+    return () => observer.disconnect();
   }, []);
 
   return (
     <div className="min-h-screen bg-[#0B1121] text-white">
       {/* Navigation */}
-      <nav className="container mx-auto px-4 py-6 flex justify-between items-center">
+      <nav className="container mx-auto px-4 py-6 flex justify-between items-center backdrop-blur-md bg-[#0B1121]/80 sticky top-0 z-50">
         <div className="flex items-center space-x-2">
-          <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
-          </svg>
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-70 group-hover:opacity-100 transition duration-300"></div>
+            <svg className="relative w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
+            </svg>
+          </div>
           <span className="text-2xl font-bold">Sajilo Notary</span>
         </div>
-        <div className="flex items-center space-x-8">
-          <a href="#" className="text-gray-400 hover:text-white transition-colors">Solution</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors">Customers</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors">Company</a>
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors" onClick={() => {
-            window.location.href = '/auth/sign-in';
-          }}>
-            Sign in
+        
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center space-x-8">
+          <a href="#solutions" className="text-gray-400 hover:text-white transition-colors hover:scale-105 transform duration-200">Solutions</a>
+          <a href="#customers" className="text-gray-400 hover:text-white transition-colors hover:scale-105 transform duration-200">Customers</a>
+          <a href="#pricing" className="text-gray-400 hover:text-white transition-colors hover:scale-105 transform duration-200">Pricing</a>
+          <a href="#features" className="text-gray-400 hover:text-white transition-colors hover:scale-105 transform duration-200">Features</a>
+          <a href="#about" className="text-gray-400 hover:text-white transition-colors hover:scale-105 transform duration-200">About Us</a>
+          <button 
+            className="relative group overflow-hidden bg-transparent rounded-lg px-6 py-2 text-white"
+            onClick={() => window.location.href = '/auth/sign-in'}
+          >
+            <span className="absolute inset-0 w-full h-full transition duration-300 ease-out transform translate-x-0 -translate-y-0 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:translate-x-0 group-hover:translate-y-0"></span>
+            <span className="absolute inset-0 w-full h-full border-2 border-white rounded-lg"></span>
+            <span className="relative font-medium">Sign in</span>
           </button>
         </div>
+        
+        {/* Mobile Menu Button */}
+        <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="absolute top-20 left-0 right-0 bg-[#0B1121] shadow-2xl p-6 md:hidden z-50 animate-fadeDown">
+            <div className="flex flex-col space-y-4">
+              <a href="#solutions" className="text-gray-400 hover:text-white transition-colors py-2" onClick={() => setIsMenuOpen(false)}>Solutions</a>
+              <a href="#customers" className="text-gray-400 hover:text-white transition-colors py-2" onClick={() => setIsMenuOpen(false)}>Customers</a>
+              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors py-2" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+              <a href="#features" className="text-gray-400 hover:text-white transition-colors py-2" onClick={() => setIsMenuOpen(false)}>Features</a>
+              <a href="#about" className="text-gray-400 hover:text-white transition-colors py-2" onClick={() => setIsMenuOpen(false)}>About Us</a>
+              <button 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg mt-4"
+                onClick={() => window.location.href = '/auth/sign-in'}
+              >
+                Sign in
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20">
-        <div className="flex justify-between items-center">
-          <div className="max-w-2xl">
-            <h1 className="text-6xl font-bold mb-6">
-              Design, Build, <span className="text-blue-500">Scale</span>
+        <div className="flex flex-col md:flex-row justify-between items-center reveal">
+          <div className="max-w-2xl mb-12 md:mb-0">
+            <div className="text-sm font-semibold text-blue-500 mb-4 flex items-center">
+              <div className="w-6 h-0.5 bg-blue-500 mr-3"></div>
+              STREAMLINED NOTARY SERVICES
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              Notarize Documents <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">Seamlessly</span>
             </h1>
             <p className="text-gray-400 text-xl mb-12 leading-relaxed">
-              Computers used to be magical. But much of that magic has been lost over time, replaced by subpar tools and practices that slow teams down and hold great work back.
+              Sajilo Notary brings the power of digital transformation to notarial services, making document authentication faster, secure, and convenient for everyone.
             </p>
-            <div className="flex space-x-4 mb-12">
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-12">
               <input
                 type="email"
-                placeholder="Your mail address"
-                className="bg-[#1A2337] px-6 py-3 rounded-lg w-80 border border-gray-700 focus:outline-none focus:border-blue-500"
+                placeholder="Your email address"
+                className="bg-[#1A2337] px-6 py-3 rounded-lg w-full sm:w-80 border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <button className="bg-blue-500 px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
-                Get Started
+              <button className="relative overflow-hidden group bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-3 rounded-lg hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 transform hover:scale-105">
+                <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
+                <span className="relative flex items-center justify-center text-white font-medium">
+                  Get Started <ArrowRight className="ml-2 w-5 h-5" />
+                </span>
               </button>
             </div>
             <div>
-              <p className="text-sm text-gray-400 mb-4">From the most talented team</p>
+              <p className="text-sm text-gray-400 mb-3">Trusted by industry professionals</p>
               <div className="flex -space-x-2">
                 {[1,2,3,4,5].map((i) => (
-                  <img key={i} src="/img/prof.jpg" alt={`Team member ${i}`} className="w-8 h-8 rounded-full border-2 border-[#0B1121]" />
+                  <div key={i} className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-[#0B1121] hover:scale-110 transform transition-transform duration-200 hover:z-10">
+                    <img src="/img/prof.jpg" alt={`Team member ${i}`} className="h-full w-full object-cover" />
+                  </div>
                 ))}
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500/20 text-blue-500 font-medium text-xs border-2 border-[#0B1121]">
+                  +850
+                </div>
               </div>
             </div>
           </div>
           <div className="relative">
-            <img src="/api/placeholder/500/400" alt="Team collaboration illustration" className="w-96" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+            <div className="relative bg-[#1A2337] p-1 rounded-2xl overflow-hidden">
+              <img src="/api/placeholder/500/400" alt="Notary service illustration" className="w-full md:w-96 rounded-xl transform hover:scale-105 transition-transform duration-500" />
+            </div>
+            <div className="absolute -top-4 -right-4 bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold animate-pulse">
+              New
+            </div>
           </div>
         </div>
       </section>
 
       {/* Trusted By Section */}
-      <section className="container mx-auto px-4 py-16 border-t border-gray-800">
+      <section id="customers" className="container mx-auto px-4 py-16 border-t border-gray-800/50 reveal">
         <p className="text-center text-gray-500 mb-12 uppercase tracking-wider text-sm">
-          Trusted by your favored top techs companies
+          Trusted by leading organizations
         </p>
-        <div className="flex justify-between items-center ">
-          {['Airbnb', 'COTY', 'GE', 'Lilly', 'Microsoft'].map((company) => (
-            <div key={company} className="bg-white rounded-xl p-6 shadow-lg hover:bg-gray-50 transition-colors">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 items-center">
+          {['Airbnb', 'COTY', 'GE', 'Lilly', 'Microsoft'].map((company, index) => (
+            <div key={company} className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg hover:shadow-blue-500/10 transition-all duration-300 transform hover:scale-105">
               <img 
                 src="/img/comp.png" 
                 alt={company} 
-                className="h-8 opacity-50 text-white" 
+                className="h-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-300 mx-auto" 
               />
             </div>
           ))}

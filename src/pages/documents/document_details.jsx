@@ -856,9 +856,8 @@ const DocumentDetails = () => {
                 <h3 className="text-sm font-medium text-gray-500">Remaining Payment</h3>
                 <p className="mt-1 text-gray-900 capitalize">Rs {(() => {
                   try {
-                    const total = parseInt(document.payment.total_payment_amount) || 0;
-                    const partial = parseInt(document.payment.partial_payment_amount) || 0;
-                    return total - (partial);
+                    const remaining = parseInt(document.payment.remaining_payment_amount) || 0;
+                    return remaining;
                   } catch (error) {
                     console.error('Error calculating remaining payment:', error);
                     return 0;
