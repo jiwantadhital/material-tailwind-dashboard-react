@@ -22,7 +22,8 @@ export default function Create_admin() {
     address: "",
     gender: "",
     password: "",
-    password_confirmation: ""
+    password_confirmation: "",
+    services: []
   });
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -32,11 +33,7 @@ export default function Create_admin() {
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [user, setUser] = useState(null);
-
-
-
-
-
+  const [availableServices, setAvailableServices] = useState([]);
 
   const handleStatusChange = async (checked, adminId) => {
     setIsUpdatingStatus(true);
@@ -59,8 +56,17 @@ export default function Create_admin() {
   };
 
   useEffect(() => {
-   
-
+    const storedServices = localStorage.getItem('services');
+    if (storedServices) {
+      try {
+        const parsedServices = JSON.parse(storedServices);
+        setAvailableServices(parsedServices);
+      } catch (error) {
+        console.error("Error parsing services from localStorage:", error);
+        setAvailableServices([]);
+      }
+    }
+    
     fetchAdmins();
   }, []);
 
@@ -85,6 +91,11 @@ export default function Create_admin() {
     }
   };
 
+  const handleServiceChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setAdminData({...adminData, services: selectedOptions});
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -101,7 +112,8 @@ export default function Create_admin() {
         dob: "",
         address: "",
         gender: "",
-        password: ""
+        password: "",
+        services: []
       });
       setImagePreview(null);
       }
@@ -124,16 +136,17 @@ export default function Create_admin() {
     setAdminData({
       name: admin.name,
       email: admin.kyc?.email,
-      phone: admin.phone, // Assuming this is the phone number
-      photo: admin.kyc?.photo, // Assuming this is the photo URL
-      dob: admin.kyc?.dob, // Add this if dob is available in admin object
-      address: admin.kyc?.address, // Add this if address is available in admin object
-      gender: admin.kyc?.gender, // Add this if gender is available in admin object
-      password: "", // Keep this empty for security
-      password_confirmation: "", // Keep this empty for security
+      phone: admin.phone,
+      photo: admin.kyc?.photo,
+      dob: admin.kyc?.dob,
+      address: admin.kyc?.address,
+      gender: admin.kyc?.gender,
+      password: "",
+      password_confirmation: "",
+      services: admin.services || []
     });
-    setImagePreview(admin.kyc?.photo); // Set the image preview if available
-    setIsFormOpen(true); // Open the form for editing
+    setImagePreview(admin.kyc?.photo);
+    setIsFormOpen(true);
   };
 
   if (!admins) {
@@ -272,6 +285,28 @@ export default function Create_admin() {
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                   </select>
+                </div>
+
+                <div className="col-span-2">
+                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                    Services
+                  </Typography>
+                  <select
+                    name="services"
+                    multiple
+                    value={adminData.services}
+                    onChange={handleServiceChange}
+                    className="w-full h-32 border border-blue-gray-200 rounded-lg px-3 focus:border-gray-900 focus:outline-none"
+                  >
+                    {availableServices.map((service, index) => (
+                      <option key={index} value={service.id || service._id || index}>
+                        {service.name || service.title || service.serviceName || "Unnamed Service"}
+                      </option>
+                    ))}
+                  </select>
+                  <Typography variant="small" color="gray" className="mt-1">
+                    Hold Ctrl (or Cmd) to select multiple services
+                  </Typography>
                 </div>
 
                 <div className="col-span-2 md:col-span-1">

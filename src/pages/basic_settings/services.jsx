@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '@/services/apiService';
+import { useNavigate } from 'react-router-dom';
+
 
 const Services = () => {
   const [services, setServices] = useState([]);
   const [formData, setFormData] = useState({ name: '', priceRange: '', image: null ,code:'' ,isActive:true});
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const navigateToCreateService = () => {
+    navigate('/edit-service');
+  };
 
   useEffect(() => {
     fetchServices();
@@ -68,8 +75,8 @@ const Services = () => {
   };
 
   const handleEdit = (service) => {
-    setFormData({ name: service.name, priceRange: service.price_range, image: service.image ,code:service.code ,isActive:service.is_active });
-    setEditingId(service.id);
+    // Navigate to edit service page with service id
+    navigate(`/edit-service`);
   };
 
   const handleDelete = async (id) => {
@@ -96,58 +103,18 @@ const Services = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Manage Services</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Manage Services</h1>
+        <button 
+          onClick={navigateToCreateService} 
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center"
+        >
+          <span className="mr-1">+</span> Add New Service
+        </button>
+      </div>
       
       {/* Add/Edit Form */}
-      <form onSubmit={handleSubmit} className="mb-6">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Service Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-           <input
-            type="text"
-            placeholder="Code"
-            value={formData.code}
-            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Price Range"
-            value={formData.priceRange}
-            onChange={(e) => setFormData({ ...formData, priceRange: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-          <input
-            type="checkbox"
-            checked={formData.isActive}
-            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            className="border p-2 rounded"
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
-            className="border p-2 rounded"
-            required
-          />
-         
-          <button 
-            type="submit" 
-            className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Loading...' : (editingId !== null ? 'Update' : 'Add')} Service
-          </button>
-        </div>
-      </form>
+    
 
       {/* Services List */}
       {isLoading ? (

@@ -54,12 +54,18 @@ export const authService = {
           const initResponse = await apiService.get('/api/init-after-login', {
             headers: { Authorization: `Bearer ${token}` }
           });
+
+          const servicesResponse = await apiService.get('/api/get-all-services', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          
           
           // Save user and kyc data to localStorage
           const { user, kyc_record } = initResponse.data.data;
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('kyc_record', JSON.stringify(kyc_record));
-          
+          localStorage.setItem('services', JSON.stringify(servicesResponse.data));
           // Return combined data
           return {
             ...userData,
@@ -386,6 +392,14 @@ export const authService = {
       getServices: async () => {
         const token = localStorage.getItem('token');
         const response = await apiService.get('/api/get-services', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      getAllServices: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-all-services', {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

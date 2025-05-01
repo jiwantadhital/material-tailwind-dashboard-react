@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Notifications from "@/pages/notifications";
 import { Reports } from "@/layouts/reports";
 import { ReportDetails } from "@/pages/reports/report_details";
+import { EditService } from "@/pages/basic_settings";
 function App() {
   useEffect(() => {
     // Request permission for notifications
@@ -73,6 +74,7 @@ function App() {
       <Route path="/mobile/*" element={<Mobile />} />
       <Route path="/documents/*" element={<Documents />} />
       <Route path="/document_details/*" element={<DocumentDetails />} />
+      <Route path="/edit-service/*" element={<EditService />} />
       <Route path="/basicSettings/*" element={<BasicSettings />} />
       <Route path="/home" element={<HomePage />} />
       <Route path="/reports/*" element={<Reports />} />
