@@ -17,11 +17,19 @@ import { Countries, Services } from "@/pages/basic_settings";
 import { ReportList } from "@/pages/reports";
 import { Carousel } from "@/pages/documents";
 import { RejectedDocuments } from "@/pages/documents";
-
+import { UserDocuments } from "@/pages/documents";
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
 const token = localStorage.getItem('token');
+
+// Function to handle logout
+const handleLogout = () => {
+  // Remove all localStorage data
+  localStorage.clear();
+  // Redirect to the sign-in page
+  window.location.href = "/auth/sign-in";
+};
 
 export const routes = [
   {
@@ -108,7 +116,7 @@ export const routes = [
         icon: <DocumentIcon {...icon} />,
         name: "Notary Documents",
         path: "/user_documents",
-        element: <NotaryDocuments />,
+        element: <UserDocuments code={"NO"}/>,
         allowedRoles: ["admin","lawyer"]
       },
       {
@@ -144,6 +152,7 @@ export const routes = [
         name: "Logout",
         path: "/sign-in",
         element: <SignIn />,
+        onClick: handleLogout,
       },
      
     ],

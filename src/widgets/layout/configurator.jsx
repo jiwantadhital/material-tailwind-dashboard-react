@@ -47,12 +47,14 @@ export function Configurator() {
   const [stars, setStars] = React.useState(0);
 
   const sidenavColors = {
-    white: "from-gray-100 to-gray-100 border-gray-200",
-    dark: "from-black to-black border-gray-200",
+    blue: "from-blue-400 to-blue-600",
+    "blue-gray": "from-blue-gray-800 to-blue-gray-900",
     green: "from-green-400 to-green-600",
     orange: "from-orange-400 to-orange-600",
     red: "from-red-400 to-red-600",
+    purple: "from-purple-400 to-purple-600",
     pink: "from-pink-400 to-pink-600",
+    indigo: "from-indigo-400 to-indigo-600",
   };
 
   React.useEffect(() => {
@@ -65,40 +67,40 @@ export function Configurator() {
 
   return (
     <aside
-      className={`fixed top-0 right-0 z-50 h-screen w-96 bg-white px-2.5 shadow-lg transition-transform duration-300 ${
+      className={`fixed top-0 right-0 z-50 h-screen w-96 bg-gradient-to-b from-[#0B1121] to-[#0F172A] px-2.5 shadow-2xl transition-transform duration-300 ${
         openConfigurator ? "translate-x-0" : "translate-x-96"
       }`}
     >
-      <div className="flex items-start justify-between px-6 pt-8 pb-6">
+      <div className="flex items-start justify-between px-6 pt-8 pb-6 border-b border-white/10">
         <div>
-          <Typography variant="h5" color="blue-gray">
-            Dashboard Configurator
+          <Typography variant="h5" color="white">
+            Dashboard Settings
           </Typography>
-          <Typography className="font-normal text-blue-gray-600">
-            See our dashboard options.
+          <Typography className="font-normal text-white/60">
+            Customize your dashboard experience
           </Typography>
         </div>
         <IconButton
           variant="text"
-          color="blue-gray"
+          color="white"
           onClick={() => setOpenConfigurator(dispatch, false)}
         >
           <XMarkIcon strokeWidth={2.5} className="h-5 w-5" />
         </IconButton>
       </div>
-      <div className="py-4 px-6">
+      <div className="py-6 px-6 overflow-y-auto h-[calc(100vh-100px)] custom-scrollbar">
         <div className="mb-12">
-          <Typography variant="h6" color="blue-gray">
+          <Typography variant="h6" color="white" className="mb-4">
             Sidenav Colors
           </Typography>
           <div className="mt-3 flex items-center gap-2">
             {Object.keys(sidenavColors).map((color) => (
               <span
                 key={color}
-                className={`h-6 w-6 cursor-pointer rounded-full border bg-gradient-to-br transition-transform hover:scale-105 ${
+                className={`h-8 w-8 cursor-pointer rounded-full bg-gradient-to-r ${
                   sidenavColors[color]
-                } ${
-                  sidenavColor === color ? "border-black" : "border-transparent"
+                } transition-transform hover:scale-105 ${
+                  sidenavColor === color ? "ring-2 ring-white" : ""
                 }`}
                 onClick={() => setSidenavColor(dispatch, color)}
               />
@@ -106,128 +108,88 @@ export function Configurator() {
           </div>
         </div>
         <div className="mb-12">
-          <Typography variant="h6" color="blue-gray">
-            Sidenav Types
+          <Typography variant="h6" color="white" className="mb-4">
+            Sidenav Type
           </Typography>
-          <Typography variant="small" color="gray">
-            Choose between 3 different sidenav types.
+          <Typography variant="small" color="white" className="font-normal opacity-60 mb-4">
+            Choose how your sidenav will look like.
           </Typography>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-col gap-3">
             <Button
               variant={sidenavType === "dark" ? "gradient" : "outlined"}
+              color={sidenavType === "dark" ? "blue" : "white"}
               onClick={() => setSidenavType(dispatch, "dark")}
+              className={sidenavType === "dark" ? "border-none" : "border-white/20 text-white"}
             >
               Dark
             </Button>
             <Button
               variant={sidenavType === "transparent" ? "gradient" : "outlined"}
+              color={sidenavType === "transparent" ? "blue" : "white"}
               onClick={() => setSidenavType(dispatch, "transparent")}
+              className={sidenavType === "transparent" ? "border-none" : "border-white/20 text-white"}
             >
               Transparent
             </Button>
             <Button
               variant={sidenavType === "white" ? "gradient" : "outlined"}
+              color={sidenavType === "white" ? "blue" : "white"}
               onClick={() => setSidenavType(dispatch, "white")}
+              className={sidenavType === "white" ? "border-none" : "border-white/20 text-white"}
             >
               White
             </Button>
           </div>
         </div>
         <div className="mb-12">
-          <hr />
-          <div className="flex items-center justify-between py-5">
-            <Typography variant="h6" color="blue-gray">
-              Navbar Fixed
+          <div className="flex items-center justify-between py-5 px-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-white/10">
+            <Typography variant="h6" color="white">
+              Fixed Navbar
             </Typography>
             <Switch
               id="navbar-fixed"
               value={fixedNavbar}
               onChange={() => setFixedNavbar(dispatch, !fixedNavbar)}
+              color="blue"
+              className="checked:bg-blue-500"
             />
           </div>
-          <hr />
-          <div className="my-8 flex flex-col gap-4">
-            <a
-              href="https://www.creative-tim.com/product/material-tailwind-dashboard-react?rel=mtdr"
-              target="_black"
-            >
-              <Button variant="gradient" fullWidth>
-                Free Download
-              </Button>
-            </a>
-            <a
-              href="https://www.material-tailwind.com/docs/react/installation?rel=mtdr"
-              target="_black"
-            >
-              <Button variant="outlined" color="blue-gray" fullWidth>
-                View Documentation
-              </Button>
-            </a>
-            <a
-              href="https://www.material-tailwind.com/blocks/react?rel=mtdr"
-              target="_black"
-            >
-              <Button variant="outlined" color="blue-gray" fullWidth>
-                Material Tailwind PRO
-              </Button>
-            </a>
-          </div>
-          <a
-            className="mx-auto flex items-center justify-center gap-2"
-            href="https://github.com/creativetimofficial/material-tailwind-dashboard-react"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Chip
-              value={`${stars} - Stars`}
-              icon={
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="mt-px ml-1.5 h-4 w-4"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              }
-              className="bg-blue-gray-900 px-4"
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-            </svg>
-          </a>
         </div>
-        <div className="text-center">
-          <Typography variant="h6" color="blue-gray">
-            Thank you for sharing ❤️
-          </Typography>
-          <div className="mt-4 flex justify-center gap-2">
-            <Button
-              variant="gradient"
-              className="flex items-center gap-2"
+        
+        <div className="my-8 flex flex-col gap-4">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-white/10">
+            <Typography variant="small" color="white" className="font-medium mb-3">
+              Need help with customization?
+            </Typography>
+            <Typography variant="small" color="white" className="opacity-60 mb-4">
+              Check our documentation for detailed instructions.
+            </Typography>
+            <Button 
+              variant="gradient" 
+              color="blue" 
+              fullWidth
+              className="mt-2"
             >
-              <i className="fa-brands fa-twitter text-white" />
-              Tweet
-            </Button>
-            <Button
-              variant="gradient"
-              className="flex items-center gap-2"
-            >
-              <i className="fa-brands fa-facebook text-white" />
-              Share
+              View Documentation
             </Button>
           </div>
         </div>
       </div>
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      `}</style>
     </aside>
   );
 }

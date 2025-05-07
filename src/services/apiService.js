@@ -84,6 +84,11 @@ export const authService = {
     signOut: () => {
       localStorage.removeItem('token');
     },
+
+    getInitAfterLogin: () => {
+      const user = JSON.parse(localStorage.getItem('initAfterLogin'));
+      return user;
+    },
   
     getCurrentUser: () => {
       const token = localStorage.getItem('token');
@@ -243,6 +248,15 @@ export const authService = {
       getDocumentById: async (documentId) => {
         const token = localStorage.getItem('token');
         const response = await apiService.get(`/api/get-document-by-id/${documentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //get documents by user id
+      getUserDocuments: async (userId, page = 1) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get(`/api/get-documents-by-user-id/${userId}?page=${page}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
@@ -454,6 +468,92 @@ export const authService = {
         const response = await apiService.get(`/api/get-report-by-id/${reportId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+      },
+
+
+      //front end
+      getFrontEndData: async () => {
+        const response = await apiService.get('/api/get-dashboard-data-for-web');
+        // Save countries to localStorage if present in response
+        if (response.data?.data?.countries) {
+          localStorage.setItem('countries', JSON.stringify(response.data.data.countries));
+        }
+        return response.data;
+      },
+
+      getservicebyId: async (serviceId) => {
+        const response = await apiService.get(`/api/get-service-by-id/${serviceId}`);
+        return response.data;
+      },
+
+
+      //send documents
+      sendDocuments: async (data) => {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        
+        // Add basic document fields
+        formData.append('title', data.title);
+        formData.append('description', data.description);
+        formData.append('country_id', data.countryId);
+        formData.append('service_id', data.serviceId);
+        
+        // Add file(s)
+        if (data.files) {
+          // Handle single file
+          if (!Array.isArray(data.files)) {
+            formData.append('file', data.files);
+          } 
+          // Handle multiple files if needed
+          else {
+            data.files.forEach(file => {
+              formData.append('file', file);
+            });
+          }
+        }
+        
+        const response = await apiService.post('/api/upload-document', formData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
+        });
+        
+        return response.data;
+      },
+
+
+      //init after login for frontend
+      initAfterLogin: async () => {
+        const response = await apiService.get('/api/init-after-login');
+        return response.data;
+      },
+
+      //upload kyc
+      uploadKyc: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/upload-kyc', data, {
+          headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
+        });
+        return response.data;
+      },
+
+      //accept reject by user for document
+      acceptRejectByUser: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/change-is-accepted-by-user/${data.document_id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //report problem with final document
+      reportProblem: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/report-document-problem`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
       },
     };
 export default apiService; 

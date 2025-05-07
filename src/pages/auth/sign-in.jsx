@@ -44,15 +44,7 @@ export function SignIn() {
         navigate('/dashboard/home', { replace: true });
       }
       else{
-        toast.info(`"Error": "You are not authorized to access this application"`, {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
+        navigate('/home', { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Failed to sign in');
@@ -62,96 +54,123 @@ export function SignIn() {
   };
 
   return (
-    <section className="m-8 flex gap-4">
-      <div className="w-full lg:w-3/5 mt-24">
-        <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Enter your Phone Number and password to Sign In.</Typography>
+    <div className="min-h-screen bg-blue-gray-50/50 flex justify-center items-center px-4">
+      <Card className="w-full max-w-[500px] p-6 shadow-xl">
+        <div className="flex justify-center mb-6">
+          <img src="/img/logo-ct-dark.png" alt="Logo" className="h-12" />
         </div>
-        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+        
+        <div className="text-center mb-8">
+          <Typography variant="h3" color="blue-gray" className="font-bold">
+            Sign In
+          </Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-blue-gray-500 mt-1">
+            Enter your credentials to access the dashboard
+          </Typography>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="mb-2">
           {error && (
-            <Typography variant="small" color="red" className="mb-4 text-center">
-              {error}
-            </Typography>
+            <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-center">
+              <Typography variant="small">{error}</Typography>
+            </div>
           )}
-          <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Your Phone Number
-            </Typography>
-            <Input
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              size="lg"
-              placeholder="98......."
-              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
-              type="tel"
-              pattern="[0-9]{10}"
-              maxLength={10}
-              inputMode="numeric"
-            />
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Password
-            </Typography>
-            <Input
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              size="lg"
-              placeholder="********"
-              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
-            />
-          </div>
-          <Checkbox
-            label={
-              <Typography
-                variant="small"
-                color="gray"
-                className="flex items-center justify-start font-medium"
-              >
-                I agree the&nbsp;
-                <a
-                  href="#"
-                  className="font-normal text-black transition-colors hover:text-gray-900 underline"
-                >
-                  Terms and Conditions
-                </a>
+          
+          <div className="mb-6 space-y-6">
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 font-semibold">
+                Phone Number
               </Typography>
-            }
-            containerProps={{ className: "-ml-2.5" }}
-          />
-          <Button type="submit" className="mt-6" fullWidth disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+              <Input
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                size="lg"
+                placeholder="98......."
+                className="!border-blue-gray-200 focus:!border-blue-500"
+                labelProps={{
+                  className: "before:content-none after:content-none",
+                }}
+                type="tel"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                inputMode="numeric"
+                icon={<i className="fas fa-phone text-blue-gray-300" />}
+              />
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Typography variant="small" color="blue-gray" className="font-semibold">
+                  Password
+                </Typography>
+                <Typography variant="small" className="font-medium text-blue-500 hover:text-blue-700 transition-colors">
+                  <Link to="/auth/forgot-password">
+                    Forgot Password?
+                  </Link>
+                </Typography>
+              </div>
+              <Input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                size="lg"
+                placeholder="********"
+                className="!border-blue-gray-200 focus:!border-blue-500"
+                labelProps={{
+                  className: "before:content-none after:content-none",
+                }}
+                icon={<i className="fas fa-lock text-blue-gray-300" />}
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center mb-6">
+            <Checkbox
+              color="blue"
+              className="rounded-sm"
+              containerProps={{ className: "mr-2" }}
+            />
+            <Typography variant="small" color="blue-gray">
+              Remember me for 30 days
+            </Typography>
+          </div>
+          
+          <Button 
+            type="submit" 
+            fullWidth 
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 shadow-md"
+            size="lg"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </div>
+            ) : "Sign In"}
           </Button>
 
-          <div className="flex items-center justify-between gap-2 mt-6">
-            <Checkbox
-              label={
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="flex items-center justify-start font-medium"
-                >
-                  Subscribe me to newsletter
-                </Typography>
-              }
-              containerProps={{ className: "-ml-2.5" }}
-            />
-            <Typography variant="small" className="font-medium text-gray-900">
-              <a href="#">
-                Forgot Password
-              </a>
+          <div className="relative flex items-center justify-center gap-2 my-6">
+            <div className="h-px w-full bg-blue-gray-200"></div>
+            <Typography variant="small" color="blue-gray" className="font-medium px-2">
+              OR
             </Typography>
+            <div className="h-px w-full bg-blue-gray-200"></div>
           </div>
-          <div className="space-y-4 mt-8">
-            <Button size="lg" color="white" className="flex items-center gap-2 justify-center shadow-md" fullWidth>
+          
+          <div className="space-y-3">
+            <Button 
+              size="lg" 
+              variant="outlined" 
+              color="blue-gray" 
+              className="flex items-center gap-2 justify-center shadow-sm"
+              fullWidth
+            >
               <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1156_824)">
                   <path d="M16.3442 8.18429C16.3442 7.64047 16.3001 7.09371 16.206 6.55872H8.66016V9.63937H12.9813C12.802 10.6329 12.2258 11.5119 11.3822 12.0704V14.0693H13.9602C15.4741 12.6759 16.3442 10.6182 16.3442 8.18429Z" fill="#4285F4" />
@@ -165,28 +184,19 @@ export function SignIn() {
                   </clipPath>
                 </defs>
               </svg>
-              <span>Sign in With Google</span>
-            </Button>
-            <Button size="lg" color="white" className="flex items-center gap-2 justify-center shadow-md" fullWidth>
-              <img src="/img/twitter-logo.svg" height={24} width={24} alt="" />
-              <span>Sign in With Twitter</span>
+              <span>Sign in with Google</span>
             </Button>
           </div>
-          <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
-            Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Create account</Link>
+          
+          <Typography variant="small" className="text-center text-blue-gray-500 font-medium mt-6">
+            Don't have an account?
+            <Link to="/auth/sign-up" className="text-blue-500 ml-1 font-semibold hover:text-blue-700 transition-colors">
+              Sign up
+            </Link>
           </Typography>
         </form>
-
-      </div>
-      <div className="w-2/5 h-full hidden lg:block">
-        <img
-          src="/img/pattern.png"
-          className="h-full w-full object-cover rounded-3xl"
-        />
-      </div>
-
-    </section>
+      </Card>
+    </div>
   );
 }
 

@@ -7,6 +7,7 @@ import { DocumentDetails } from "@/pages/documents";
 import { Mobile } from "@/layouts/mobile";
 import { BasicSettings } from "@/layouts/basicSettings";
 import HomePage from "@/frontend/home_page";
+import ServicesPage from "@/frontend/services/services";
 import { requestNotificationPermission, messaging } from "@/firebase"; // Import notification function
 import { onMessage } from "firebase/messaging";
 import { ToastContainer, toast } from "react-toastify";
@@ -14,7 +15,13 @@ import "react-toastify/dist/ReactToastify.css";
 import Notifications from "@/pages/notifications";
 import { Reports } from "@/layouts/reports";
 import { ReportDetails } from "@/pages/reports/report_details";
-import { EditService } from "@/pages/basic_settings";
+import { EditService, Services } from "@/pages/basic_settings";
+import ServiceDetailPage from "@/frontend/services/service";
+import ServiceForm from "@/frontend/services/ServiceForm";
+import UserProfile from "@/frontend/profile/user_profile";
+import UserDocuments from "@/frontend/pages/UserDocuments";
+import DocumentDetail from "@/frontend/pages/DocumentDetail";
+
 function App() {
   useEffect(() => {
     // Request permission for notifications
@@ -61,25 +68,41 @@ function App() {
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
   const token = localStorage.getItem('token'); // Check for token
-
+  const user = localStorage.getItem('user');
+  const userRole = user ? JSON.parse(user).role : null;
+  console.log('userrole ', userRole);
   return (
     <>
     <ToastContainer />
     <Routes>
-      {token != null ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/auth/*" element={<Auth />} />}
+      {token != null ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/home" element={<HomePage />} />}
       <Route path="/notifications" element={<Notifications />} />
-      <Route path="/auth/*" element={<Auth />} />
+      {token === null ? <Route path="/auth/*" element={<Auth />} /> : userRole === "user" ? <Route path="/home" element={<HomePage />} /> : <Route path="/dashboard/home" element={<Dashboard />} />}
       <Route path="/user_details/*" element={<User_details />} />
       <Route path="/users/*" element={<Users />} />
       <Route path="/mobile/*" element={<Mobile />} />
       <Route path="/documents/*" element={<Documents />} />
       <Route path="/document_details/*" element={<DocumentDetails />} />
-      <Route path="/edit-service/*" element={<EditService />} />
+      <Route path="/edit-service/:id?" element={<EditService />} />
       <Route path="/basicSettings/*" element={<BasicSettings />} />
       <Route path="/home" element={<HomePage />} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/all-services" element={<ServicesPage />} />
+      <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+      <Route path="/service-form" element={<ServiceForm />} />
+      <Route path="/profile" element={<UserProfile />} />
       <Route path="/reports/*" element={<Reports />} />
       <Route path="/reports/report_details/*" element={<ReportDetails />} />
-      {token != null ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> : <Route path="*" element= {<Navigate to="/home" replace />} />}
+      
+      {/* User Document Routes */}
+      <Route path="/documents" element={<UserDocuments />} />
+      <Route path="/document/:id" element={<DocumentDetail />} />
+      
+      {
+        token != null && userRole !== "user" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :
+        token != null && userRole === "user" ? <Route path="*" element= {<Navigate to="/home" replace />} /> :
+        <Route path="*" element= {<Navigate to="/home" replace />} />
+      }
     </Routes>
     </>
   );

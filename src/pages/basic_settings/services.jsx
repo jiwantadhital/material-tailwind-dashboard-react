@@ -76,7 +76,7 @@ const Services = () => {
 
   const handleEdit = (service) => {
     // Navigate to edit service page with service id
-    navigate(`/edit-service`);
+    navigate(`/edit-service/${service.id}`);
   };
 
   const handleDelete = async (id) => {
