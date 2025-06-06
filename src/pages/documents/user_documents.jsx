@@ -17,7 +17,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function UserDocuments({ code }) {
+export default function UserDocuments({ code, serviceId }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,6 +25,7 @@ export default function UserDocuments({ code }) {
   const [pagination, setPagination] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStartedOnly, setShowStartedOnly] = useState('all');
+  const [serviceName, setServiceName] = useState('');
 
   const [categories, setCategories] = useState({
     'Pending': [],
@@ -33,7 +34,23 @@ export default function UserDocuments({ code }) {
     'Completed': []
   });
 
+  // Get service name based on code
+  useEffect(() => {
+    try {
+      const servicesData = localStorage.getItem('services');
+      if (servicesData) {
+        const parsedServices = JSON.parse(servicesData);
+        const services = parsedServices.data || [];
+        const service = services.find(s => s.code === code) || {};
+        setServiceName(service.name || '');
+      }
+    } catch (error) {
+      console.error('Error parsing services from localStorage:', error);
+    }
+  }, [code]);
+
   const getCategoryStyle = (status) => {
+    console.log(localStorage.getItem('user'));
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800',
       cost_estimated: 'bg-purple-100 text-purple-800',
@@ -215,7 +232,13 @@ export default function UserDocuments({ code }) {
   };
 
   useEffect(() => {
-    fetchDocuments(currentPage,"in_progress", code, showStartedOnly);
+    // Reset to first page when code changes
+    setCurrentPage(1);
+    fetchDocuments(1, "in_progress", code, showStartedOnly);
+  }, [code, serviceId]); // Add serviceId to dependencies to ensure rerender
+
+  useEffect(() => {
+    fetchDocuments(currentPage, "in_progress", code, showStartedOnly);
   }, [currentPage]);
 
   const PaginationControls = () => (
@@ -267,7 +290,9 @@ export default function UserDocuments({ code }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-10 tracking-tight">My Documents</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-10 tracking-tight">
+        {serviceName ? `${serviceName} Documents` : 'My Documents'}
+      </h1>
       
       <Tab.Group defaultIndex={2} onChange={(index) => {
         setCurrentPage(1);

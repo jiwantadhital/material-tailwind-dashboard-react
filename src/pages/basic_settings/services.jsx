@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Services = () => {
   const [services, setServices] = useState([]);
-  const [formData, setFormData] = useState({ name: '', priceRange: '', image: null ,code:'' ,isActive:true});
+  const [formData, setFormData] = useState({ name: '', priceRange: '', image: null, code:'', isActive:true, percentageOfPrice: '0' });
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -52,6 +52,7 @@ const Services = () => {
       formDataToSend.append('image', formData.image); // Append the image file
       formDataToSend.append('code', formData.code); // Append the image file
       formDataToSend.append('is_active', formData.isActive); // Append the image file
+      formDataToSend.append('percentage_of_price', formData.percentageOfPrice); // Add percentage of price field
 
       if (editingId !== null) {
         // Update existing service
@@ -59,10 +60,10 @@ const Services = () => {
       } else {
         // Add new service
         await authService.createService(formDataToSend);
-        setFormData({ name: '', priceRange: '', image: null ,code:'',isActive:true });
+        setFormData({ name: '', priceRange: '', image: null, code:'', isActive:true, percentageOfPrice: '0' });
       }
       fetchServices(); // Refresh the list
-      setFormData({ name: '', priceRange: '', image: null ,code:'',isActive:true });
+      setFormData({ name: '', priceRange: '', image: null, code:'', isActive:true, percentageOfPrice: '0' });
       setEditingId(null);
     } catch (error) {
       console.error('Error saving service:', error);
@@ -130,8 +131,8 @@ const Services = () => {
                 <span className="font-bold">{service.name}</span>
                 <span className="ml-2 text-gray-600">Rs {service.price_range}</span>
                 <span className="ml-2 text-gray-600">Code: {service.code}</span>
-                {service.image && (
-                  <img src={`https://sajilonotary.xyz/${service.image}`} alt={service.name} className="w-8 h-8 ml-2" />
+                {service.image_url && (
+                  <img src={`${service.image_url}`} alt={service.name} className="w-8 h-8 ml-2" />
                 )}
                 <span className={`ml-2 ${service.is_active === true ? 'text-green-600' : 'text-red-600'}`}>
                   {service.is_active === true ? 'Active' : 'Inactive'}

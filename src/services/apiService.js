@@ -84,11 +84,6 @@ export const authService = {
     signOut: () => {
       localStorage.removeItem('token');
     },
-
-    getInitAfterLogin: () => {
-      const user = JSON.parse(localStorage.getItem('initAfterLogin'));
-      return user;
-    },
   
     getCurrentUser: () => {
       const token = localStorage.getItem('token');
@@ -107,6 +102,7 @@ export const authService = {
 
     //create admin
     createAdmin: async (data) => {
+      console.log("this is data",data.services);
       const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('photo', data.photo);
@@ -118,6 +114,9 @@ export const authService = {
       formData.append('gender', data.gender);
       formData.append('password', data.password);
       formData.append('password_confirmation', data.password);
+      data.services.forEach(serviceId => {
+        formData.append('service_id[]', serviceId);
+      });
       
       const response = await apiService.post('/api/create-admin', formData, {
         headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
@@ -411,6 +410,14 @@ export const authService = {
         return response.data;
       },
 
+      getServiceTypes: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-service-types', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
       getAllServices: async () => {
         const token = localStorage.getItem('token');
         const response = await apiService.get('/api/get-all-services', {
@@ -555,5 +562,35 @@ export const authService = {
         });
         return response.data;
       },
+
+      //create service type
+      createServiceType: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/create-doc-type', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+      
+
+      //get service types
+      getServiceTypes: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-doc-types', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //update service type
+      updateServiceType: async (serviceTypeId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/update-doc-type/${serviceTypeId}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      
     };
 export default apiService; 

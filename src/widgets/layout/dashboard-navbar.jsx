@@ -28,6 +28,8 @@ import {
 } from "@/context";
 
 export function DashboardNavbar() {
+  const userJSON = localStorage.getItem("user");
+  const user = userJSON ? JSON.parse(userJSON) : null;
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
@@ -220,10 +222,10 @@ export function DashboardNavbar() {
                 />
                 <div>
                   <Typography variant="small" className="normal-case font-medium">
-                    John Doe
+                    {user?.name || 'User'}
                   </Typography>
                   <Typography variant="small" className="text-xs font-normal text-blue-gray-500 normal-case">
-                    Administrator
+                    {user?.role || 'Guest'}
                   </Typography>
                 </div>
               </Button>

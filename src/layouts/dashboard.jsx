@@ -39,7 +39,7 @@ export function Dashboard() {
             ({ layout, pages }) =>
               layout === "dashboard" &&
               pages.map(({ path, element }) => (
-                <Route exact path={path} element={element} />
+                <Route exact key={path} path={path} element={element} />
               ))
           )}
         </Routes>

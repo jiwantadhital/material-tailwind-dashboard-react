@@ -57,6 +57,8 @@ const DocumentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [cost, setCost] = useState('');
+  const [documentTypeQuantities, setDocumentTypeQuantities] = useState({});
+  const [totalPrice, setTotalPrice] = useState(0);
   const [estimatedDateTime, setEstimatedDateTime] = useState('');
   const [alert, setAlert] = useState({ show: false, message: '', type: '' });
   const [messages, setMessages] = useState([]);
@@ -93,6 +95,15 @@ const DocumentDetails = () => {
         setHasNewMessageForAdmin(response.data.document_mark.has_new_message_for_admin);
         // Convert hours to days for display
         setEstimatedDateTime(response.data.estimated_time ? format(new Date(response.data.estimated_time), 'yyyy-MM-ddTHH:mm') : '');
+        
+        // Initialize document type quantities
+        if (response.data.related_doc_types) {
+          const initialQuantities = {};
+          response.data.related_doc_types.forEach(type => {
+            initialQuantities[type.id] = 0;
+          });
+          setDocumentTypeQuantities(initialQuantities);
+        }
       } catch (error) {
         console.error('Error fetching document:', error);
       } finally {
@@ -102,6 +113,21 @@ const DocumentDetails = () => {
 
     fetchDocument();
   }, [documentId]);
+
+  // Calculate total price when document type quantities change
+  useEffect(() => {
+    if (document && document.related_doc_types) {
+      let total = 0;
+      Object.entries(documentTypeQuantities).forEach(([typeId, quantity]) => {
+        const docType = document.related_doc_types.find(type => type.id === parseInt(typeId));
+        if (docType && quantity > 0) {
+          total += parseFloat(docType.user_price) * quantity;
+        }
+      });
+      setTotalPrice(total);
+      setCost(total.toString());
+    }
+  }, [documentTypeQuantities, document]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -179,6 +205,14 @@ const DocumentDetails = () => {
     }
   }, [isChatOpen]);
 
+  const handleQuantityChange = (typeId, value) => {
+    const quantity = Math.max(0, parseInt(value) || 0);
+    setDocumentTypeQuantities(prev => ({
+      ...prev,
+      [typeId]: quantity
+    }));
+  };
+
   const handlePaymentForDocument = async () => {
     setUpdating(true);
     try {
@@ -186,11 +220,18 @@ const DocumentDetails = () => {
       const estimatedDate = new Date(estimatedDateTime);
       const formattedDate = format(estimatedDate, 'yyyy-MM-dd HH:mm:ss');
       
+      // Extract doc_type_id values where quantity > 0
+      const docTypeIds = Object.entries(documentTypeQuantities)
+        .filter(([typeId, quantity]) => quantity > 0)
+        .map(([typeId, quantity]) => typeId);
+      
       await authService.paymentForDocument(documentId, {
-        total_payment_amount: cost,
+        total_payment_amount: totalPrice.toString(),
         estimated_time: formattedDate,
         clearAccepted: true,
-        status: 'cost_estimated'
+        status: 'cost_estimated',
+        document_type_quantities: documentTypeQuantities,
+        doc_type_id: docTypeIds
       });
       
       // Refresh document data
@@ -472,8 +513,9 @@ const DocumentDetails = () => {
           <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Document Preview</h2>
+              {console.log(document.file_url_full)}
               <a
-                href={`http://sajilonotary.xyz/${document.file_url}`}
+                href={JSON.parse(JSON.stringify(document.file_url_full))}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
@@ -485,9 +527,13 @@ const DocumentDetails = () => {
               </a>
             </div>
             <div className="border border-gray-200 rounded-lg overflow-hidden shadow-inner">
-              {document.file_url.endsWith('.pdf') ? (
+              {(() => {
+                // Extract the pathname from the URL to check file extension
+                const urlPath = document.file_url_full.split('?')[0]; // Remove query parameters
+                return urlPath.endsWith('.pdf');
+              })() ? (
                 <iframe
-                  src={`http://sajilonotary.xyz/${document.file_url}`}
+                  src={JSON.parse(JSON.stringify(document.file_url_full))}
                   className="w-full h-[600px]"
                   title="Document Preview"
                 />
@@ -574,26 +620,48 @@ const DocumentDetails = () => {
               {document.status === 'pending' && (
                 <div className="space-y-8">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Cost</label>
-                    <div className="relative mt-1">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <span className="text-gray-500 sm:text-sm">Rs </span>
+                    <h3 className="block text-sm font-medium text-gray-700 mb-4">Select Document Types and Quantities</h3>
+                    {document.related_doc_types && document.related_doc_types.map((docType) => (
+                      <div key={docType.id} className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">{docType.name}</p>
+                          <p className="text-sm text-gray-500">Price: Rs {docType.user_price}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <button 
+                            type="button"
+                            onClick={() => handleQuantityChange(docType.id, (documentTypeQuantities[docType.id] || 0) - 1)}
+                            className="inline-flex items-center justify-center p-1 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={documentTypeQuantities[docType.id] || 0}
+                            onChange={(e) => handleQuantityChange(docType.id, e.target.value)}
+                            className="mx-2 w-16 text-center rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => handleQuantityChange(docType.id, (documentTypeQuantities[docType.id] || 0) + 1)}
+                            className="inline-flex items-center justify-center p-1 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                      <input
-                        type="number"
-                        value={cost}
-                        onChange={(e) => setCost(e.target.value)}
-                        className="block w-full rounded-lg border-gray-300 pl-8 pr-16 py-3 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        placeholder="0.00"
-                      />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                        <span className="text-gray-500 sm:text-sm">Rs</span>
-                      </div>
+                    ))}
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg flex justify-between items-center">
+                      <span className="font-medium text-blue-800">Total Price:</span>
+                      <span className="text-lg font-bold text-blue-800">Rs {totalPrice.toFixed(2)}</span>
                     </div>
                   </div>
 
-                  
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Completion Date</label>
                     <div className="relative mt-1">
@@ -651,11 +719,11 @@ const DocumentDetails = () => {
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Document Review</h2>
               
-              {document.recheck_file_url && (
+              {document.recheck_file_url_full && (
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Current Review Document</h3>
                   <a
-                    href={`http://sajilonotary.xyz/${document.recheck_file_url}`}
+                    href={`${document.recheck_file_url_full}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
@@ -807,11 +875,11 @@ const DocumentDetails = () => {
             </div>
           )}
 
-          {document.status === 'completed' && document.final_file_url && (
+          {document.status === 'completed' && document.final_file_url_full && (
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Final Document</h2>
               <a
-                href={`http://sajilonotary.xyz/${document.final_file_url}`}
+                href={`${document.final_file_url_full}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
@@ -956,7 +1024,7 @@ const DocumentDetails = () => {
                             {message.file && (
                               <div className="mb-2 rounded-lg overflow-hidden">
                                 <img 
-                                  src={`http://sajilonotary.xyz/${message.file}`} 
+                                  src={`${message.file}`} 
                                   alt="Attached file" 
                                   className="max-w-full"
                                 />

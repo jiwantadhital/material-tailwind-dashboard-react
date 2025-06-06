@@ -83,6 +83,7 @@ const LandingPage = () => {
     localStorage.removeItem('initAfterLogin');
     setIsLoggedIn(false);
     navigate('/auth/sign-in');
+    window.location.reload();
   };
 
   // Default services to use if API fails or returns empty

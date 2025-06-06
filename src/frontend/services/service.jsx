@@ -123,7 +123,7 @@ const ServiceDetailPage = () => {
           id: apiData.id,
           title: apiData.name,
           description: apiData.price_description,
-          mainImage: `${apiData.image.startsWith('http') ? '' : 'https://sajilonotary.xyz/'}${apiData.image}`,
+          mainImage: `${apiData.image_url}`,
           content: `<h2>About Our ${apiData.name} Services</h2><p>${apiData.price_description}</p>`,
           // Parse pricing from price_range
           pricing: apiData.price_range ? [

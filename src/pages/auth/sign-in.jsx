@@ -194,6 +194,12 @@ export function SignIn() {
               Sign up
             </Link>
           </Typography>
+          
+          <Typography variant="small" className="text-center text-blue-gray-500 font-medium mt-2">
+            <Link to="/home" replace className="text-blue-500 hover:text-blue-700 transition-colors">
+              Skip to Homepage
+            </Link>
+          </Typography>
         </form>
       </Card>
     </div>

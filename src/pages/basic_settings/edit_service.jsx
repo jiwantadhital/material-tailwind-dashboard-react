@@ -148,6 +148,7 @@ const EditService = () => {
     imagePreview: null,
     isActive: true,
     isTopRated: false,
+    percentageOfPrice: '0',
   });
   
   const [errors, setErrors] = useState({});
@@ -241,6 +242,7 @@ const EditService = () => {
       formData.append('requirements', service.requirements);
       formData.append('is_active', service.isActive ? 1 : 0);
       formData.append('is_featured', service.isTopRated ? 1 : 0);
+      formData.append('percentage_of_price', service.percentageOfPrice);
       
       // Only append image if it exists and is a file object (not a URL)
       if (service.image instanceof File) {
@@ -397,6 +399,26 @@ const EditService = () => {
                       startAdornment: (
                         <InputAdornment position="start">
                           <span style={{ color: '#888' }}>Range:</span>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <StyledInput
+                    fullWidth
+                    label="Percentage of Price"
+                    name="percentageOfPrice"
+                    value={service.percentageOfPrice}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 10"
+                    variant="outlined"
+                    type="number"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <span style={{ color: '#888' }}>%</span>
                         </InputAdornment>
                       ),
                     }}

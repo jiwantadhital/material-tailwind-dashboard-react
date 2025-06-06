@@ -77,7 +77,7 @@ function App() {
     <Routes>
       {token != null ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/home" element={<HomePage />} />}
       <Route path="/notifications" element={<Notifications />} />
-      {token === null ? <Route path="/auth/*" element={<Auth />} /> : userRole === "user" ? <Route path="/home" element={<HomePage />} /> : <Route path="/dashboard/home" element={<Dashboard />} />}
+      {token === null ? <Route path="/auth/*" element={<Auth />} /> : userRole === "user" ? <Route path="/home" element={<HomePage />} /> : <Route path="/dashboard/*" element={<Dashboard />} />}
       <Route path="/user_details/*" element={<User_details />} />
       <Route path="/users/*" element={<Users />} />
       <Route path="/mobile/*" element={<Mobile />} />

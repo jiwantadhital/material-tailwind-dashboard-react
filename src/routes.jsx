@@ -18,6 +18,7 @@ import { ReportList } from "@/pages/reports";
 import { Carousel } from "@/pages/documents";
 import { RejectedDocuments } from "@/pages/documents";
 import { UserDocuments } from "@/pages/documents";
+import { ServiceType } from "@/pages/basic_settings";
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
@@ -29,6 +30,43 @@ const handleLogout = () => {
   localStorage.clear();
   // Redirect to the sign-in page
   window.location.href = "/auth/sign-in";
+};
+
+// Get services from localStorage
+const getServicesFromLocalStorage = () => {
+  try {
+    const servicesData = localStorage.getItem('services');
+    if (servicesData) {
+      const parsedServices = JSON.parse(servicesData);
+      return parsedServices.data || [];
+    }
+    return [];
+  } catch (error) {
+    console.error('Error parsing services from localStorage:', error);
+    return [];
+  }
+};
+
+// Generate dynamic service document routes
+const generateServiceDocumentRoutes = () => {
+  const services = getServicesFromLocalStorage();
+  if (!Array.isArray(services) || services.length === 0) {
+    return [];
+  }
+  
+  // Generate a route for each service with a wrapper component to force remounting
+  return services.map(service => {
+    // Create a wrapper component with the service ID in closure to ensure remounting
+    const ServiceDocumentWrapper = () => <UserDocuments code={service.code} serviceId={service.id} />;
+    
+    return {
+      icon: <DocumentIcon {...icon} />,
+      name: `${service.name} Documents`,
+      path: `/service_documents/${service.id}`,
+      element: <ServiceDocumentWrapper />,
+      allowedRoles: ["admin","lawyer"]
+    };
+  });
 };
 
 export const routes = [
@@ -77,6 +115,13 @@ export const routes = [
         element: <Services />,
         allowedRoles: ["admin"]
       },
+      {
+        icon: <BriefcaseIcon {...icon} />,
+        name: "Service Type",
+        path: "/service_type",
+        element: <ServiceType />,
+        allowedRoles: ["admin"]
+      },
       //carousel
     {
       icon: <UserCircleIcon {...icon} />,
@@ -111,29 +156,7 @@ export const routes = [
   {
     title: "Documents",
     layout: "documents",
-    pages: [
-      {
-        icon: <DocumentIcon {...icon} />,
-        name: "Notary Documents",
-        path: "/user_documents",
-        element: <UserDocuments code={"NO"}/>,
-        allowedRoles: ["admin","lawyer"]
-      },
-      {
-        icon: <DocumentTextIcon {...icon} />,
-        name: "SOP Documents",
-        path: "/sop_documents",
-        element: <SopDocuments />,
-        allowedRoles: ["admin","lawyer"]
-      },
-      {
-        icon: <HomeIcon {...icon} />,
-        name: "Property Documents",
-        path: "/property_documents",
-        element: <PropertyDocuments />,
-        allowedRoles: ["admin","lawyer"]
-      }
-    ],
+    pages: generateServiceDocumentRoutes(),
   },
   
 

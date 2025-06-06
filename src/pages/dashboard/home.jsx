@@ -30,18 +30,22 @@ import { CurrencyDollarIcon, UserGroupIcon, DocumentTextIcon, BriefcaseIcon } fr
 import { authService } from "@/services/apiService";
 
 export function Home() {
+  console.log("Dashboard Home component is being rendered", new Date().toISOString());
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await authService.getDashboardData();
-        setDashboardData(response.data);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-    };
+  const fetchDashboardData = async () => {
+    console.log("Fetching dashboard data...");
+    try {
+      const response = await authService.getDashboardData();
+      console.log("Dashboard data response:", response);
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+  };
 
+  useEffect(() => {
+    console.log("dashboardData", dashboardData);
     fetchDashboardData();
   }, []);
 

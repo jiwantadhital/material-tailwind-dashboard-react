@@ -41,7 +41,7 @@ const Carousel = () => {
         <div className="relative aspect-[3/2] bg-gray-100 rounded-lg overflow-hidden">
           {images[currentIndex] ? (
             <img
-                src={`https://sajilonotary.xyz/${images[currentIndex].image}`}
+                src={`${images[currentIndex].image_url}`}
               alt={`Slide ${currentIndex + 1}`}
               className="w-full h-full object-cover"
             />
