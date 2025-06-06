@@ -74,7 +74,7 @@ function App() {
   const userRole = user ? JSON.parse(user).role : null;
   console.log('userrole ', userRole);
   
-  if (location.pathname.startsWith("/api/")) {
+  if (location.pathname.includes("/api/")) {
     return null;
   }
   
