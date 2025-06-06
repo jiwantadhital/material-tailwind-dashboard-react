@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Dashboard, Auth } from "@/layouts";
 import { Users, User_details } from "@/pages/dashboard";
 import { Documents } from "@/layouts/documents";
@@ -23,6 +23,8 @@ import UserDocuments from "@/frontend/pages/UserDocuments";
 import DocumentDetail from "@/frontend/pages/DocumentDetail";
 
 function App() {
+  const location = useLocation();
+
   useEffect(() => {
     // Request permission for notifications
     requestNotificationPermission();
@@ -71,6 +73,11 @@ function App() {
   const user = localStorage.getItem('user');
   const userRole = user ? JSON.parse(user).role : null;
   console.log('userrole ', userRole);
+  
+  if (location.pathname.startsWith("/api/")) {
+    return null;
+  }
+  
   return (
     <>
     <ToastContainer />
