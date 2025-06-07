@@ -480,7 +480,7 @@ export const authService = {
 
       //front end
       getFrontEndData: async () => {
-        const response = await apiService.get('/api/get-dashboard-data-for-web');
+        const response = await apiService.get('/api/get-dashboard-data-for-web/');
         // Save countries to localStorage if present in response
         if (response.data?.data?.countries) {
           localStorage.setItem('countries', JSON.stringify(response.data.data.countries));
