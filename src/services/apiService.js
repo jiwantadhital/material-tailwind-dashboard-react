@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { pusherService } from './pusher_init';
 
-const API_BASE_URL = 'https://sajilonotary.xyz/';
+const API_BASE_URL = 'https://sajilonotary.xyz';
 // const API_BASE_URL = 'http://localhost:8000/';
 
 const apiService = axios.create({
