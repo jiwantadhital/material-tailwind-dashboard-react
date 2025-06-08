@@ -131,7 +131,7 @@ const LandingPage = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
           <a 
-            onClick={() => navigate('/services')} 
+            onClick={() => navigate('/all-services')} 
             className="text-gray-600 hover:text-blue-600 transition-colors text-sm cursor-pointer"
           >All Services</a>
           <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Pricing</a>
@@ -205,7 +205,7 @@ const LandingPage = () => {
             <div className="flex flex-col space-y-3">
               <a 
                 onClick={() => {
-                  navigate('/services');
+                  navigate('/all-services');
                   setIsMenuOpen(false);
                 }} 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
@@ -388,7 +388,7 @@ const LandingPage = () => {
         </div>
         <div className="text-center mt-8">
           <button 
-            onClick={() => navigate('/services')}
+            onClick={() => navigate('/all-services')}
             className="inline-flex items-center bg-white border border-blue-600 text-blue-600 px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
           >
             View All Services <ChevronRight className="ml-1 w-4 h-4" />

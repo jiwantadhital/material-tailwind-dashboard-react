@@ -124,15 +124,13 @@ const ServiceDetailPage = () => {
           title: apiData.name,
           description: apiData.price_description,
           mainImage: `${apiData.image_url}`,
-          content: `<h2>About Our ${apiData.name} Services</h2><p>${apiData.price_description}</p>`,
+          content: `<h2>About Our ${apiData.name} Services</h2><div>${apiData.price_description}</div>`,
           // Parse pricing from price_range
           pricing: apiData.price_range ? [
             { name: `${apiData.name} Service`, price: apiData.price_range }
           ] : [],
-          // Split requirements string by newlines or use as is
-          requirements: apiData.requirements ? 
-            apiData.requirements.split('\n').filter(Boolean) : 
-            [apiData.requirements],
+          // Requirements as HTML content
+          requirements: apiData.requirements || '',
           // Parse steps from how_it_works or use default
           steps: apiData.how_it_works ? [
             {
@@ -327,9 +325,10 @@ const ServiceDetailPage = () => {
                       <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold flex-shrink-0">{index + 1}</div>
                       <div>
                         <h3 className="text-base font-bold text-gray-800 mb-1">{step.title}</h3>
-                        <p className="text-gray-600 text-sm">
-                          {step.description}
-                        </p>
+                        <div 
+                          className="text-gray-600 text-sm"
+                          dangerouslySetInnerHTML={{ __html: step.description }}
+                        />
                       </div>
                     </div>
                   ))}
@@ -349,14 +348,14 @@ const ServiceDetailPage = () => {
                 </div>
 
                 <h3 className="text-base font-bold mb-3 text-gray-900">Required Documents</h3>
-                <ul className="space-y-2 mb-6">
-                  {serviceData.requirements && serviceData.requirements.map((item, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <CheckCircle className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600 text-xs">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-2 mb-6">
+                  {serviceData.requirements && (
+                    <div 
+                      className="text-gray-600 text-xs"
+                      dangerouslySetInnerHTML={{ __html: serviceData.requirements }}
+                    />
+                  )}
+                </div>
 
                 <button 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
