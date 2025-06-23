@@ -13,6 +13,69 @@ const LandingPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [featuredServices, setFeaturedServices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Homepage content states
+  const [heroContent, setHeroContent] = useState({
+    title: 'Notarize Documents Securely & Seamlessly',
+    subtitle: 'SECURE & STREAMLINED NOTARY SERVICES',
+    description: 'Sajilo Notary brings the power of digital transformation to notarial services, making document authentication faster, secure, and convenient for everyone.',
+    primary_button_text: 'Get Started',
+    email_placeholder: 'Your email',
+    is_active: true
+  });
+  const [featuresContent, setFeaturesContent] = useState({
+    title: 'Why Choose Sajilo Notary?',
+    description: 'Our platform offers a seamless notarization experience with powerful features designed for businesses and individuals alike.',
+    features: [
+      {
+        title: 'Time-Saving Process',
+        description: 'Complete notarizations in minutes, not days. Our streamlined digital process eliminates the need for in-person meetings.',
+        icon_type: 'clock'
+      },
+      {
+        title: 'Enhanced Security',
+        description: 'Advanced encryption and authentication protocols ensure your documents remain secure and tamper-proof throughout the process.',
+        icon_type: 'shield'
+      },
+      {
+        title: 'Legal Compliance',
+        description: 'Our platform is fully compliant with all relevant regulations and laws governing digital notarization services.',
+        icon_type: 'document'
+      }
+    ]
+  });
+  const [testimonialsContent, setTestimonialsContent] = useState({
+    title: 'Trusted by industry leaders',
+    description: 'See what our clients say about how Sajilo Notary has transformed their document workflows.',
+    testimonials: [
+      {
+        company: 'Microsoft',
+        testimonial: 'Sajilo Notary completely transformed our document processing workflow. What used to take days now takes minutes.',
+        name: 'Andrew Mitchell',
+        role: 'Legal Director'
+      },
+      {
+        company: 'Airbnb',
+        testimonial: 'Sajilo Notary\'s platform has significantly reduced our document processing time and improved our client experience.',
+        name: 'Sarah Johnson',
+        role: 'Head of Real Estate Operations'
+      },
+      {
+        company: 'Goldman Sachs',
+        testimonial: 'Security and compliance are non-negotiable in our industry. Sajilo Notary delivers on both fronts.',
+        name: 'Michael Chen',
+        role: 'VP of Legal Affairs'
+      }
+    ]
+  });
+  const [ctaContent, setCtaContent] = useState({
+    title: 'Ready to streamline your document workflows?',
+    description: 'Join thousands of businesses and professionals who are saving time and resources with Sajilo Notary\'s secure platform.',
+    primary_button_text: 'Get Started',
+    email_placeholder: 'Your email',
+    statistics_text: 'Join 2,500+ businesses already using Sajilo Notary'
+  });
+  const [homepageLoading, setHomepageLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -58,8 +121,62 @@ const LandingPage = () => {
         setIsLoading(false);
       }
     };
+
+    // Fetch homepage content
+    const fetchHomepageContent = async () => {
+      try {
+        setHomepageLoading(true);
+        
+        // Fetch all homepage sections
+        const [heroResponse, featuresResponse, testimonialsResponse, ctaResponse] = await Promise.all([
+          authService.getHeroSection().catch(err => ({ success: false, error: err })),
+          authService.getFeaturesSection().catch(err => ({ success: false, error: err })),
+          authService.getTestimonialsSection().catch(err => ({ success: false, error: err })),
+          authService.getCallToActionSection().catch(err => ({ success: false, error: err }))
+        ]);
+
+        // Update hero section if API call succeeded
+        if (heroResponse.success && heroResponse.data) {
+          setHeroContent(heroResponse.data);
+        }
+
+        // Update features section if API call succeeded
+        if (featuresResponse.success && featuresResponse.data) {
+          setFeaturesContent({
+            title: featuresResponse.data.section?.title || featuresContent.title,
+            description: featuresResponse.data.section?.description || featuresContent.description,
+            features: featuresResponse.data.features && featuresResponse.data.features.length > 0 
+              ? featuresResponse.data.features 
+              : featuresContent.features
+          });
+        }
+
+        // Update testimonials section if API call succeeded
+        if (testimonialsResponse.success && testimonialsResponse.data) {
+          setTestimonialsContent({
+            title: testimonialsResponse.data.section?.title || testimonialsContent.title,
+            description: testimonialsResponse.data.section?.description || testimonialsContent.description,
+            testimonials: testimonialsResponse.data.testimonials && testimonialsResponse.data.testimonials.length > 0
+              ? testimonialsResponse.data.testimonials
+              : testimonialsContent.testimonials
+          });
+        }
+
+        // Update call to action section if API call succeeded
+        if (ctaResponse.success && ctaResponse.data) {
+          setCtaContent(ctaResponse.data);
+        }
+
+        setHomepageLoading(false);
+      } catch (error) {
+        console.error('Error fetching homepage content:', error);
+        setHomepageLoading(false);
+        // Keep default content if API calls fail
+      }
+    };
     
     fetchFeaturedServices();
+    fetchHomepageContent();
     fetchInitAfterLoginIfLoggedIn();
     // Add scroll reveal animations
     const observer = new IntersectionObserver((entries) => {
@@ -100,6 +217,22 @@ const LandingPage = () => {
         return <FileText className="w-5 h-5 text-purple-600" />;
       case 'sop':
         return <Clock className="w-5 h-5 text-blue-600" />;
+      default:
+        return <FileText className="w-5 h-5 text-blue-600" />;
+    }
+  };
+
+  // Map feature icon types to actual icons
+  const getFeatureIcon = (iconType) => {
+    switch(iconType?.toLowerCase()) {
+      case 'clock':
+        return <Clock className="w-5 h-5 text-blue-600" />;
+      case 'shield':
+        return <Shield className="w-5 h-5 text-purple-600" />;
+      case 'document':
+        return <FileText className="w-5 h-5 text-blue-600" />;
+      case 'check':
+        return <Check className="w-5 h-5 text-green-600" />;
       default:
         return <FileText className="w-5 h-5 text-blue-600" />;
     }
@@ -185,12 +318,20 @@ const LandingPage = () => {
               )}
             </div>
           ) : (
-            <button 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              onClick={() => navigate('/auth/sign-in')}
-            >
-              Sign in
-            </button>
+            <div className="flex items-center space-x-3">
+              <button 
+                className="text-blue-600 hover:text-blue-700 transition-colors text-sm font-medium"
+                onClick={() => navigate('/auth/sign-in')}
+              >
+                Sign in
+              </button>
+              <button 
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                onClick={() => navigate('/auth/sign-up')}
+              >
+                Sign Up
+              </button>
+            </div>
           )}
         </div>
         
@@ -212,14 +353,14 @@ const LandingPage = () => {
               >All Services</a>
               <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm" onClick={() => setIsMenuOpen(false)}>Pricing</a>
               {isLoggedIn && (
-                <a 
+                <a
                   onClick={() => {
-                    navigate('/profile#documents');
+                    navigate('/documents');
                     setIsMenuOpen(false);
                   }} 
                   className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
                 >
-                  Your Documents
+                  My Documents
                 </a>
               )}
               
@@ -234,6 +375,15 @@ const LandingPage = () => {
                     className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm flex items-center cursor-pointer"
                   >
                     <User className="w-4 h-4 mr-2" /> Profile
+                  </a>
+                  <a 
+                    onClick={() => {
+                      navigate('/documents');
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm flex items-center cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 mr-2" /> My Documents
                   </a>
                   <a 
                     onClick={() => {
@@ -255,12 +405,26 @@ const LandingPage = () => {
                   </button>
                 </div>
               ) : (
-                <button 
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium mt-2"
-                  onClick={() => navigate('/auth/sign-in')}
-                >
-                  Sign in
-                </button>
+                <div className="border-t border-gray-200 pt-2 flex flex-col space-y-2">
+                  <button 
+                    className="text-blue-600 hover:text-blue-700 transition-colors py-2 text-sm font-medium text-left"
+                    onClick={() => {
+                      navigate('/auth/sign-in');
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Sign in
+                  </button>
+                  <button 
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    onClick={() => {
+                      navigate('/auth/sign-up');
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Sign Up
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -271,16 +435,33 @@ const LandingPage = () => {
       <section className="container mx-auto px-4 py-12 md:py-16 relative">
         <div className="flex flex-col md:flex-row justify-between items-center reveal">
           <div className="max-w-xl mb-12 md:mb-0">
-            <div className="text-sm font-semibold text-blue-600 mb-4 flex items-center">
-              <Shield className="w-4 h-4 text-blue-600 mr-2" />
-              SECURE & STREAMLINED NOTARY SERVICES
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-gray-900">
-              Notarize Documents <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Securely & Seamlessly</span>
-            </h1>
-            <p className="text-gray-600 text-base mb-8">
-              Sajilo Notary brings the power of digital transformation to notarial services, making document authentication faster, secure, and convenient for everyone.
-            </p>
+            {homepageLoading ? (
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-64 mb-4"></div>
+                <div className="h-12 bg-gray-200 rounded w-full mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-8"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-sm font-semibold text-blue-600 mb-4 flex items-center">
+                  <Shield className="w-4 h-4 text-blue-600 mr-2" />
+                  {heroContent.subtitle}
+                </div>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-gray-900">
+                  {heroContent.title.split(' ').map((word, index, words) => {
+                    // Make the last two words gradient colored
+                    if (index >= words.length - 2) {
+                      return <span key={index} className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">{word} </span>;
+                    }
+                    return word + ' ';
+                  })}
+                </h1>
+                <p className="text-gray-600 text-base mb-8">
+                  {heroContent.description}
+                </p>
+              </>
+            )}
             
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="flex items-center space-x-2">
@@ -297,18 +478,39 @@ const LandingPage = () => {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="bg-white px-4 py-2.5 rounded-lg w-full sm:w-64 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
-                Get Started <ArrowRight className="ml-1 w-4 h-4 inline-block" />
-              </button>
-            </div>
+            {!homepageLoading && (
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                {!isLoggedIn ? (
+                  <>
+                    <button 
+                      onClick={() => navigate('/auth/sign-up')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      {heroContent.primary_button_text} <ArrowRight className="ml-1 w-4 h-4 inline-block" />
+                    </button>
+                    <button 
+                      onClick={() => navigate('/all-services')}
+                      className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      View All Services
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="email"
+                      placeholder={heroContent.email_placeholder}
+                      className="bg-white px-4 py-2.5 rounded-lg w-full sm:w-64 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                      {heroContent.primary_button_text} <ArrowRight className="ml-1 w-4 h-4 inline-block" />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-200 max-w-md">
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
@@ -399,44 +601,52 @@ const LandingPage = () => {
       {/* Features Highlights Section */}
       <section id="features" className="container mx-auto px-4 py-12 bg-gray-50 rounded-xl my-8 reveal">
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            Why Choose Sajilo Notary?
-          </h2>
-          <p className="text-gray-600">
-            Our platform offers a seamless notarization experience with powerful features designed for businesses and individuals alike.
-          </p>
+          {homepageLoading ? (
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                {featuresContent.title}
+              </h2>
+              <p className="text-gray-600">
+                {featuresContent.description}
+              </p>
+            </>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 reveal">
-          {[
-            { 
-              icon: <Clock className="w-5 h-5 text-blue-600" />, 
-              title: "Time-Saving Process", 
-              description: "Complete notarizations in minutes, not days. Our streamlined digital process eliminates the need for in-person meetings."
-            },
-            { 
-              icon: <Shield className="w-5 h-5 text-purple-600" />, 
-              title: "Enhanced Security", 
-              description: "Advanced encryption and authentication protocols ensure your documents remain secure and tamper-proof throughout the process."
-            },
-            { 
-              icon: <FileText className="w-5 h-5 text-blue-600" />, 
-              title: "Legal Compliance", 
-              description: "Our platform is fully compliant with all relevant regulations and laws governing digital notarization services."
-            }
-          ].map((feature, index) => (
-            <div key={index} className="flex p-5 rounded-xl bg-white border border-gray-200">
-              <div className="p-2 bg-blue-50 rounded-lg mr-3 h-fit">
-                {feature.icon}
+          {homepageLoading ? (
+            // Loading placeholders
+            [1, 2, 3].map((index) => (
+              <div key={index} className="flex p-5 rounded-xl bg-white border border-gray-200 animate-pulse">
+                <div className="p-2 bg-gray-200 rounded-lg mr-3 h-fit w-9 h-9"></div>
+                <div className="flex-1">
+                  <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold mb-2 text-gray-800">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">
-                  {feature.description}
-                </p>
+            ))
+          ) : (
+            featuresContent.features.filter(feature => feature.is_active !== false).map((feature, index) => (
+              <div key={feature.id || index} className="flex p-5 rounded-xl bg-white border border-gray-200">
+                <div className="p-2 bg-blue-50 rounded-lg mr-3 h-fit">
+                  {getFeatureIcon(feature.icon_type)}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2 text-gray-800">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm">
+                    {feature.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -584,36 +794,50 @@ const LandingPage = () => {
       {/* Testimonials Section */}
       <section id="customers" className="container mx-auto px-4 py-12 reveal">
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            Trusted by industry leaders
-          </h2>
-          <p className="text-gray-600">
-            See what our clients say about how Sajilo Notary has transformed their document workflows.
-          </p>
+          {homepageLoading ? (
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                {testimonialsContent.title}
+              </h2>
+              <p className="text-gray-600">
+                {testimonialsContent.description}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 reveal">
-          {[
-            {
-              company: "Microsoft",
-              testimonial: "Sajilo Notary completely transformed our document processing workflow. What used to take days now takes minutes.",
-              name: "Andrew Mitchell",
-              role: "Legal Director"
-            },
-            {
-              company: "Airbnb",
-              testimonial: "Sajilo Notary's platform has significantly reduced our document processing time and improved our client experience.",
-              name: "Sarah Johnson",
-              role: "Head of Real Estate Operations"
-            },
-            {
-              company: "Goldman Sachs",
-              testimonial: "Security and compliance are non-negotiable in our industry. Sajilo Notary delivers on both fronts.",
-              name: "Michael Chen",
-              role: "VP of Legal Affairs"
-            }
-          ].map((testimonial, index) => (
-            <div key={index} className="bg-white p-5 rounded-xl border border-gray-200 hover:shadow-md transition-all">
+          {homepageLoading ? (
+            // Loading placeholders
+            [1, 2, 3].map((index) => (
+              <div key={index} className="bg-white p-5 rounded-xl border border-gray-200 animate-pulse">
+                <div className="flex items-center mb-4">
+                  <div className="w-9 h-9 bg-gray-200 rounded-lg mr-3"></div>
+                  <div className="flex-1">
+                    <div className="flex space-x-1">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <div key={star} className="w-4 h-4 bg-gray-200 rounded"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="border-t border-gray-100 pt-3">
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              </div>
+            ))
+          ) : (
+            testimonialsContent.testimonials.filter(testimonial => testimonial.is_active !== false).map((testimonial, index) => (
+            <div key={testimonial.id || index} className="bg-white p-5 rounded-xl border border-gray-200 hover:shadow-md transition-all">
               <div className="flex items-center mb-4">
                 <div className="p-2 bg-blue-50 rounded-lg mr-3 flex-shrink-0">
                   <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -636,7 +860,8 @@ const LandingPage = () => {
                 <p className="text-blue-600 text-xs">{testimonial.role}, {testimonial.company}</p>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -645,30 +870,65 @@ const LandingPage = () => {
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-4 text-gray-900">
-                Ready to streamline your document workflows?
-              </h2>
-              <p className="text-gray-600 text-sm mb-6">
-                Join thousands of businesses and professionals who are saving time and resources with Sajilo Notary's secure platform.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="bg-white px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center">
-                  Get Started
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="mt-6">
-                <p className="text-blue-600 text-sm font-medium">Join 2,500+ businesses already using Sajilo Notary</p>
-              </div>
+              {homepageLoading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6 mb-6"></div>
+                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mb-6">
+                    <div className="h-10 bg-gray-200 rounded w-full sm:w-64"></div>
+                    <div className="h-10 bg-gray-200 rounded w-32"></div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-48"></div>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                    {ctaContent.title}
+                  </h2>
+                  <p className="text-gray-600 text-sm mb-6">
+                    {ctaContent.description}
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                    {!isLoggedIn ? (
+                      <>
+                        <button 
+                          onClick={() => navigate('/auth/sign-up')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
+                        >
+                          {ctaContent.primary_button_text}
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => navigate('/auth/sign-in')}
+                          className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Sign In
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          type="email"
+                          placeholder={ctaContent.email_placeholder}
+                          className="bg-white px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center">
+                          {ctaContent.primary_button_text}
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="mt-6">
+                    <p className="text-blue-600 text-sm font-medium">{ctaContent.statistics_text}</p>
+                  </div>
+                </>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">

@@ -21,6 +21,9 @@ import ServiceForm from "@/frontend/services/ServiceForm";
 import UserProfile from "@/frontend/profile/user_profile";
 import UserDocuments from "@/frontend/pages/UserDocuments";
 import DocumentDetail from "@/frontend/pages/DocumentDetail";
+import PaymentSuccess from "@/frontend/pages/PaymentSuccess";
+import PaymentFailure from "@/frontend/pages/PaymentFailure";
+import PaymentCancel from "@/frontend/pages/PaymentCancel";
 
 function App() {
   const location = useLocation();
@@ -104,6 +107,11 @@ function App() {
       {/* User Document Routes */}
       <Route path="/documents" element={<UserDocuments />} />
       <Route path="/document/:id" element={<DocumentDetail />} />
+      
+      {/* Payment Routes */}
+      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-failure" element={<PaymentFailure />} />
+      <Route path="/payment-cancel" element={<PaymentCancel />} />
       
       {
         token != null && userRole !== "user" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :

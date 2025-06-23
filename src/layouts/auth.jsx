@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import {
   ChartPieIcon,
   UserIcon,
@@ -36,13 +36,14 @@ const token = localStorage.getItem('token');
     <div className="relative min-h-screen w-full">
       <Routes>
         {routes.map(
-          ({ layout, pages }) =>
+          ({ layout, pages }, routeIndex) =>
             layout === "auth" &&
-            pages.map(({ path, element }) => token == null ? (
-              <Route exact path={path} element={element} />
-            ) : (
-              localStorage.removeItem('token'),
-              <Navigate to="/auth/sign-in" replace />
+            pages.map(({ path, element }, pageIndex) => (
+              <Route 
+                key={`${routeIndex}-${pageIndex}`} 
+                path={path} 
+                element={token == null ? element : <Navigate to="/home" replace />} 
+              />
             ))
         )}
       </Routes>

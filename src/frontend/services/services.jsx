@@ -44,19 +44,24 @@ const ServicesPage = () => {
     const fetchServices = async () => {
       try {
         setIsLoading(true);
-        const response = await authService.getFrontEndData();
-        if (response.success && response.data.featuredServices) {
-          const servicesData = response.data.featuredServices.map(service => ({
+        // Use the correct API for all services (not just featured ones)
+        const response = await authService.getAllServicesPublic();
+        if (response.success && response.data) {
+          const servicesData = response.data.map(service => ({
             id: service.id,
             icon: getServiceIcon(service.code),
             title: service.name,
-            description: service.price_description,
+            description: service.price_description || service.description || 'Professional service',
             category: service.category || 'General', // Add category if available in API
             slug: service.code,
-            code: service.code
+            code: service.code,
+            is_active: service.is_active
           }));
-          setAllServices(servicesData);
-          setFilteredServices(servicesData);
+          
+          // Filter only active services for public display
+          const activeServices = servicesData.filter(service => service.is_active);
+          setAllServices(activeServices);
+          setFilteredServices(activeServices);
         } else {
           // Fallback to empty array if no services
           setAllServices([]);
@@ -64,7 +69,7 @@ const ServicesPage = () => {
         }
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching services:', error);
+        console.error('Error fetching all services:', error);
         setIsLoading(false);
         // Set empty arrays on error
         setAllServices([]);

@@ -72,7 +72,7 @@ export default function Users() {
           <tr key={id}>
             <td className="py-3 px-5 border-b border-blue-gray-50">
               <Avatar
-                src={"http://sajilonotary.xyz/"+ kyc?.photo || "/default-avatar.png"}
+                src={ kyc?.photo_url || "/default-avatar.png"}
                 alt={name}
                 size="sm"
                 className="border border-blue-gray-50 bg-blue-gray-50/50"

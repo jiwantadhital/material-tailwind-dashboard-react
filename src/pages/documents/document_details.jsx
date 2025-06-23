@@ -938,10 +938,10 @@ const DocumentDetails = () => {
                     <p className="mt-1 text-gray-900">{document.estimated_time}</p>
                 </div>
               )}
-              {document.assigned_to && (
+              {document.assigned_user && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Assigned To</h3>
-                  <p className="mt-1 text-gray-900">{document.assigned_to}</p>
+                  <p className="mt-1 text-gray-900">{document.assigned_user.name}</p>
                 </div>
               )}
             </div>
@@ -1021,10 +1021,10 @@ const DocumentDetails = () => {
                               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {message.file && (
+                            {message.file_url && (
                               <div className="mb-2 rounded-lg overflow-hidden">
                                 <img 
-                                  src={`${message.file}`} 
+                                  src={`${message.file_url}`} 
                                   alt="Attached file" 
                                   className="max-w-full"
                                 />

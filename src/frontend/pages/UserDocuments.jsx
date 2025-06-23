@@ -19,13 +19,21 @@ const API_BASE_URL = 'https://sajilonotary.xyz/';
 const DocumentStatusBadge = ({ status }) => {
   const statusConfig = {
     pending: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Pending' },
-    approved: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Approved' },
+    cost_estimated: { bgColor: 'bg-blue-100', textColor: 'text-blue-800', icon: FileText, label: 'Cost Estimated' },
+    payment_pending: { bgColor: 'bg-orange-100', textColor: 'text-orange-800', icon: Clock, label: 'Payment Pending' },
+    in_progress: { bgColor: 'bg-indigo-100', textColor: 'text-indigo-800', icon: FileText, label: 'In Progress' },
+    completed: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Completed' },
     rejected: { bgColor: 'bg-red-100', textColor: 'text-red-800', icon: X, label: 'Rejected' },
-    in_progress: { bgColor: 'bg-blue-100', textColor: 'text-blue-800', icon: FileText, label: 'In Progress' },
-    completed: { bgColor: 'bg-purple-100', textColor: 'text-purple-800', icon: Check, label: 'Completed' },
+    approved: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Approved' },
+    under_review: { bgColor: 'bg-purple-100', textColor: 'text-purple-800', icon: AlertCircle, label: 'Under Review' },
   };
 
-  const config = statusConfig[status] || statusConfig.pending;
+  const config = statusConfig[status] || { 
+    bgColor: 'bg-gray-100', 
+    textColor: 'text-gray-800', 
+    icon: AlertCircle, 
+    label: status ? status.replace('_', ' ').toUpperCase() : 'Unknown' 
+  };
   const Icon = config.icon;
 
   return (
@@ -99,11 +107,24 @@ const UserDocuments = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    }).format(date);
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     }).format(date);
   };
 
@@ -169,19 +190,19 @@ const UserDocuments = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
+                        Document
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Country
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Payment
+                        Payment Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date Submitted
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -191,13 +212,13 @@ const UserDocuments = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {documents.map((document) => (
                       <tr key={document.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-500">
                               <FileText className="h-5 w-5" />
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
+                            <div className="ml-4 min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 flex items-center">
                                 {document.title}
                                 {hasNewMessages[document.id] && (
                                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -205,23 +226,34 @@ const UserDocuments = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="text-sm text-gray-500 truncate max-w-xs">
+                              <div className="text-sm text-gray-500 truncate">
                                 {document.description}
                               </div>
+                              {document.estimated_time && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Est. completion: {formatDateTime(document.estimated_time)}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{document.country?.name || 'Unknown'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{formatDate(document.created_at)}</div>
+                          <div className="text-xs text-gray-500">{document.country?.code}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <DocumentStatusBadge status={document.status} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <PaymentStatusBadge status={document.payment?.payment_status} />
+                          {document.payment?.total_payment_amount && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              NPR {parseFloat(document.payment.total_payment_amount).toLocaleString()}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{formatDate(document.created_at)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-2">
@@ -232,9 +264,9 @@ const UserDocuments = () => {
                               <FileText className="h-4 w-4 mr-1" />
                               View
                             </button>
-                            {document.file_url && (
+                            {document.file_url_full && (
                               <a
-                                href={`${API_BASE_URL}${document.file_url}`}
+                                href={document.file_url_full}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-green-600 hover:text-green-900 flex items-center"

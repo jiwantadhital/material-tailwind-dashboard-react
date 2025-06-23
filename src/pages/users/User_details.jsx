@@ -170,7 +170,7 @@ import { authService } from "../../services/apiService";
             <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
               <div className="flex items-center gap-6">
                 <Avatar
-                  src={`http://sajilonotary.xyz/${user.kyc?.photo}`}
+                  src={`${user.kyc?.photo_url}`}
                   alt={user.name}
                   size="xl"
                   variant="rounded"
@@ -266,7 +266,7 @@ import { authService } from "../../services/apiService";
                     </Typography>
                     <div className="flex items-center gap-2">
                       <a
-                        href={`http://sajilonotary.xyz/${user.kyc?.documents}`}
+                        href={`${user.kyc?.documents_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 flex items-center gap-2"

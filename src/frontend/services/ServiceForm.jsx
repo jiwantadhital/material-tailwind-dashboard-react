@@ -19,7 +19,7 @@ const SuccessDialog = ({ isOpen, onClose }) => {
           <div className="w-full h-2 bg-gray-100 rounded-full mb-6">
             <div className="h-full bg-green-500 rounded-full animate-progress"></div>
           </div>
-          <p className="text-sm text-gray-500">Redirecting to homepage...</p>
+          <p className="text-sm text-gray-500">Redirecting to your documents...</p>
         </div>
       </div>
     </div>
@@ -150,9 +150,9 @@ const ServiceForm = () => {
       // Show success dialog
       setShowSuccessDialog(true);
       
-      // Redirect to homepage after delay
+      // Redirect to documents page after delay
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/documents';
       }, 3000);
     } catch (error) {
       console.error('Error submitting form:', error);

@@ -177,9 +177,56 @@ export default function Create_admin() {
         setShowAlert(true);
       }
     } catch (error) {
-      console.error("Error creating admin:", error);
+      console.error("Full error object:", error);
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+      
       setAlertType("error");
-      setAlertMessage(error.message || "Failed to create admin");
+      
+      let errorMessage = "Failed to create admin";
+      
+      // Check different possible error structures
+      if (error.error && typeof error.error === 'object') {
+        // Case 1: Validation errors in error.error (direct structure)
+        const validationErrors = error.error;
+        const errorMessages = [];
+        
+        Object.keys(validationErrors).forEach(field => {
+          if (Array.isArray(validationErrors[field])) {
+            validationErrors[field].forEach(message => {
+              errorMessages.push(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`);
+            });
+          }
+        });
+        
+        errorMessage = errorMessages.join('\n') || "Validation failed";
+      } else if (error.response?.data?.error) {
+        // Case 2: Validation errors in error.response.data.error
+        const validationErrors = error.response.data.error;
+        const errorMessages = [];
+        
+        Object.keys(validationErrors).forEach(field => {
+          if (Array.isArray(validationErrors[field])) {
+            validationErrors[field].forEach(message => {
+              errorMessages.push(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`);
+            });
+          }
+        });
+        
+        errorMessage = errorMessages.join('\n') || "Validation failed";
+      } else if (error.response?.data?.message) {
+        // Case 3: Error message in error.response.data.message
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        // Case 4: Error message in error.message
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        // Case 5: Error is a string
+        errorMessage = error;
+      }
+      
+      console.log("Final error message:", errorMessage);
+      setAlertMessage(errorMessage);
       setShowAlert(true);
     } finally {
       setIsSubmitting(false);
@@ -197,7 +244,7 @@ export default function Create_admin() {
       name: admin.name,
       email: admin.kyc?.email,
       phone: admin.phone,
-      photo: admin.kyc?.photo,
+      photo: admin.kyc?.photo_url,
       dob: admin.kyc?.dob,
       address: admin.kyc?.address,
       gender: admin.kyc?.gender,
@@ -205,7 +252,7 @@ export default function Create_admin() {
       password_confirmation: "",
       services: admin.services ? admin.services.map(id => String(id)) : []
     });
-    setImagePreview(admin.kyc?.photo);
+    setImagePreview(admin.kyc?.photo_url);
     setIsFormOpen(true);
   };
 
@@ -238,7 +285,7 @@ export default function Create_admin() {
               </svg>
             )}
           </div>
-          <Typography className="font-medium">
+          <Typography className="font-medium whitespace-pre-line">
             {alertMessage}
           </Typography>
           <button 
@@ -645,8 +692,8 @@ export default function Create_admin() {
                     <tr key={index}>
                       <td className={className}>
                         <Avatar
-                          src={"https://sajilonotary.xyz/"+ admin.kyc?.photo || "/default-avatar.png"}
-                          alt={admin.photo}
+                          src={admin.kyc?.photo_url || "/default-avatar.png"}
+                          alt={admin.kyc?.photo_url}
                           size="sm"
                           className="border border-blue-gray-50 bg-blue-gray-50/50"
                         />

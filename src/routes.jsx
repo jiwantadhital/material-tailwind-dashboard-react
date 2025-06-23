@@ -11,7 +11,7 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/solid";
 import { Home,Users,Profile, Tables, Notifications, Create_admin } from "@/pages/dashboard";
-import { SignIn, SignUp } from "@/pages/auth";
+import { SignIn, SignUp, ForgotPassword } from "@/pages/auth";
 import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/documents";
 import { Countries, Services } from "@/pages/basic_settings";
 import { ReportList } from "@/pages/reports";
@@ -19,6 +19,7 @@ import { Carousel } from "@/pages/documents";
 import { RejectedDocuments } from "@/pages/documents";
 import { UserDocuments } from "@/pages/documents";
 import { ServiceType } from "@/pages/basic_settings";
+import { HeroSection, FeaturesSection, TestimonialsSection, CallToActionSection } from "@/pages/homepage";
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
@@ -133,6 +134,40 @@ export const routes = [
     ],
   },
   {
+    title: "Homepage Management",
+    layout: "basicSettings",
+    pages: [
+      {
+        icon: <HomeIcon {...icon} />,
+        name: "Hero Section",
+        path: "/hero-section",
+        element: <HeroSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <RectangleStackIcon {...icon} />,
+        name: "Features Section",
+        path: "/features-section",
+        element: <FeaturesSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Testimonials",
+        path: "/testimonials-section",
+        element: <TestimonialsSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <DocumentTextIcon {...icon} />,
+        name: "Call to Action",
+        path: "/call-to-action-section",
+        element: <CallToActionSection />,
+        allowedRoles: ["admin"]
+      },
+    ],
+  },
+  {
     title: "Problem Reports",
     layout: "reports",
     pages: [
@@ -177,7 +212,18 @@ export const routes = [
         element: <SignIn />,
         onClick: handleLogout,
       },
-     
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "sign up",
+        path: "/sign-up",
+        element: <SignUp />,
+      },
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "forgot password",
+        path: "/forgot-password",
+        element: <ForgotPassword />,
+      },
     ],
   },
 ];

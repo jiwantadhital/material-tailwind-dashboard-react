@@ -204,11 +204,12 @@ export const authService = {
       //carousel
 
       //upload carousel image
-      uploadCarouselImage: async (image, title) => {
+      uploadCarouselImage: async (image, title, htmlContent) => {
         const token = localStorage.getItem('token');
         const formData = new FormData();
         formData.append('image', image);
         formData.append('title', title);
+        formData.append('html_content', htmlContent || '');
 
         const response = await apiService.post('/api/upload-carousel', formData, {
           headers: {
@@ -493,6 +494,19 @@ export const authService = {
         return response.data;
       },
 
+      // Get all services for public access (All Services page)
+      getAllServicesPublic: async () => {
+        try {
+          // Try the new public endpoint first
+          const response = await apiService.get('/api/get-all-services-public');
+          return response.data;
+        } catch (error) {
+          // Fallback to the regular endpoint (now public too)
+          const response = await apiService.get('/api/get-all-services');
+          return response.data;
+        }
+      },
+
 
       //send documents
       sendDocuments: async (data) => {
@@ -591,6 +605,200 @@ export const authService = {
         return response.data;
       },
 
+      // Payment Gateway Integration APIs
+      getPaymentInstrumentDetails: async (data) => {
+        const response = await apiService.post('/api/getPaymentInstrumentDetails', data);
+        return response.data;
+      },
+
+      getServiceCharge: async (data) => {
+        const response = await apiService.post('/api/getServiceCharge', data);
+        return response.data;
+      },
+
+      getProcessId: async (data) => {
+        const response = await apiService.post('/api/getProcessId', data);
+        return response.data;
+      },
+
+      checkTransactionStatus: async (data) => {
+        const response = await apiService.post('/api/checkTransactionStatus', data);
+        return response.data;
+      },
+
+      testPaymentConfig: async (data) => {
+        const response = await apiService.post('/api/testPaymentConfig', data);
+        return response.data;
+      },
+
+      // Process payment for document (update payment status)
+      processDocumentPayment: async (documentId, paymentData) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post(`/api/process-document-payment/${documentId}`, paymentData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Homepage Management APIs
+      
+      // Hero Section
+      getHeroSection: async () => {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await apiService.get('/api/homepage/hero-sections', { headers });
+        return response.data;
+      },
+
+      updateHeroSection: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/hero-section', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Features Section
+      getFeaturesSection: async () => {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await apiService.get('/api/homepage/features-sections', { headers });
+        return response.data;
+      },
+
+      updateFeaturesSection: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/features-section', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      createFeature: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/features', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateFeature: async (featureId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/homepage/features/${featureId}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteFeature: async (featureId) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/homepage/features/${featureId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Testimonials Section
+      getTestimonialsSection: async () => {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await apiService.get('/api/homepage/testimonials-sections', { headers });
+        return response.data;
+      },
+
+      updateTestimonialsSection: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/testimonials-section', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      createTestimonial: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/testimonials', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateTestimonial: async (testimonialId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/homepage/testimonials/${testimonialId}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteTestimonial: async (testimonialId) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/homepage/testimonials/${testimonialId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Call to Action Section
+      getCallToActionSection: async () => {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await apiService.get('/api/homepage/call-to-action-sections', { headers });
+        return response.data;
+      },
+
+      updateCallToActionSection: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/homepage/call-to-action-section', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // OTP Related APIs
+      sendOtpEmail: async (email) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/send-otp-email', { email }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      verifyOtp: async (email, otp) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/verify-otp', { email, otp }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Registration API
+      register: async (userData) => {
+        const response = await apiService.post('/api/register', userData);
+        // Don't automatically store token - user should login after registration
+        return response.data;
+      },
+
+      // Update Password API
+      updatePassword: async (passwordData) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/update-password', passwordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Forgot Password APIs
+      requestOTP: async (phone) => {
+        const response = await apiService.post('/api/request-otp', { phone });
+        return response.data;
+      },
+
+      resetPasswordWithOTP: async (resetData) => {
+        const response = await apiService.post('/api/reset-password-with-otp', resetData);
+        return response.data;
+      },
+
       
     };
-export default apiService; 
+
+export default apiService;

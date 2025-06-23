@@ -44,6 +44,14 @@ const DocumentDetail = () => {
   const [showReportProblemForm, setShowReportProblemForm] = useState(false);
   const [problemReport, setProblemReport] = useState('');
   const [sendingProblemReport, setSendingProblemReport] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentStep, setPaymentStep] = useState('init'); // init, processing, success, error
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentData, setPaymentData] = useState(null);
+  const [availablePaymentInstruments, setAvailablePaymentInstruments] = useState([]);
+  const [selectedPaymentInstrument, setSelectedPaymentInstrument] = useState(null);
+  const [showPaymentSelection, setShowPaymentSelection] = useState(false);
 
   const fetchMessages = async () => {
     try {
@@ -93,6 +101,32 @@ const DocumentDetail = () => {
       fetchDocument();
     }
   }, [id]);
+
+  // Check for payment status in URL parameters (when returning from payment gateway)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const transactionId = urlParams.get('TransactionId');
+    const processId = urlParams.get('ProcessId');
+    
+    if (status && transactionId && processId) {
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      if (status === 'success') {
+        setPaymentStep('success');
+        setShowPaymentModal(true);
+        // Refresh document data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else if (status === 'failed') {
+        setPaymentStep('error');
+        setPaymentError('Payment failed. Please try again.');
+        setShowPaymentModal(true);
+      }
+    }
+  }, []);
 
   // Scroll to bottom of messages when new messages arrive
   useEffect(() => {
@@ -331,6 +365,341 @@ const DocumentDetail = () => {
     }
   };
 
+  const handleInitiatePayment = async (amount, paymentType = 'initial') => {
+    try {
+      setPaymentLoading(true);
+      setPaymentStep('processing');
+      setPaymentError('');
+      setShowPaymentModal(true);
+
+      // Configuration based on the provided credentials
+      const MERCHANT_ID = '7530';
+      const MERCHANT_NAME = 'dbridge';
+
+      // Step 1: Get Payment Instrument Details
+      console.log('Step 1: Getting payment instrument details...');
+      const merchantData = {
+        MerchantId: MERCHANT_ID,
+        MerchantName: MERCHANT_NAME,
+      };
+
+      const instrumentResponse = await authService.getPaymentInstrumentDetails(merchantData);
+      
+      if (!instrumentResponse.success) {
+        throw new Error(instrumentResponse.message || 'Failed to get payment instruments');
+      }
+
+      console.log('Available payment instruments:', instrumentResponse.data);
+
+      // Parse the available payment instruments
+      if (instrumentResponse.data && instrumentResponse.data.data) {
+        setAvailablePaymentInstruments(instrumentResponse.data.data);
+        setPaymentStep('selectPayment');
+        setPaymentData({ amount, paymentType, documentId: document.id });
+        setShowPaymentSelection(true);
+      } else {
+        throw new Error('No payment instruments available');
+      }
+
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      const errorMessage = typeof error === 'string' ? error : error.message || 'Failed to get payment instruments';
+      setPaymentError(errorMessage);
+      setPaymentStep('error');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handlePaymentInstrumentSelected = async (instrument) => {
+    try {
+      setSelectedPaymentInstrument(instrument);
+      setPaymentLoading(true);
+      setPaymentStep('processing');
+      setShowPaymentSelection(false);
+
+      const MERCHANT_ID = '7530';
+      const MERCHANT_NAME = 'dbridge';
+      const { amount, paymentType } = paymentData;
+
+      console.log('Selected payment instrument:', instrument);
+
+      // Step 2: Get Service Charge
+      console.log('Step 2: Getting service charge...');
+      const serviceChargeData = {
+        MerchantId: MERCHANT_ID,
+        MerchantName: MERCHANT_NAME,
+        Amount: amount.toString(),
+        InstrumentCode: instrument.InstrumentCode || instrument.instrumentCode,
+      };
+
+      const serviceChargeResponse = await authService.getServiceCharge(serviceChargeData);
+      
+      if (!serviceChargeResponse.success) {
+        throw new Error(serviceChargeResponse.message || 'Failed to get service charge');
+      }
+
+      console.log('Service charge response:', serviceChargeResponse);
+
+      // Step 3: Get Process ID
+      console.log('Step 3: Getting process ID...');
+      const merchantTxnId = `TXN_${Date.now()}_${document.id}`;
+      const processIdData = {
+        MerchantId: MERCHANT_ID,
+        MerchantName: MERCHANT_NAME,
+        Amount: amount.toString(),
+        MerchantTxnId: merchantTxnId,
+      };
+
+      const processIdResponse = await authService.getProcessId(processIdData);
+      
+      if (!processIdResponse.success) {
+        throw new Error(processIdResponse.message || 'Failed to get process ID');
+      }
+
+      console.log('Full Process ID Response:', processIdResponse);
+      console.log('Process ID Response Data:', processIdResponse.data);
+
+      // Check the nested data structure for ProcessId
+      let processId = null;
+      
+      // Try different possible locations for ProcessId
+      if (processIdResponse.data?.data?.ProcessId) {
+        processId = processIdResponse.data.data.ProcessId;
+      } else if (processIdResponse.data?.data?.processId) {
+        processId = processIdResponse.data.data.processId;
+      } else if (processIdResponse.data?.data?.process_id) {
+        processId = processIdResponse.data.data.process_id;
+      } else if (processIdResponse.data?.ProcessId) {
+        processId = processIdResponse.data.ProcessId;
+      } else if (processIdResponse.data?.processId) {
+        processId = processIdResponse.data.processId;
+      } else if (processIdResponse.data?.process_id) {
+        processId = processIdResponse.data.process_id;
+      }
+
+      console.log('Extracted ProcessId:', processId);
+      console.log('Nested data structure:', processIdResponse.data?.data);
+      
+      if (!processId) {
+        const availableFields = Object.keys(processIdResponse.data || {});
+        const nestedFields = processIdResponse.data?.data ? Object.keys(processIdResponse.data.data) : [];
+        throw new Error(`Process ID not found in response. Top-level fields: ${availableFields.join(', ')}. Nested data fields: ${nestedFields.join(', ')}`);
+      }
+
+      setPaymentData(prev => ({
+        ...prev,
+        processId: processId,
+        merchantTxnId: merchantTxnId,
+        selectedInstrument: instrument
+      }));
+
+      console.log('Payment data updated:', {
+        processId: processId,
+        merchantTxnId: merchantTxnId,
+        amount: amount,
+        paymentType: paymentType,
+        instrument: instrument
+      });
+
+      // Step 4: Redirect to OnePG Gateway using form POST
+      console.log('Step 4: Redirecting to OnePG Gateway...');
+      redirectToOnePGGateway({
+        merchantId: MERCHANT_ID,
+        merchantName: MERCHANT_NAME,
+        merchantTxnId: merchantTxnId,
+        amount: amount.toString(),
+        processId: processId,
+        instrumentCode: instrument.InstrumentCode || instrument.instrumentCode,
+        documentId: document.id
+      });
+
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      const errorMessage = typeof error === 'string' ? error : error.message || 'Failed to process payment';
+      setPaymentError(errorMessage);
+      setPaymentStep('error');
+      setShowPaymentSelection(false);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleCheckPaymentStatus = async (processId, merchantTxnId) => {
+    try {
+      console.log('Checking payment status...', { processId, merchantTxnId });
+      
+      const statusData = {
+        MerchantId: '7530',
+        MerchantName: 'dbridge',
+        ProcessId: processId,
+        MerchantTxnId: merchantTxnId,
+      };
+
+      const statusResponse = await authService.checkTransactionStatus(statusData);
+      
+      console.log('Payment status response:', statusResponse);
+      
+      if (statusResponse.success && statusResponse.data.Status === 'SUCCESS') {
+        setPaymentStep('success');
+        
+        // Update document payment status on backend
+        try {
+          const paymentUpdateData = {
+            merchant_txn_id: merchantTxnId,
+            process_id: processId,
+            payment_status: 'paid',
+            amount: paymentData.amount,
+            payment_type: paymentData.paymentType
+          };
+          
+          await authService.processDocumentPayment(document.id, paymentUpdateData);
+        } catch (updateError) {
+          console.error('Failed to update payment status:', updateError);
+        }
+        
+        // Refresh document data after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        const errorMsg = statusResponse.data?.Message || 'Payment verification failed';
+        setPaymentError(errorMsg);
+        setPaymentStep('error');
+      }
+    } catch (error) {
+      console.error('Payment status check error:', error);
+      const errorMessage = typeof error === 'string' ? error : error.message || 'Failed to verify payment status';
+      setPaymentError(errorMessage);
+      setPaymentStep('error');
+    }
+  };
+
+  const handlePayInitial20Percent = () => {
+    const amount = parseFloat(document.payment.total_payment_amount) * 0.2;
+    handleInitiatePayment(amount, 'initial');
+  };
+
+  const handlePayRemaining = () => {
+    const amount = parseFloat(document.payment.remaining_payment_amount);
+    handleInitiatePayment(amount, 'final');
+  };
+
+  const redirectToOnePGGateway = (paymentParams) => {
+    try {
+      console.log('Creating OnePG payment form with params:', paymentParams);
+      
+      // Check if we're in browser environment
+      if (typeof window === 'undefined' || typeof document === 'undefined') {
+        throw new Error('Not in browser environment');
+      }
+
+      console.log('Document object available:', typeof document);
+      console.log('Document createElement available:', typeof document.createElement);
+      
+      // Create form element
+      const form = window.document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://gatewaysandbox.nepalpayment.com/Payment/Index';
+      form.style.display = 'none';
+      form.target = '_self';
+
+      // Add form fields
+      const fields = {
+        MerchantId: paymentParams.merchantId,
+        MerchantName: paymentParams.merchantName,
+        MerchantTxnId: paymentParams.merchantTxnId,
+        Amount: paymentParams.amount,
+        ProcessId: paymentParams.processId,
+        InstrumentCode: paymentParams.instrumentCode || '',
+        TransactionRemarks: `Document payment for Doc ID: ${paymentParams.documentId}`,
+        ResponseUrl: `${window.location.origin}/payment-success?docId=${paymentParams.documentId}`
+      };
+
+      console.log('Form fields to be added:', fields);
+
+      Object.keys(fields).forEach(key => {
+        const input = window.document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+        console.log(`Added field: ${key} = ${fields[key]}`);
+      });
+
+      // Add form to page
+      window.document.body.appendChild(form);
+      console.log('Form added to document body');
+      
+      console.log('Submitting OnePG payment form...');
+      form.submit();
+      
+      // Clean up - remove form after submission
+      setTimeout(() => {
+        try {
+          if (form.parentNode) {
+            window.document.body.removeChild(form);
+            console.log('Form cleaned up successfully');
+          }
+        } catch (cleanupError) {
+          console.log('Form cleanup error (not critical):', cleanupError);
+        }
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error creating OnePG payment form:', error);
+      console.error('Error stack:', error.stack);
+      
+      // Fallback: try a different approach using innerHTML
+      try {
+        console.log('Trying fallback approach with innerHTML...');
+        redirectToOnePGGatewayFallback(paymentParams);
+      } catch (fallbackError) {
+        console.error('Fallback approach also failed:', fallbackError);
+        throw new Error(`Failed to redirect to payment gateway. Original error: ${error.message}`);
+      }
+    }
+  };
+
+  const redirectToOnePGGatewayFallback = (paymentParams) => {
+    // Fallback method using innerHTML
+    console.log('Using fallback method to create payment form');
+    
+    const formHtml = `
+      <form id="onepg-payment-form" method="POST" action="https://gatewaysandbox.nepalpayment.com/Payment/Index" style="display: none;">
+        <input type="hidden" name="MerchantId" value="${paymentParams.merchantId}" />
+        <input type="hidden" name="MerchantName" value="${paymentParams.merchantName}" />
+        <input type="hidden" name="MerchantTxnId" value="${paymentParams.merchantTxnId}" />
+        <input type="hidden" name="Amount" value="${paymentParams.amount}" />
+        <input type="hidden" name="ProcessId" value="${paymentParams.processId}" />
+        <input type="hidden" name="InstrumentCode" value="${paymentParams.instrumentCode || ''}" />
+        <input type="hidden" name="TransactionRemarks" value="Document payment for Doc ID: ${paymentParams.documentId}" />
+        <input type="hidden" name="ResponseUrl" value="${window.location.origin}/payment-success?docId=${paymentParams.documentId}" />
+      </form>
+    `;
+
+    // Create a temporary container
+    const tempDiv = window.document.createElement('div');
+    tempDiv.innerHTML = formHtml;
+    const form = tempDiv.querySelector('#onepg-payment-form');
+    
+    // Add to body and submit
+    window.document.body.appendChild(form);
+    console.log('Fallback form added and submitting...');
+    form.submit();
+    
+    // Cleanup
+    setTimeout(() => {
+      try {
+        if (form.parentNode) {
+          window.document.body.removeChild(form);
+        }
+      } catch (e) {
+        console.log('Fallback cleanup error (not critical):', e);
+      }
+    }, 2000);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -518,10 +887,18 @@ const DocumentDetail = () => {
                           <strong>Initial Payment Required:</strong> Please pay 20% of the total amount (Rs{(parseFloat(document.payment.total_payment_amount) * 0.2).toFixed(2)}) to proceed with document processing and receive your recheck file.
                         </p>
                         <button 
-                          onClick={() => window.location.href = `/payment/${document.id}`}
-                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          onClick={handlePayInitial20Percent}
+                          disabled={paymentLoading}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Pay Initial 20%
+                          {paymentLoading ? (
+                            <>
+                              <Loader className="h-4 w-4 mr-1 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            `Pay Initial 20% - Rs${(parseFloat(document.payment.total_payment_amount) * 0.2).toFixed(2)}`
+                          )}
                         </button>
                       </div>
                     )}
@@ -547,7 +924,7 @@ const DocumentDetail = () => {
                         <span className="text-sm text-gray-900">Original Document</span>
                       </div>
                       <a 
-                        href={`${API_BASE_URL}${document.file_url}`}
+                        href={`${API_BASE_URL}${document.file_url_full}`}
                         target="_blank"
                         rel="noopener noreferrer" 
                         className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -567,7 +944,7 @@ const DocumentDetail = () => {
                         </div>
                         {(document.status !== 'cost_estimated' || (document.payment && document.payment.partial_payment_amount > 0)) ? (
                           <a 
-                            href={`${API_BASE_URL}${document.recheck_file_url}`}
+                            href={`${document.recheck_file_url_full}`}
                             target="_blank"
                             rel="noopener noreferrer" 
                             className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
@@ -618,10 +995,18 @@ const DocumentDetail = () => {
                             You have accepted the recheck file, now please pay the final payment and your document will be available.
                           </p>
                           <button 
-                            onClick={() => window.location.href = `/payment/${document.id}`}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            onClick={handlePayRemaining}
+                            disabled={paymentLoading}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Pay Now - Rs{parseFloat(document.payment.remaining_payment_amount).toFixed(2)}
+                            {paymentLoading ? (
+                              <>
+                                <Loader className="h-4 w-4 mr-1 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              `Pay Now - Rs${parseFloat(document.payment.remaining_payment_amount).toFixed(2)}`
+                            )}
                           </button>
                         </div>
                       )}
@@ -631,10 +1016,18 @@ const DocumentDetail = () => {
                             You have rejected the recheck file, {document.rejection_reason}.
                           </p>
                           <button 
-                            onClick={() => window.location.href = `/payment/${document.id}`}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            onClick={handlePayRemaining}
+                            disabled={paymentLoading}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Pay Now - Rs{parseFloat(document.payment.remaining_payment_amount).toFixed(2)}
+                            {paymentLoading ? (
+                              <>
+                                <Loader className="h-4 w-4 mr-1 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              `Pay Now - Rs${parseFloat(document.payment.remaining_payment_amount).toFixed(2)}`
+                            )}
                           </button>
                         </div>
                       )}
@@ -944,6 +1337,126 @@ const DocumentDetail = () => {
                   "Submit Rejection"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              {paymentStep === 'processing' && (
+                <>
+                  <div className="w-16 h-16 mx-auto mb-4 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Processing Payment</h3>
+                  <p className="text-sm text-gray-500">
+                    Please wait while we set up your payment...
+                  </p>
+                </>
+              )}
+
+              {paymentStep === 'selectPayment' && (
+                <>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Choose your preferred payment method from the options below:
+                  </p>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {availablePaymentInstruments.map((instrument, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePaymentInstrumentSelected(instrument)}
+                        disabled={paymentLoading}
+                        className="w-full p-3 text-left border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {instrument.InstrumentName || instrument.instrumentName || 'Payment Method'}
+                            </p>
+                            <p className="text-sm text-blue-600 font-mono">
+                              {instrument.InstrumentCode || instrument.instrumentCode}
+                            </p>
+                            {instrument.Description && (
+                              <p className="text-xs text-gray-500 mt-1">{instrument.Description}</p>
+                            )}
+                          </div>
+                          <div className="ml-2">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      setPaymentStep('init');
+                      setShowPaymentSelection(false);
+                    }}
+                    className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+              
+              {paymentStep === 'success' && (
+                <>
+                  <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                    <Check className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Payment Successful</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Your payment has been processed successfully.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      setPaymentStep('init');
+                    }}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    Close
+                  </button>
+                </>
+              )}
+              
+              {paymentStep === 'error' && (
+                <>
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <X className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Payment Error</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    {paymentError || 'An error occurred while processing your payment.'}
+                  </p>
+                  <div className="flex justify-center space-x-2">
+                    <button
+                      onClick={() => {
+                        setShowPaymentModal(false);
+                        setPaymentStep('init');
+                        setPaymentError('');
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Close
+                    </button>
+                    {paymentData && paymentData.processId && (
+                      <button
+                        onClick={() => handleCheckPaymentStatus(paymentData.processId, paymentData.merchantTxnId)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Check Status
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -5,20 +5,38 @@ import {
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { authService } from "../../services/apiService";
 import { toast } from "react-toastify";
 
 
 export function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     phone: '',
     password: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Check for success message from registration
+  useEffect(() => {
+    if (location.state?.message && location.state?.type === 'success') {
+      setSuccessMessage(location.state.message);
+      // Clear the message from location state to prevent it from showing again on refresh
+      window.history.replaceState({}, document.title);
+      
+      // Auto-hide success message after 10 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 10000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({
@@ -39,7 +57,7 @@ export function SignIn() {
     }
     
     try {
-    const response  = await authService.signIn(formData.phone, formData.password, fcmToken);
+    const response  = await authService.signIn(formData.phone, formData.password, fcmToken??'web');
       if(response.role !== "user"){
         navigate('/dashboard/home', { replace: true });
       }
@@ -70,6 +88,25 @@ export function SignIn() {
         </div>
         
         <form onSubmit={handleSubmit} className="mb-2">
+          {successMessage && (
+            <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-center border border-green-200 relative">
+              <div className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <Typography variant="small" className="font-medium">{successMessage}</Typography>
+              </div>
+              <button
+                onClick={() => setSuccessMessage('')}
+                className="absolute top-2 right-2 text-green-500 hover:text-green-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-center">
               <Typography variant="small">{error}</Typography>
