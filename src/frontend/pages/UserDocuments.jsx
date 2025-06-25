@@ -168,7 +168,16 @@ const UserDocuments = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Documents</h1>
+        <div className="flex items-center justify-between mb-8">
+          <Link 
+            to="/"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Requested Documents</h1>
+        </div>
         
         {documents.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
@@ -176,7 +185,7 @@ const UserDocuments = () => {
             <h2 className="text-xl font-medium text-gray-800 mb-2">No documents found</h2>
             <p className="text-gray-600 mb-6">You haven't uploaded any documents yet.</p>
             <Link 
-              to="/"
+              to="/all-services"
               className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Upload New Document
@@ -367,14 +376,16 @@ const UserDocuments = () => {
           </>
         )}
         
-        <div className="mt-8 text-center">
-          <Link 
-            to="/"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Upload New Document
-          </Link>
-        </div>
+        {documents.length > 0 && (
+          <div className="mt-8 text-center">
+            <Link 
+              to="/all-services"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Upload New Document
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

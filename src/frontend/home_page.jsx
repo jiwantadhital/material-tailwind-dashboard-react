@@ -12,6 +12,7 @@ const LandingPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [featuredServices, setFeaturedServices] = useState([]);
+  const [allServices, setAllServices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Homepage content states
@@ -122,6 +123,18 @@ const LandingPage = () => {
       }
     };
 
+    // Fetch all services data
+    const fetchAllServices = async () => {
+      try {
+        const response = await authService.getAllServicesPublic();
+        if (response.success && response.data) {
+          setAllServices(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching all services:', error);
+      }
+    };
+
     // Fetch homepage content
     const fetchHomepageContent = async () => {
       try {
@@ -176,6 +189,7 @@ const LandingPage = () => {
     };
     
     fetchFeaturedServices();
+    fetchAllServices();
     fetchHomepageContent();
     fetchInitAfterLoginIfLoggedIn();
     // Add scroll reveal animations
@@ -273,7 +287,7 @@ const LandingPage = () => {
               onClick={() => navigate('/documents')} 
               className="text-gray-600 hover:text-blue-600 transition-colors text-sm cursor-pointer"
             >
-              Your Documents
+              Requested Documents
             </a>
           )}
           
@@ -650,21 +664,25 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* For Teams Section - Improved */}
+      {/* Services We Provide Section - Improved */}
       <section className="container mx-auto px-4 py-12 bg-white rounded-xl border border-gray-200 my-8 reveal">
         <div className="text-center max-w-2xl mx-auto mb-6">
           <h2 className="text-3xl font-bold mb-4 text-gray-900">
-            For growing teams and organizations
+            Service we provide
           </h2>
           <p className="text-gray-600">
             Sajilo Notary scales with your business needs, providing enterprise-grade features that streamline workflows.
           </p>
         </div>
         
-        <div className="flex justify-center space-x-2 mb-10">
-          {['Legal Teams', 'Real Estate', 'Financial Services'].map((tab, index) => (
+        <div className="flex justify-center space-x-2 mb-10 flex-wrap gap-2">
+          {(allServices.length > 0 ? allServices : [
+            { name: 'Notary Services', id: 0 },
+            { name: 'Document Translation', id: 1 },
+            { name: 'Legal Assistance', id: 2 }
+          ]).map((service, index) => (
             <button 
-              key={tab}
+              key={service.id || index}
               onClick={() => setActiveTab(index)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === index 
@@ -672,69 +690,91 @@ const LandingPage = () => {
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {tab}
+              {service.name}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div>
-            <h3 className="text-2xl font-bold mb-6 text-gray-900">
-              Make work flow across teams while connecting back to company goals
+        {/* Service Steps Section */}
+        <div className="mt-8">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold mb-4 text-gray-900">
+              How it works
             </h3>
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <div className="p-2 bg-blue-50 rounded-lg mr-3 flex-shrink-0">
-                  <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-base mb-1 text-gray-800">Collaborative Workflows</h4>
-                  <p className="text-gray-600 text-sm">Enable seamless team collaboration with role-based permissions and shared document access.</p>
-                </div>
+            <p className="text-gray-600">
+              Simple steps to get your documents processed quickly and securely
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 font-bold text-lg">1</span>
               </div>
-              <div className="flex items-start">
-                <div className="p-2 bg-blue-50 rounded-lg mr-3 flex-shrink-0">
-                  <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-base mb-1 text-gray-800">Accelerate Processing</h4>
-                  <p className="text-gray-600 text-sm">Reduce document processing time by up to 80% with automated workflows and instant verification.</p>
-                </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-bold text-lg mb-2 text-gray-900">Upload Document</h4>
+                <p className="text-gray-600 text-sm">
+                  Upload your document securely through our platform. We support multiple file formats.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 font-bold text-lg">2</span>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-bold text-lg mb-2 text-gray-900">Cost Estimation</h4>
+                <p className="text-gray-600 text-sm">
+                  Get an instant cost estimate based on your document type and service requirements.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 font-bold text-lg">3</span>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-bold text-lg mb-2 text-gray-900">Pay 20% Advance</h4>
+                <p className="text-gray-600 text-sm">
+                  Make a 20% advance payment to initiate the processing of your document.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-green-600 font-bold text-lg">4</span>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-bold text-lg mb-2 text-gray-900">Get Completed</h4>
+                <p className="text-gray-600 text-sm">
+                  Receive your processed document and complete the remaining payment upon satisfaction.
+                </p>
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Document Activity</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-100">
-                <span className="text-sm">Contract_final.pdf</span>
-                <span className="px-2 py-1 bg-green-500/20 text-green-600 rounded text-xs">Completed</span>
+          
+          <div className="text-center mt-8">
+            <div className="inline-flex items-center space-x-4 text-sm text-gray-600">
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-1 text-blue-600" />
+                <span>Processing: 1-3 business days</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-100">
-                <span className="text-sm">Agreement_v2.pdf</span>
-                <span className="px-2 py-1 bg-yellow-500/20 text-yellow-600 rounded text-xs">In progress</span>
+              <div className="flex items-center">
+                <Shield className="w-4 h-4 mr-1 text-green-600" />
+                <span>100% Secure & Confidential</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-100">
-                <span className="text-sm">Legal_document.pdf</span>
-                <span className="px-2 py-1 bg-blue-500/20 text-blue-600 rounded text-xs">Pending</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
-                <p className="text-gray-500 text-xs mb-1">Processing time</p>
-                <p className="text-xl font-bold text-blue-600">-75%</p>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
-                <p className="text-gray-500 text-xs mb-1">Cost savings</p>
-                <p className="text-xl font-bold text-green-600">+68%</p>
+              <div className="flex items-center">
+                <Check className="w-4 h-4 mr-1 text-purple-600" />
+                <span>Money-back guarantee</span>
               </div>
             </div>
           </div>
         </div>
+
+
       </section>
 
       {/* Simplified Developer Section */}
