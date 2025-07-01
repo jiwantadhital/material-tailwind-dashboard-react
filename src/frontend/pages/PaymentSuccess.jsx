@@ -21,6 +21,9 @@ const PaymentSuccess = () => {
   const merchantTxnId = searchParams.get('MerchantTxnId');
   const gatewayTxnId = searchParams.get('GatewayTxnId');
   const docId = searchParams.get('docId');
+  const amount = searchParams.get('Amount');
+  const bankName = searchParams.get('BankName');
+  const paymentType = searchParams.get('PaymentType');
 
   // Update backend with payment success
   useEffect(() => {
@@ -67,14 +70,36 @@ const PaymentSuccess = () => {
           
           {merchantTxnId && (
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-500 mb-1">Merchant Transaction ID</p>
-              <p className="font-mono text-sm text-gray-900">{merchantTxnId}</p>
-              {gatewayTxnId && (
-                <>
-                  <p className="text-sm text-gray-500 mb-1 mt-3">Gateway Transaction ID</p>
-                  <p className="font-mono text-sm text-gray-900">{gatewayTxnId}</p>
-                </>
-              )}
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Merchant Transaction ID</p>
+                  <p className="font-mono text-sm text-gray-900">{merchantTxnId}</p>
+                </div>
+                {gatewayTxnId && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Gateway Transaction ID</p>
+                    <p className="font-mono text-sm text-gray-900">{gatewayTxnId}</p>
+                  </div>
+                )}
+                {amount && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Amount</p>
+                    <p className="font-semibold text-lg text-green-600">Rs. {amount}</p>
+                  </div>
+                )}
+                {bankName && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Bank Name</p>
+                    <p className="text-sm text-gray-900">{bankName}</p>
+                  </div>
+                )}
+                {paymentType && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Payment Type</p>
+                    <p className="text-sm text-gray-900">{paymentType}</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           

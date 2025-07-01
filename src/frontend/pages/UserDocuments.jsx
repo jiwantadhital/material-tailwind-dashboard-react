@@ -11,7 +11,9 @@ import {
   ChevronRight, 
   MessageCircle,
   FileImage,
-  Download
+  Download,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const API_BASE_URL = 'https://sajilonotary.xyz/';
@@ -60,51 +62,8 @@ const PaymentStatusBadge = ({ status }) => {
   );
 };
 
-const UserDocuments = () => {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [hasNewMessages, setHasNewMessages] = useState({});
-  
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const userId = authService.getCurrentUserId();
-        
-       
-        
-        const response = await authService.getUserDocuments(userId, currentPage);
-        
-        if (response.success) {
-          setDocuments(response.data.data);
-          setTotalPages(response.data.last_page);
-          
-          // Check for new messages
-          const newMessageStatus = {};
-          response.data.data.forEach(doc => {
-            newMessageStatus[doc.id] = doc.document_mark.has_new_message_for_user;
-          });
-          setHasNewMessages(newMessageStatus);
-        } else {
-          throw new Error(response.message || 'Failed to fetch documents');
-        }
-      } catch (err) {
-        setError(err.message || 'An error occurred while fetching your documents');
-        console.error('Error fetching documents:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocuments();
-  }, [currentPage]);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
+const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, hasNewMessages, onViewDocument }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -126,6 +85,221 @@ const UserDocuments = () => {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      {/* Service Header */}
+      <div 
+        className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {serviceImage && (
+              <img 
+                src={serviceImage} 
+                alt={serviceName}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+            )}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{serviceName}</h3>
+              <p className="text-sm text-gray-600">Code: {serviceCode}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              {documents.length} document{documents.length !== 1 ? 's' : ''}
+            </span>
+            {isExpanded ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Documents Table */}
+      {isExpanded && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Document
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Country
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payment Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date Submitted
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {documents.map((document) => (
+                <tr key={document.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-500">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="ml-4 min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 flex items-center">
+                          {document.title}
+                          {hasNewMessages[document.id] && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              New Message
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate">
+                          {document.description}
+                        </div>
+                        {document.estimated_time && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            Est. completion: {formatDateTime(document.estimated_time)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{document.country?.name || 'Unknown'}</div>
+                    <div className="text-xs text-gray-500">{document.country?.code}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <DocumentStatusBadge status={document.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <PaymentStatusBadge status={document.payment?.payment_status} />
+                    {document.payment?.total_payment_amount && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        NPR {parseFloat(document.payment.total_payment_amount).toLocaleString()}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{formatDate(document.created_at)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => onViewDocument(document.id)}
+                        className="text-blue-600 hover:text-blue-900 flex items-center"
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        View
+                      </button>
+                      {document.file_url_full && (
+                        <a
+                          href={document.file_url_full}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 hover:text-green-900 flex items-center"
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </a>
+                      )}
+                      <button
+                        onClick={() => onViewDocument(document.id)}
+                        className="text-indigo-600 hover:text-indigo-900 flex items-center"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Message
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const UserDocuments = () => {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasNewMessages, setHasNewMessages] = useState({});
+  const [groupedDocuments, setGroupedDocuments] = useState({});
+  
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true);
+        const userId = authService.getCurrentUserId();
+        
+        const response = await authService.getUserDocuments(userId, currentPage);
+        
+        if (response.success) {
+          setDocuments(response.data.data);
+          setTotalPages(response.data.last_page);
+          
+          // Check for new messages
+          const newMessageStatus = {};
+          response.data.data.forEach(doc => {
+            newMessageStatus[doc.id] = doc.document_mark.has_new_message_for_user;
+          });
+          setHasNewMessages(newMessageStatus);
+
+          // Group documents by service using the service data from API
+          const grouped = {};
+          response.data.data.forEach(doc => {
+            console.log('Document:', doc.title, 'Service:', doc.service);
+            
+            const serviceKey = doc.service?.id || 'unknown';
+            const serviceName = doc.service?.name || 'Unknown Service';
+            const serviceCode = doc.service?.code || 'N/A';
+            const serviceImage = doc.service?.image_url || null;
+            
+            if (!grouped[serviceKey]) {
+              grouped[serviceKey] = {
+                serviceName,
+                serviceCode,
+                serviceImage,
+                documents: []
+              };
+            }
+            grouped[serviceKey].documents.push(doc);
+          });
+          
+          console.log('Grouped documents:', grouped);
+          
+          setGroupedDocuments(grouped);
+        } else {
+          throw new Error(response.message || 'Failed to fetch documents');
+        }
+      } catch (err) {
+        setError(err.message || 'An error occurred while fetching your documents');
+        console.error('Error fetching documents:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [currentPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleViewDocument = async (documentId) => {
@@ -165,6 +339,8 @@ const UserDocuments = () => {
     );
   }
 
+  const totalDocuments = Object.values(groupedDocuments).reduce((total, group) => total + group.documents.length, 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -176,10 +352,14 @@ const UserDocuments = () => {
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Requested Documents</h1>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Requested Documents</h1>
+            <p className="text-gray-600 mt-1">Organized by service type</p>
+          </div>
+          <div></div> {/* Spacer for centering */}
         </div>
         
-        {documents.length === 0 ? (
+        {totalDocuments === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-medium text-gray-800 mb-2">No documents found</h2>
@@ -193,116 +373,22 @@ const UserDocuments = () => {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Document
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Country
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Payment Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date Submitted
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {documents.map((document) => (
-                      <tr key={document.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-500">
-                              <FileText className="h-5 w-5" />
-                            </div>
-                            <div className="ml-4 min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 flex items-center">
-                                {document.title}
-                                {hasNewMessages[document.id] && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    New Message
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-sm text-gray-500 truncate">
-                                {document.description}
-                              </div>
-                              {document.estimated_time && (
-                                <div className="text-xs text-blue-600 mt-1">
-                                  Est. completion: {formatDateTime(document.estimated_time)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{document.country?.name || 'Unknown'}</div>
-                          <div className="text-xs text-gray-500">{document.country?.code}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <DocumentStatusBadge status={document.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <PaymentStatusBadge status={document.payment?.payment_status} />
-                          {document.payment?.total_payment_amount && (
-                            <div className="text-xs text-gray-600 mt-1">
-                              NPR {parseFloat(document.payment.total_payment_amount).toLocaleString()}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{formatDate(document.created_at)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleViewDocument(document.id)}
-                              className="text-blue-600 hover:text-blue-900 flex items-center"
-                            >
-                              <FileText className="h-4 w-4 mr-1" />
-                              View
-                            </button>
-                            {document.file_url_full && (
-                              <a
-                                href={document.file_url_full}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-green-600 hover:text-green-900 flex items-center"
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Download
-                              </a>
-                            )}
-                            <button
-                              onClick={() => handleViewDocument(document.id)}
-                              className="text-indigo-600 hover:text-indigo-900 flex items-center"
-                            >
-                              <MessageCircle className="h-4 w-4 mr-1" />
-                              Message
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {/* Service Sections */}
+            {Object.entries(groupedDocuments).map(([serviceKey, serviceGroup]) => (
+              <ServiceSection
+                key={serviceKey}
+                serviceName={serviceGroup.serviceName}
+                serviceCode={serviceGroup.serviceCode}
+                serviceImage={serviceGroup.serviceImage}
+                documents={serviceGroup.documents}
+                hasNewMessages={hasNewMessages}
+                onViewDocument={handleViewDocument}
+              />
+            ))}
             
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 bg-white rounded-b-lg sm:px-6">
+              <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 bg-white rounded-lg shadow-md sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
@@ -328,9 +414,9 @@ const UserDocuments = () => {
                     <p className="text-sm text-gray-700">
                       Showing <span className="font-medium">{(currentPage - 1) * 5 + 1}</span> to{' '}
                       <span className="font-medium">
-                        {Math.min(currentPage * 5, documents.length)}
+                        {Math.min(currentPage * 5, totalDocuments)}
                       </span>{' '}
-                      of <span className="font-medium">{documents.length}</span> results
+                      of <span className="font-medium">{totalDocuments}</span> results
                     </p>
                   </div>
                   <div>
@@ -376,7 +462,7 @@ const UserDocuments = () => {
           </>
         )}
         
-        {documents.length > 0 && (
+        {totalDocuments > 0 && (
           <div className="mt-8 text-center">
             <Link 
               to="/all-services"

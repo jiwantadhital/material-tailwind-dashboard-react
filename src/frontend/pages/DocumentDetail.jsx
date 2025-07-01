@@ -613,7 +613,7 @@ const DocumentDetail = () => {
         ProcessId: paymentParams.processId,
         InstrumentCode: paymentParams.instrumentCode || '',
         TransactionRemarks: `Document payment for Doc ID: ${paymentParams.documentId}`,
-        ResponseUrl: `${window.location.origin}/payment-success?docId=${paymentParams.documentId}`
+        ResponseUrl: `${window.location.origin}/api/payment-response?docId=${paymentParams.documentId}`
       };
 
       console.log('Form fields to be added:', fields);
@@ -674,7 +674,7 @@ const DocumentDetail = () => {
         <input type="hidden" name="ProcessId" value="${paymentParams.processId}" />
         <input type="hidden" name="InstrumentCode" value="${paymentParams.instrumentCode || ''}" />
         <input type="hidden" name="TransactionRemarks" value="Document payment for Doc ID: ${paymentParams.documentId}" />
-        <input type="hidden" name="ResponseUrl" value="${window.location.origin}/payment-success?docId=${paymentParams.documentId}" />
+        <input type="hidden" name="ResponseUrl" value="${window.location.origin}/api/payment-response?docId=${paymentParams.documentId}" />
       </form>
     `;
 
