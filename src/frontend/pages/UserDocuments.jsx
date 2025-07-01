@@ -65,6 +65,10 @@ const PaymentStatusBadge = ({ status }) => {
 const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, hasNewMessages, onViewDocument }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
+  // Count documents with updates
+  const newUpdatesCount = documents.filter(doc => doc.document_mark?.is_new).length;
+  const newMessagesCount = documents.filter(doc => hasNewMessages[doc.id]).length;
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -112,6 +116,16 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
               {documents.length} document{documents.length !== 1 ? 's' : ''}
             </span>
+            {newUpdatesCount > 0 && (
+              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm font-medium">
+                {newUpdatesCount} new update{newUpdatesCount !== 1 ? 's' : ''}
+              </span>
+            )}
+            {newMessagesCount > 0 && (
+              <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
+                {newMessagesCount} new message{newMessagesCount !== 1 ? 's' : ''}
+              </span>
+            )}
             {isExpanded ? (
               <ChevronUp className="w-5 h-5 text-gray-500" />
             ) : (
@@ -156,10 +170,17 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                         <FileText className="h-5 w-5" />
                       </div>
                       <div className="ml-4 min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-900 flex items-center">
+                        <div className="text-sm font-medium text-gray-900 flex items-center flex-wrap gap-2">
                           {document.title}
+                          {/* New Update Badge */}
+                          {document.document_mark?.is_new && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              New Update
+                            </span>
+                          )}
+                          {/* New Message Badge */}
                           {hasNewMessages[document.id] && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                               New Message
                             </span>
                           )}
@@ -172,6 +193,24 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                             Est. completion: {formatDateTime(document.estimated_time)}
                           </div>
                         )}
+                        {/* Additional status indicators */}
+                        <div className="flex items-center gap-2 mt-1">
+                          {document.payment?.payment_status === 'full_paid' && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                              Paid
+                            </span>
+                          )}
+                          {document.recheck_file_url_full && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                              Revised
+                            </span>
+                          )}
+                          {document.isAcceptedByUser === true && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                              Accepted
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -263,8 +302,6 @@ const UserDocuments = () => {
           // Group documents by service using the service data from API
           const grouped = {};
           response.data.data.forEach(doc => {
-            console.log('Document:', doc.title, 'Service:', doc.service);
-            
             const serviceKey = doc.service?.id || 'unknown';
             const serviceName = doc.service?.name || 'Unknown Service';
             const serviceCode = doc.service?.code || 'N/A';
@@ -280,8 +317,6 @@ const UserDocuments = () => {
             }
             grouped[serviceKey].documents.push(doc);
           });
-          
-          console.log('Grouped documents:', grouped);
           
           setGroupedDocuments(grouped);
         } else {
