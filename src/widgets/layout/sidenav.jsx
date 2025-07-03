@@ -126,32 +126,6 @@ export function Sidenav({ brandImg, brandName, routes }) {
             ))}
           </ul>
         ))}
-        
-        <div className="mt-auto py-4">
-          <div className="mx-4 mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-white/10">
-            <Typography
-              variant="small"
-              color="white"
-              className="font-medium mb-2"
-            >
-              Need help?
-            </Typography>
-            <Typography
-              variant="small"
-              color="white"
-              className="font-normal opacity-70 mb-3"
-            >
-              Check our documentation
-            </Typography>
-            <Button
-              variant="gradient"
-              color={sidenavColor}
-              className="text-sm w-full"
-            >
-              Documentation
-            </Button>
-          </div>
-        </div>
       </div>
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

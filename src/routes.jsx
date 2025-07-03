@@ -213,12 +213,6 @@ export const routes = [
         onClick: handleLogout,
       },
       {
-        icon: <UserCircleIcon {...icon} />,
-        name: "sign up",
-        path: "/sign-up",
-        element: <SignUp />,
-      },
-      {
         icon: <ServerStackIcon {...icon} />,
         name: "forgot password",
         path: "/forgot-password",

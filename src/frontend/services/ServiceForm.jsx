@@ -152,7 +152,7 @@ const ServiceForm = () => {
       
       // Redirect to documents page after delay
       setTimeout(() => {
-        window.location.href = '/documents';
+        window.location.href = 'documents';
       }, 3000);
     } catch (error) {
       console.error('Error submitting form:', error);
