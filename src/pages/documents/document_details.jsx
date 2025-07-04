@@ -496,6 +496,19 @@ const DocumentDetails = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Document Header Card */}
           <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
+            {/* Back to Dashboard Button */}
+            <div className="mb-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+              </button>
+            </div>
+            
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{document.title}</h1>

@@ -798,6 +798,15 @@ export const authService = {
         return response.data;
       },
 
+      // Lawyer Revenue Data API
+      getLawyerRevenueData: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/get-lawyer-revenue-data', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
       
     };
 

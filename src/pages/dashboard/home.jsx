@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Typography,
   Card,
@@ -32,6 +33,7 @@ import { authService } from "@/services/apiService";
 export function Home() {
   console.log("Dashboard Home component is being rendered", new Date().toISOString());
   const [dashboardData, setDashboardData] = useState(null);
+  const navigate = useNavigate();
 
   const fetchDashboardData = async () => {
     console.log("Fetching dashboard data...");
@@ -49,6 +51,12 @@ export function Home() {
     fetchDashboardData();
   }, []);
 
+  const handleCardClick = (cardTitle) => {
+    if (cardTitle === "Total Lawyers") {
+      navigate("/lawyer-revenue");
+    }
+  };
+
   const dashboardStats = [
     {
       color: "blue",
@@ -56,13 +64,15 @@ export function Home() {
       title: "Total Users",
       value: dashboardData?.totalUsers || "0",
       footer: null,
+      clickable: false,
     },
     {
       color: "pink",
       icon: BriefcaseIcon,
       title: "Total Lawyers",
       value: dashboardData?.totalLawyers || "0",
-      footer: null,
+      footer: "Click to view revenue details →",
+      clickable: true,
     },
     {
       color: "green",
@@ -70,6 +80,15 @@ export function Home() {
       title: "Total Income",
       value: `Rs. ${dashboardData?.payments?.totalIncome || "0.00"}`,
       footer: null,
+      clickable: false,
+    },
+    {
+      color: "purple",
+      icon: CurrencyDollarIcon,
+      title: "Company Profit",
+      value: `Rs. ${dashboardData?.doctypePricing?.profit || "0.00"}`,
+      footer: null,
+      clickable: false,
     },
     {
       color: "orange",
@@ -77,273 +96,147 @@ export function Home() {
       title: "Total Services",
       value: dashboardData?.totalServices || "0",
       footer: null,
+      clickable: false,
     },
   ];
 
-  const documentCharts = [
-    {
-      color: "white",
-      title: "NO Documents",
-      description: "Document status distribution",
-      footer: "Updated Just Now",
-      chart: {
-        type: "bar",
-        height: 220,
-        series: [
-          {
-            name: "Documents",
-            data: [
-              dashboardData?.documentsData?.NO?.completed || 0,
-              dashboardData?.documentsData?.NO?.pending || 0,
-              dashboardData?.documentsData?.NO?.in_progress || 0,
-            ],
-          },
-        ],
-        options: {
-          chart: {
-            toolbar: {
-              show: false,
-            },
-            animations: {
-              enabled: true,
-              easing: 'easeinout',
-              speed: 800,
-            },
-          },
-          colors: ["#4CAF50", "#FF9800", "#2196f3"],
-          plotOptions: {
-            bar: {
-              borderRadius: 8,
-              columnWidth: "60%",
-              distributed: true,
-              dataLabels: {
-                position: "top",
-              },
-            },
-          },
-          dataLabels: {
-            enabled: true,
-            formatter: function (val) {
-              return val;
-            },
-            offsetY: -20,
-            style: {
-              fontSize: "12px",
-              colors: ["#333"],
-              fontWeight: 600
-            }
-          },
-          xaxis: {
-            categories: ['Completed', 'Pending', 'In Progress'],
-            axisBorder: {
-              show: true,
-              color: '#e0e0e0'
-            },
-            axisTicks: {
-              show: false
-            },
-            labels: {
-              style: {
-                colors: "#333",
-                fontSize: "13px",
-                fontWeight: 500
-              }
-            }
-          },
-          yaxis: {
-            labels: {
-              show: true,
-              style: {
-                colors: "#666",
-                fontSize: "12px"
-              }
-            },
-            grid: {
-              show: true
-            }
-          },
-          grid: {
-            show: true,
-            borderColor: '#f0f0f0',
-            strokeDashArray: 0,
-            position: 'back',
-            xaxis: {
-              lines: {
-                show: false
-              }
-            },
-            yaxis: {
-              lines: {
-                show: true
-              }
-            },
-            padding: {
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0
-            }
-          },
-          theme: {
-            mode: 'light',
-            palette: 'palette1',
-            monochrome: {
-              enabled: false,
-              shadeTo: 'light',
-              shadeIntensity: 0.65
-            }
-          }
-        },
-      },
-    },
-    {
-      color: "white",
-      title: "SOP Documents",
-      description: "Document status distribution",
-      footer: "Updated Just Now",
-      chart: {
-        type: "bar",
-        height: 220,
-        series: [
-          {
-            name: "Documents",
-            data: [
-              dashboardData?.documentsData?.SOP?.completed || 0,
-              dashboardData?.documentsData?.SOP?.pending || 0,
-              dashboardData?.documentsData?.SOP?.in_progress || 0,
-            ],
-          },
-        ],
-        options: {
-          chart: {
-            toolbar: {
-              show: false,
-            },
-            animations: {
-              enabled: true,
-              easing: 'easeinout',
-              speed: 800,
-            },
-          },
-          colors: ["#4CAF50", "#FF9800", "#2196f3"],
-          plotOptions: {
-            bar: {
-              borderRadius: 8,
-              columnWidth: "60%",
-              distributed: true,
-              dataLabels: {
-                position: "top",
-              },
-            },
-          },
-          dataLabels: {
-            enabled: true,
-            formatter: function (val) {
-              return val;
-            },
-            offsetY: -20,
-            style: {
-              fontSize: "12px",
-              colors: ["#333"],
-              fontWeight: 600
-            }
-          },
-          xaxis: {
-            categories: ['Completed', 'Pending', 'In Progress'],
-            axisBorder: {
-              show: true,
-              color: '#e0e0e0'
-            },
-            axisTicks: {
-              show: false
-            },
-            labels: {
-              style: {
-                colors: "#333",
-                fontSize: "13px",
-                fontWeight: 500
-              }
-            }
-          },
-          yaxis: {
-            labels: {
-              show: true,
-              style: {
-                colors: "#666",
-                fontSize: "12px"
-              }
-            },
-            grid: {
-              show: true
-            }
-          },
-          grid: {
-            show: true,
-            borderColor: '#f0f0f0',
-            strokeDashArray: 0,
-            position: 'back',
-            xaxis: {
-              lines: {
-                show: false
-              }
-            },
-            yaxis: {
-              lines: {
-                show: true
-              }
-            },
-            padding: {
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0
-            }
-          },
-          theme: {
-            mode: 'light',
-            palette: 'palette1',
-            monochrome: {
-              enabled: false,
-              shadeTo: 'light',
-              shadeIntensity: 0.65
-            }
-          }
-        },
-      },
-    },
-  ];
+
 
   return (
     <div className="mt-12">
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardStats.map(({ icon, title, value, color }) => (
-          <StatisticsCard
+        {dashboardStats.map(({ icon, title, value, color, clickable }) => (
+          <div
             key={title}
-            color={color}
-            value={value}
-            title={title}
-            icon={React.createElement(icon, {
-              className: "w-6 h-6 text-white",
-            })}
-          />
+            onClick={clickable ? () => handleCardClick(title) : undefined}
+            className={clickable ? "cursor-pointer transform hover:scale-105 transition-transform duration-200" : ""}
+          >
+            <StatisticsCard
+              color={color}
+              value={value}
+              title={title}
+              icon={React.createElement(icon, {
+                className: "w-6 h-6 text-white",
+              })}
+            />
+          </div>
         ))}
       </div>
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
-        {documentCharts.map((props) => (
-          <StatisticsChart
-            key={props.title}
-            {...props}
-            footer={
-              <Typography
-                variant="small"
-                className="flex items-center font-normal text-blue-gray-600"
-              >
-                <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                &nbsp;{props.footer}
-              </Typography>
-            }
-          />
-        ))}
+      {/* Services Overview Section */}
+      <div className="mb-12">
+        <Card>
+          <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
+            <Typography variant="h6" color="white">
+              Services Performance Overview
+            </Typography>
+            <Typography variant="small" color="white" className="opacity-80">
+              Document counts, earnings, and company profit by service
+            </Typography>
+          </CardHeader>
+          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+              {dashboardData?.documentsData && Object.entries(dashboardData.documentsData).map(([serviceCode, serviceData]) => (
+                <Card key={serviceCode} className="border border-blue-gray-100 shadow-lg">
+                  <CardBody className="p-6">
+                    <div className="mb-4">
+                      <Typography variant="h5" color="blue-gray" className="font-bold">
+                        {serviceData.service_name}
+                      </Typography>
+                      <Typography variant="small" color="blue-gray" className="opacity-60">
+                        Service Code: {serviceCode}
+                      </Typography>
+                    </div>
+                    
+                    {/* Document Statistics */}
+                    <div className="mb-6">
+                      <Typography variant="h6" color="blue-gray" className="mb-3">
+                        Document Statistics
+                      </Typography>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <Typography variant="small" color="blue" className="font-medium">
+                            Total Documents
+                          </Typography>
+                          <Typography variant="h6" color="blue-gray">
+                            {serviceData.total_documents || 0}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <Typography variant="small" color="green" className="font-medium">
+                            Completed
+                          </Typography>
+                          <Typography variant="h6" color="green">
+                            {serviceData.completed || 0}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-3 bg-orange-50 rounded-lg">
+                          <Typography variant="small" color="orange" className="font-medium">
+                            In Progress
+                          </Typography>
+                          <Typography variant="h6" color="orange">
+                            {serviceData.in_progress || 0}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                          <Typography variant="small" color="yellow" className="font-medium">
+                            Pending
+                          </Typography>
+                          <Typography variant="h6" color="yellow">
+                            {serviceData.pending || 0}
+                          </Typography>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Financial Statistics */}
+                    <div>
+                      <Typography variant="h6" color="blue-gray" className="mb-3">
+                        Financial Performance
+                      </Typography>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                          <Typography variant="small" color="purple" className="font-medium">
+                            Total Revenue
+                          </Typography>
+                          <Typography variant="h6" color="purple">
+                            Rs. {serviceData.total_revenue || "0.00"}
+                          </Typography>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                          <Typography variant="small" color="green" className="font-medium">
+                            Lawyer Earnings
+                          </Typography>
+                          <Typography variant="h6" color="green">
+                            Rs. {serviceData.total_lawyer_earnings || "0.00"}
+                          </Typography>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                          <Typography variant="small" color="indigo" className="font-medium">
+                            Company Profit
+                          </Typography>
+                          <Typography variant="h6" color="indigo">
+                            Rs. {serviceData.total_company_profit || "0.00"}
+                          </Typography>
+                        </div>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+            
+            {(!dashboardData?.documentsData || Object.keys(dashboardData.documentsData).length === 0) && (
+              <div className="text-center py-8">
+                <Typography variant="h6" color="blue-gray" className="mb-2">
+                  No service data available
+                </Typography>
+                <Typography variant="small" color="blue-gray" className="opacity-60">
+                  Service performance data will appear here once documents are processed
+                </Typography>
+              </div>
+            )}
+          </CardBody>
+        </Card>
       </div>
     </div>
   );

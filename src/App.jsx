@@ -24,6 +24,7 @@ import DocumentDetail from "@/frontend/pages/DocumentDetail";
 import PaymentSuccess from "@/frontend/pages/PaymentSuccess";
 import PaymentFailure from "@/frontend/pages/PaymentFailure";
 import PaymentCancel from "@/frontend/pages/PaymentCancel";
+import { LawyerRevenue } from "@/pages/dashboard";
 
 function App() {
   const location = useLocation();
@@ -103,6 +104,9 @@ function App() {
       <Route path="/profile" element={<UserProfile />} />
       <Route path="/reports/*" element={<Reports />} />
       <Route path="/reports/report_details/*" element={<ReportDetails />} />
+      
+      {/* Lawyer Revenue Page - Admin Only */}
+      {userRole === "admin" && <Route path="/lawyer-revenue" element={<LawyerRevenue />} />}
       
       {/* User Document Routes */}
       <Route path="/documents" element={<UserDocuments />} />

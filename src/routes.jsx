@@ -20,6 +20,7 @@ import { RejectedDocuments } from "@/pages/documents";
 import { UserDocuments } from "@/pages/documents";
 import { ServiceType } from "@/pages/basic_settings";
 import { HeroSection, FeaturesSection, TestimonialsSection, CallToActionSection } from "@/pages/homepage";
+import { LawyerRevenue } from "@/pages/dashboard";
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
@@ -90,7 +91,7 @@ export const routes = [
       },
       {
         icon: <UserCircleIcon {...icon} />,
-        name: "Create Admin",
+        name: "Create Lawyer",
         path: "/create-admin",
         element: <Create_admin />,
         allowedRoles: ["admin"]
