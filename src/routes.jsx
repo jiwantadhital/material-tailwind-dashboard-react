@@ -15,7 +15,7 @@ import { SignIn, SignUp, ForgotPassword } from "@/pages/auth";
 import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/documents";
 import { Countries, Services } from "@/pages/basic_settings";
 import { ReportList } from "@/pages/reports";
-import { Carousel } from "@/pages/documents";
+import { Carousel, InfoMenu } from "@/pages/mobile";
 import { RejectedDocuments } from "@/pages/documents";
 import { UserDocuments } from "@/pages/documents";
 import { ServiceType } from "@/pages/basic_settings";
@@ -73,6 +73,26 @@ const generateServiceDocumentRoutes = () => {
 
 export const routes = [
   {
+    layout: "auth",
+    pages: [
+      {
+        name: "sign in",
+        path: "/sign-in",
+        element: <SignIn />,
+      },
+      {
+        name: "sign up",
+        path: "/sign-up",
+        element: <SignUp />,
+      },
+      {
+        name: "forgot password",
+        path: "/forgot-password",
+        element: <ForgotPassword />,
+      },
+    ],
+  },
+  {
     layout: "dashboard",
     pages: [
       {
@@ -124,12 +144,19 @@ export const routes = [
         element: <ServiceType />,
         allowedRoles: ["admin"]
       },
-      //carousel
+      //Mobile Management
     {
       icon: <UserCircleIcon {...icon} />,
       name: "Carousel",
       path: "/mobile/carousel",
       element: <Carousel />,
+      allowedRoles: ["admin"]
+    },
+    {
+      icon: <BriefcaseIcon {...icon} />,
+      name: "Info Menu",
+      path: "/mobile/info-menu",
+      element: <InfoMenu />,
       allowedRoles: ["admin"]
     },
     ],

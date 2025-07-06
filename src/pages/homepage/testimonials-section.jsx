@@ -13,6 +13,7 @@ const TestimonialsSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({
     name: '',
     role: '',
@@ -160,6 +161,19 @@ const TestimonialsSection = () => {
     ));
   };
 
+  const resetForm = () => {
+    setEditingTestimonial(null);
+    setTestimonialForm({
+      name: '',
+      role: '',
+      company: '',
+      testimonial_text: '',
+      rating: 5,
+      is_active: true
+    });
+    setShowForm(false);
+  };
+
   return (
     <div className="p-4 space-y-6">
       <div className="flex justify-between items-center mb-6">
@@ -261,8 +275,8 @@ const TestimonialsSection = () => {
             </Typography>
             <Button
               onClick={() => {
-                setEditingTestimonial(null);
-                setTestimonialForm({ name: '', role: '', company: '', testimonial_text: '', rating: 5, is_active: true });
+                resetForm();
+                setShowForm(true);
               }}
               color="green"
               variant="gradient"
@@ -275,7 +289,7 @@ const TestimonialsSection = () => {
           </div>
 
           {/* Add/Edit Testimonial Form */}
-          {(editingTestimonial || testimonialForm.name || testimonialForm.testimonial_text) && (
+          {(editingTestimonial || showForm) && (
             <form onSubmit={handleTestimonialSubmit} className="mb-6 p-4 border rounded-lg bg-gray-50">
               <Typography variant="h6" color="blue-gray" className="mb-4">
                 {editingTestimonial ? "Edit Testimonial" : "Add New Testimonial"}
@@ -373,10 +387,7 @@ const TestimonialsSection = () => {
                   type="button"
                   color="red"
                   variant="outlined"
-                  onClick={() => {
-                    setEditingTestimonial(null);
-                    setTestimonialForm({ name: '', role: '', company: '', testimonial_text: '', rating: 5, is_active: true });
-                  }}
+                  onClick={resetForm}
                 >
                   Cancel
                 </Button>

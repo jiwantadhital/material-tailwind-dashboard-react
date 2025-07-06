@@ -807,7 +807,64 @@ export const authService = {
         return response.data;
       },
 
-      
+      // Mobile Info Menu
+      getAllMobileInfoMenuForAdmin: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/admin/mobile-info-menu', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      createMobileInfoMenu: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/admin/mobile-info-menu', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateMobileInfoMenu: async (id, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/admin/mobile-info-menu/${id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteMobileInfoMenu: async (id) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/admin/mobile-info-menu/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateMobileInfoMenuStatus: async (id, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/admin/mobile-info-menu/${id}/status`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Mobile Info Menu Methods
+      getMobileInfoMenu: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/mobile-info-menu', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateMobileInfoMenu: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put('/mobile-info-menu', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
     };
 
 export default apiService;

@@ -846,7 +846,7 @@ const LandingPage = () => {
                 {testimonialsContent.title}
               </h2>
               <p className="text-gray-600">
-                {testimonialsContent.description}
+                {testimonialsContent.testimonial_text}
               </p>
             </>
           )}
@@ -893,7 +893,7 @@ const LandingPage = () => {
                 </div>
               </div>
               <p className="text-gray-600 text-sm mb-4">
-                "{testimonial.testimonial}"
+                "{testimonial.testimonial_text}"
               </p>
               <div className="border-t border-gray-100 pt-3">
                 <h4 className="font-bold text-sm text-gray-900">{testimonial.name}</h4>

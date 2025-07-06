@@ -77,9 +77,25 @@ export function Home() {
     {
       color: "green",
       icon: CurrencyDollarIcon,
-      title: "Total Income",
+      title: "Actual Income",
       value: `Rs. ${dashboardData?.payments?.totalIncome || "0.00"}`,
-      footer: null,
+      footer: {
+        color: "text-green-500",
+        value: "Received payments",
+        label: "from completed & partial payments"
+      },
+      clickable: false,
+    },
+    {
+      color: "amber",
+      icon: CurrencyDollarIcon,
+      title: "Potential Income",
+      value: `Rs. ${dashboardData?.payments?.potentialIncome || "0.00"}`,
+      footer: {
+        color: "text-amber-500",
+        value: "Expected total",
+        label: "when all payments complete"
+      },
       clickable: false,
     },
     {
