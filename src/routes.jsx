@@ -72,26 +72,7 @@ const generateServiceDocumentRoutes = () => {
 };
 
 export const routes = [
-  {
-    layout: "auth",
-    pages: [
-      {
-        name: "sign in",
-        path: "/sign-in",
-        element: <SignIn />,
-      },
-      {
-        name: "sign up",
-        path: "/sign-up",
-        element: <SignUp />,
-      },
-      {
-        name: "forgot password",
-        path: "/forgot-password",
-        element: <ForgotPassword />,
-      },
-    ],
-  },
+  
   {
     layout: "dashboard",
     pages: [
@@ -228,6 +209,7 @@ export const routes = [
     title: "auth pages",
     layout: "auth",
     pages: [
+      
      token == null ? {
         icon: <ServerStackIcon {...icon} />,
         name: "sign in",
@@ -240,13 +222,21 @@ export const routes = [
         element: <SignIn />,
         onClick: handleLogout,
       },
+      
+      token == null ? {
+        icon: <ServerStackIcon {...icon} />,
+        name: "sign up",
+        path: "/sign-up",
+        element: <SignUp />,
+      } : null,
+      
       {
         icon: <ServerStackIcon {...icon} />,
         name: "forgot password",
         path: "/forgot-password",
         element: <ForgotPassword />,
       },
-    ],
+    ].filter(Boolean),
   },
 ];
 
@@ -255,6 +245,9 @@ const userRole = user.role;
 
 export const filteredRoutes = routes.map(routeGroup => {
   const filteredPages = routeGroup.pages.filter(page => {
+    // Skip pages that are explicitly marked to not show in navigation
+    if (page.showInNav === false) return false;
+    // Continue with existing role-based filtering
     if (!page.allowedRoles) return true;
     return page.allowedRoles.includes(userRole);
   });
