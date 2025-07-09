@@ -47,7 +47,8 @@ export const authService = {
         const response = await apiService.post('/api/login', { phone, password ,ftoken});
         const { token, ...userData } = response.data.data;
         
-        if (token) {
+        // Check if phone is verified before proceeding with full login
+        if (token && userData.phone_verified === 1) {
           localStorage.setItem('token', token);
           
           // Make the init-after-login API call
@@ -73,16 +74,55 @@ export const authService = {
             kyc_record
           };
         }
-  
-        return userData;
+        
+        // If phone not verified, return data with token but don't store token yet
+        // This allows us to use the token for verification but keeps user in auth flow
+        return {
+          ...userData,
+          token // Include token in response but don't store it
+        };
       } catch (error) {
         console.error('Sign-in error:', error);
         throw error;
       }
     },
   
+    // Complete login process after phone verification
+    completeLoginAfterVerification: async (token) => {
+      try {
+        localStorage.setItem('token', token);
+        
+        // Make the init-after-login API call
+        const initResponse = await apiService.get('/api/init-after-login', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const servicesResponse = await apiService.get('/api/get-all-services', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Save user and kyc data to localStorage
+        const { user, kyc_record } = initResponse.data.data;
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('kyc_record', JSON.stringify(kyc_record));
+        localStorage.setItem('services', JSON.stringify(servicesResponse.data));
+        
+        return {
+          user,
+          kyc_record,
+          services: servicesResponse.data
+        };
+      } catch (error) {
+        console.error('Complete login error:', error);
+        throw error;
+      }
+    },
+
     signOut: () => {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('kyc_record');
+      localStorage.removeItem('services');
     },
   
     getCurrentUser: () => {
@@ -775,6 +815,17 @@ export const authService = {
       register: async (userData) => {
         const response = await apiService.post('/api/register', userData);
         // Don't automatically store token - user should login after registration
+        return response.data;
+      },
+
+      // Phone OTP Verification APIs
+      verifyPhoneNumber: async (phone, otp) => {
+        const response = await apiService.post('/api/verify-phone-number', { phone, otp });
+        return response.data;
+      },
+
+      resendPhoneOtp: async (phone) => {
+        const response = await apiService.post('/api/resend-phone-otp', { phone });
         return response.data;
       },
 

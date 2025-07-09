@@ -9,14 +9,23 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { authService } from "../../services/apiService";
 import { toast } from "react-toastify";
+import { Shield, ArrowLeft } from 'lucide-react';
 
 
 export function SignIn() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentStep, setCurrentStep] = useState('signin'); // 'signin' or 'verify-phone'
   const [formData, setFormData] = useState({
     phone: '',
     password: '',
+  });
+  const [verificationData, setVerificationData] = useState({
+    otp: '',
+    phone: '',
+    token: '',
+    role: '',
+    resendLoading: false
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,6 +54,97 @@ export function SignIn() {
     });
   };
 
+  // OTP verification handlers
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!verificationData.otp || verificationData.otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const response = await authService.verifyPhoneNumber(verificationData.phone, verificationData.otp);
+      
+      if (response.success) {
+        // Phone verified successfully, now complete the login process
+        try {
+          await authService.completeLoginAfterVerification(verificationData.token);
+          
+          // Redirect based on role
+          if (verificationData.role !== "user") {
+            navigate('/dashboard/home', { replace: true });
+          } else {
+            navigate('/home', { replace: true });
+          }
+        } catch (loginError) {
+          console.error('Failed to complete login:', loginError);
+          setError('Verification successful but failed to complete login. Please try signing in again.');
+        }
+      } else {
+        setError(response.message || 'OTP verification failed');
+      }
+    } catch (err) {
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || 'OTP verification failed');
+      } else {
+        setError(err.message || 'OTP verification failed');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setVerificationData(prev => ({ ...prev, resendLoading: true }));
+    setError('');
+    
+    try {
+      const response = await authService.resendPhoneOtp(verificationData.phone);
+      
+      if (response.success) {
+        setError('');
+        setSuccessMessage('OTP resent successfully!');
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
+      } else {
+        setError(response.message || 'Failed to resend OTP');
+      }
+    } catch (err) {
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || 'Failed to resend OTP');
+      } else {
+        setError(err.message || 'Failed to resend OTP');
+      }
+    } finally {
+      setVerificationData(prev => ({ ...prev, resendLoading: false }));
+    }
+  };
+
+  const handleOtpChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+    if (value.length <= 6) {
+      setVerificationData(prev => ({ ...prev, otp: value }));
+    }
+  };
+
+  const handleBackToSignIn = () => {
+    setCurrentStep('signin');
+    setVerificationData({
+      otp: '',
+      phone: '',
+      token: '',
+      role: '',
+      resendLoading: false
+    });
+    setError('');
+    setSuccessMessage('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -57,7 +157,32 @@ export function SignIn() {
     }
     
     try {
-    const response  = await authService.signIn(formData.phone, formData.password, fcmToken??'web');
+      const response = await authService.signIn(formData.phone, formData.password, fcmToken??'web');
+      
+      // Check if phone is verified
+      if (response.phone_verified === 0) {
+        // Phone not verified, switch to verification step
+        setVerificationData({
+          otp: '',
+          phone: formData.phone,
+          token: response.token,
+          role: response.role,
+          resendLoading: false
+        });
+        setCurrentStep('verify-phone');
+        setError('');
+        
+        // Automatically send OTP
+        try {
+          await authService.resendPhoneOtp(formData.phone);
+        } catch (err) {
+          console.error('Failed to send initial OTP:', err);
+        }
+        return;
+      }
+      
+      // Phone is verified, proceed with normal login flow
+      // The signIn method has already stored all necessary datachange
       if(response.role !== "user"){
         navigate('/dashboard/home', { replace: true });
       }
@@ -78,16 +203,36 @@ export function SignIn() {
           <img src="/img/logo-ct-dark.png" alt="Logo" className="h-12" />
         </div>
         
-        <div className="text-center mb-8">
-          <Typography variant="h3" color="blue-gray" className="font-bold">
-            Sign In
-          </Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-blue-gray-500 mt-1">
-            Enter your credentials to access the dashboard
-          </Typography>
-        </div>
+        {currentStep === 'signin' ? (
+          <div className="text-center mb-8">
+            <Typography variant="h3" color="blue-gray" className="font-bold">
+              Sign In
+            </Typography>
+            <Typography variant="paragraph" color="blue-gray" className="text-blue-gray-500 mt-1">
+              Enter your credentials to access the dashboard
+            </Typography>
+          </div>
+        ) : (
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="p-3 bg-blue-500 rounded-full">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <Typography variant="h3" color="blue-gray" className="font-bold">
+              Verify Your Phone
+            </Typography>
+            <Typography variant="paragraph" color="blue-gray" className="text-blue-gray-500 mt-1">
+              Please verify your phone number to complete login
+            </Typography>
+            <Typography variant="small" color="blue-gray" className="text-blue-gray-600 mt-2">
+              Code sent to: {verificationData.phone}
+            </Typography>
+          </div>
+        )}
         
-        <form onSubmit={handleSubmit} className="mb-2">
+        {currentStep === 'signin' ? (
+          <form onSubmit={handleSubmit} className="mb-2">
           {successMessage && (
             <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-center border border-green-200 relative">
               <div className="flex items-center justify-center">
@@ -238,6 +383,90 @@ export function SignIn() {
             </Link>
           </Typography>
         </form>
+        ) : (
+          <form onSubmit={handleOtpSubmit} className="space-y-6">
+            {successMessage && (
+              <div className="bg-green-50 text-green-600 p-3 rounded-lg text-center border border-green-200">
+                <Typography variant="small" className="font-medium">{successMessage}</Typography>
+              </div>
+            )}
+            
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-lg text-center">
+                <Typography variant="small">{error}</Typography>
+              </div>
+            )}
+            
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 font-semibold text-center">
+                Enter Verification Code
+              </Typography>
+              <div className="relative">
+                <Input
+                  value={verificationData.otp}
+                  onChange={handleOtpChange}
+                  size="lg"
+                  placeholder="000000"
+                  className="!border-blue-gray-200 focus:!border-blue-500 text-center text-2xl tracking-widest"
+                  labelProps={{
+                    className: "before:content-none after:content-none",
+                  }}
+                  type="tel"
+                  maxLength={6}
+                  inputMode="numeric"
+                />
+              </div>
+              <Typography variant="small" color="blue-gray" className="mt-2 text-center">
+                Enter the 6-digit code sent to your phone
+              </Typography>
+            </div>
+            
+            <Button 
+              type="submit" 
+              fullWidth 
+              disabled={loading || verificationData.otp.length !== 6}
+              className="bg-blue-500 hover:bg-blue-600 shadow-md"
+              size="lg"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Verifying...
+                </div>
+              ) : "Verify Phone Number"}
+            </Button>
+            
+            <div className="text-center space-y-3">
+              <Typography variant="small" color="blue-gray">
+                Didn't receive the code?
+              </Typography>
+              <Button 
+                variant="text" 
+                color="blue" 
+                size="sm"
+                disabled={verificationData.resendLoading}
+                onClick={handleResendOtp}
+                className="font-semibold"
+              >
+                {verificationData.resendLoading ? 'Sending...' : 'Resend Code'}
+              </Button>
+            </div>
+            
+            <Button 
+              variant="text" 
+              color="blue-gray" 
+              size="sm"
+              onClick={handleBackToSignIn}
+              className="w-full flex items-center justify-center gap-2 mt-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Sign In
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );

@@ -236,6 +236,7 @@ export const routes = [
         path: "/forgot-password",
         element: <ForgotPassword />,
       },
+
     ].filter(Boolean),
   },
 ];
