@@ -267,6 +267,23 @@ const DocumentDetails = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedFile) return;
 
+    // File validation if file is selected
+    if (selectedFile) {
+      // File type validation
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/bmp', 'image/webp', 'application/pdf', 'image/heic', 'image/heif'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        alert('Please select a valid file type (JPEG, PNG, JPG, GIF, PDF, HEIC, HEIF)');
+        return;
+      }
+      
+      // File size validation (2MB = 2097152 bytes)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (selectedFile.size > maxSize) {
+        alert('File size must be less than 2MB');
+        return;
+      }
+    }
+
     const messageToSend = newMessage; // Store the message to send
     setNewMessage(''); // Clear the input field immediately
     setSelectedFile(null);
@@ -1106,17 +1123,33 @@ const DocumentDetails = () => {
 
                 {/* File Preview */}
                 {selectedFile && (
-                  <div className="relative w-24 h-24 mb-4">
-                    <img 
-                      src={URL.createObjectURL(selectedFile)} 
-                      alt="Selected file" 
-                      className="w-full h-full object-cover rounded-lg border-2 border-blue-500"
-                    />
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                    <div className="flex items-center space-x-3">
+                      {selectedFile.type.startsWith('image/') ? (
+                        <img 
+                          src={URL.createObjectURL(selectedFile)} 
+                          alt="Preview" 
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-300"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
                     <button
                       onClick={() => setSelectedFile(null)}
-                      className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors"
+                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                     >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -1151,19 +1184,43 @@ const DocumentDetails = () => {
                         type="file"
                         id="file-upload"
                         className="hidden"
+                        accept=".jpg,.jpeg,.png,.gif,.pdf,.heic,.heif"
                         onChange={(e) => setSelectedFile(e.target.files[0])}
                       />
                     </div>
                     <button 
                       onClick={handleSendMessage}
+                      disabled={(!newMessage.trim() && !selectedFile) || sendingStatus === 'Sending Message...'}
                       className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 shadow-sm"
                     >
-                      <span>Send</span>
-                      <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
+                      {sendingStatus === 'Sending Message...' ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <span>Send</span>
+                          <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        </>
+                      )}
                     </button>
                   </div>
+                  
+                  {/* File upload hint */}
+                  <p className="text-xs text-gray-500 mt-2">
+                    <span className="inline-flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      Click the attachment icon to add files (Max 2MB • Images, PDF, HEIC, HEIF)
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>

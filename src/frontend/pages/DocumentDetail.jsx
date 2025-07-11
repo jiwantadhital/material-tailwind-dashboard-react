@@ -204,7 +204,23 @@ const DocumentDetail = () => {
 
   const handleAttachmentChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setAttachment(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      // File type validation
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/bmp', 'image/webp', 'application/pdf', 'image/heic', 'image/heif'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid file type (JPEG, PNG, JPG, GIF, PDF, HEIC, HEIF)');
+        return;
+      }
+      
+      // File size validation (2MB = 2097152 bytes)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        alert('File size must be less than 2MB');
+        return;
+      }
+      
+      setAttachment(file);
     }
   };
 
@@ -224,7 +240,7 @@ const DocumentDetail = () => {
       formData.append('mobile', '');
       
       if (attachment) {
-        formData.append('attachment', attachment);
+        formData.append('file', attachment); // Changed from 'attachment' to 'file'
       }
       
       const response = await authService.sendMessage(formData);
@@ -240,7 +256,7 @@ const DocumentDetail = () => {
           document_id: id,
           user_id: authService.getCurrentUserId(),
           message: newMessage,
-          attachment: attachment ? URL.createObjectURL(attachment) : null,
+          file_url: attachment ? URL.createObjectURL(attachment) : null,
           created_at: new Date().toISOString(),
           user: { name: 'You' }
         };
@@ -1247,14 +1263,51 @@ const DocumentDetail = () => {
                   {/* Message Input */}
                   <div className={`p-4 border-t border-gray-200 bg-white ${!isChatOpen && 'hidden'}`}>
                     <form onSubmit={handleSendMessage} className="space-y-3">
+                      {/* File Preview */}
+                      {attachment && (
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center space-x-3">
+                            {attachment.type.startsWith('image/') ? (
+                              <img 
+                                src={URL.createObjectURL(attachment)} 
+                                alt="Preview" 
+                                className="w-12 h-12 object-cover rounded-lg border border-gray-300"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <FileText className="h-6 w-6 text-blue-600" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => setAttachment(null)}
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        </div>
+                      )}
+                      
                       <div className="relative">
                         <textarea
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           placeholder="Type your message..."
-                          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
+                          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12 resize-none"
                           rows="2"
-                        ></textarea>
+                          style={{ maxHeight: '120px' }}
+                          onInput={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                          }}
+                        />
                         <button
                           type="submit"
                           disabled={sendingMessage || (!newMessage.trim() && !attachment)}
@@ -1274,28 +1327,25 @@ const DocumentDetail = () => {
                             type="file" 
                             id="attachment" 
                             onChange={handleAttachmentChange}
+                            accept=".jpg,.jpeg,.png,.gif,.pdf,.heic,.heif"
                             className="hidden" 
                           />
                           <label 
                             htmlFor="attachment" 
-                            className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors"
                           >
-                            <Paperclip className="h-3.5 w-3.5 mr-1.5" />
+                            <Paperclip className="h-4 w-4 mr-2" />
                             Attach File
                           </label>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Max 2MB • Images, PDF, HEIC, HEIF
+                          </p>
                         </div>
                         
-                        {attachment && (
-                          <div className="flex items-center py-1.5 px-3 bg-blue-50 rounded-lg">
-                            <Paperclip className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
-                            <span className="text-xs text-gray-700 truncate max-w-[150px]">{attachment.name}</span>
-                            <button 
-                              type="button"
-                              onClick={() => setAttachment(null)}
-                              className="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
+                        {sendingMessage && (
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
                           </div>
                         )}
                       </div>
