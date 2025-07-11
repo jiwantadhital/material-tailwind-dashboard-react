@@ -1174,20 +1174,52 @@ const DocumentDetail = () => {
                                     </div>
                                   )}
                                   <div className="text-sm mb-1 break-words">{message.message}</div>
-                                  {message.attachment && (
-                                    <a 
-                                      href={`${API_BASE_URL}${message.attachment}`} 
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`mt-2 inline-flex items-center px-3 py-1.5 rounded-lg text-xs ${
-                                        isUserMessage 
-                                          ? 'bg-blue-700 text-blue-100 hover:bg-blue-800' 
-                                          : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
-                                      }`}
-                                    >
-                                      <Paperclip className="h-3 w-3 mr-1.5" />
-                                      {message.attachment.split('/').pop()}
-                                    </a>
+                                  {message.file_url && (
+                                    <div className="mt-2">
+                                      {(() => {
+                                        let fileName = 'Attached File';
+                                        if (message.file) {
+                                          // Extract filename from file path like "chat/1752212042.png"
+                                          fileName = message.file.split('/').pop();
+                                        } else if (message.file_url) {
+                                          // Fallback to extract from URL
+                                          fileName = message.file_url.split('/').pop().split('?')[0];
+                                        }
+                                        
+                                        const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+                                        
+                                        return (
+                                          <div>
+                                            {/* File download link */}
+                                            <a 
+                                              href={message.file_url} 
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                isUserMessage 
+                                                  ? 'bg-blue-700 text-blue-100 hover:bg-blue-800' 
+                                                  : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
+                                              }`}
+                                            >
+                                              <Paperclip className="h-4 w-4 mr-2" />
+                                              {fileName}
+                                            </a>
+                                            
+                                            {/* Show image preview if it's an image */}
+                                            {isImage && (
+                                              <div className="mt-2 rounded-lg overflow-hidden">
+                                                <img 
+                                                  src={message.file_url} 
+                                                  alt={fileName}
+                                                  className="max-w-full max-h-48 object-cover cursor-pointer rounded-lg"
+                                                  onClick={() => window.open(message.file_url, '_blank')}
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
                                   )}
                                   <div className={`text-xs mt-1 ${isUserMessage ? 'text-blue-200' : 'text-gray-500'}`}>
                                     {formatDate(message.created_at)}
