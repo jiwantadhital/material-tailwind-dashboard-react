@@ -158,22 +158,28 @@ const EditService = () => {
   useEffect(() => {
     if (isEditMode) {
       setLoading(true);
-      // Replace with your actual API call
-      getServiceById(id)
-        .then(data => {
-          // Convert priceRangeMin and priceRangeMax to priceRange if needed
-          const priceRange = data.priceRange || 
-            (data.priceRangeMin && data.priceRangeMax ? 
-              `$${data.priceRangeMin} - $${data.priceRangeMax}` : '');
-          
+      // Use actual API call to get service by ID
+      authService.getservicebyId(id)
+        .then(response => {
+          const data = response.data;
+          // Map backend field names to frontend field names
           setService({
-            ...data,
-            priceRange,
-            imagePreview: data.image ? data.image : null,
+            title: data.name || '',
+            code: data.code || '',
+            priceRange: data.price_range || '',
+            pricingDescription: data.price_description || '',
+            howItWorks: data.how_it_works || '',
+            requirements: data.requirements || '',
+            imagePreview: data.image_url || null,
+            image: null,
+            isActive: data.is_active === 1 || data.is_active === true,
+            isTopRated: data.is_featured === 1 || data.is_featured === true,
+            percentageOfPrice: data.percentage_of_price || '0',
           });
           setLoading(false);
         })
         .catch(error => {
+          console.error('Error loading service details:', error);
           toast.error('Failed to load service details');
           setLoading(false);
         });
@@ -633,37 +639,3 @@ const EditService = () => {
 
 export default EditService;
 
-// Mock API functions for the example
-function getServiceById(id) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        title: 'Website Design',
-        code: 'WEB-DSG',
-        priceRange: '$500 - $2000',
-        pricingDescription: 'Pricing depends on number of pages, complexity of design, and additional features required.',
-        howItWorks: 'After initial consultation, we create wireframes, then mockups, and finally the live website with up to 3 rounds of revisions.',
-        requirements: 'Client should provide branding materials, content for pages, and any specific design preferences.',
-        image: 'https://example.com/image.jpg',
-        isActive: true,
-        isTopRated: true,
-      });
-    }, 1000);
-  });
-}
-
-function updateService(id, data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true });
-    }, 1500);
-  });
-}
-
-function createService(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, id: Math.random().toString(36).substr(2, 9) });
-    }, 1500);
-  });
-}

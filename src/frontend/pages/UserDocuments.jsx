@@ -11,7 +11,8 @@ import {
   ChevronRight, 
   FileImage,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus
 } from 'lucide-react';
 
 const API_BASE_URL = 'https://sajilonotary.xyz/';
@@ -453,7 +454,13 @@ const UserDocuments = () => {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">Requested Documents</h1>
           </div>
-          <div></div> {/* Spacer for centering */}
+          <Link 
+            to="/all-services"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Upload Document
+          </Link>
         </div>
         
         {totalDocuments === 0 ? (

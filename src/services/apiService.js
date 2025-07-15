@@ -460,7 +460,7 @@ export const authService = {
       updateService: async (serviceId, data) => {
         const token = localStorage.getItem('token');
         const response = await apiService.post(`/api/update-service/${serviceId}`, data, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
         });
         return response.data;
       },
