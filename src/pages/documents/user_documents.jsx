@@ -10,7 +10,15 @@ import {
   UserIcon,
   CalendarIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  DocumentArrowDownIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  EllipsisVerticalIcon,
+  CheckIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 function classNames(...classes) {
@@ -26,6 +34,11 @@ export default function UserDocuments({ code, serviceId }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showStartedOnly, setShowStartedOnly] = useState('all');
   const [serviceName, setServiceName] = useState('');
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const [categories, setCategories] = useState({
     'Pending': [],
@@ -49,15 +62,25 @@ export default function UserDocuments({ code, serviceId }) {
     }
   }, [code]);
 
+
+
   const getCategoryStyle = (status) => {
-    console.log(localStorage.getItem('user'));
     const styles = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      cost_estimated: 'bg-purple-100 text-purple-800',
-      in_progress: 'bg-indigo-100 text-indigo-800',
-      completed: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      cost_estimated: 'bg-purple-100 text-purple-800 border-purple-200',
+      in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
+      completed: 'bg-green-100 text-green-800 border-green-200',
     };
-    return styles[status] || 'bg-gray-100 text-gray-800';
+    return styles[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getPriorityStyle = (priority) => {
+    const styles = {
+      high: 'bg-red-100 text-red-800 border-red-200',
+      medium: 'bg-orange-100 text-orange-800 border-orange-200',
+      low: 'bg-green-100 text-green-800 border-green-200',
+    };
+    return styles[priority] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const getCategoryIcon = (category) => {
@@ -68,8 +91,6 @@ export default function UserDocuments({ code, serviceId }) {
     };
     return icons[category] || "📎";
   };
-
-
 
   const formatTime = (estimatedTime) => {
     if (!estimatedTime) return '';
@@ -99,106 +120,219 @@ export default function UserDocuments({ code, serviceId }) {
     return `${days} days, ${hours} hours remaining`;
   };
 
+  const handleDocumentSelect = (documentId) => {
+    setSelectedDocuments(prev => 
+      prev.includes(documentId) 
+        ? prev.filter(id => id !== documentId)
+        : [...prev, documentId]
+    );
+  };
+
+  const handleSelectAll = (documents) => {
+    const allIds = documents.map(doc => doc.id);
+    setSelectedDocuments(prev => 
+      prev.length === allIds.length ? [] : allIds
+    );
+  };
+
+  const handleBulkAction = async (action) => {
+    if (selectedDocuments.length === 0) return;
+    
+    // Implement bulk actions based on the action type
+    try {
+      setLoading(true);
+      // Add your bulk action API calls here
+      console.log(`Performing ${action} on documents:`, selectedDocuments);
+      setSelectedDocuments([]);
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   const renderDocumentCard = (document) => (
-    <div key={document.id} className="bg-white rounded-xl shadow-sm p-6 mb-4 hover:shadow-xl transition-all duration-200 border border-gray-100">
-      <div className="flex justify-between items-start gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
+    <div key={document.id} className="bg-white rounded-xl shadow-sm p-6 mb-4 hover:shadow-md transition-all duration-200 border border-gray-100">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 pt-1">
+          <input
+            type="checkbox"
+            checked={selectedDocuments.includes(document.id)}
+            onChange={() => handleDocumentSelect(document.id)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">{getCategoryIcon(document.category)}</span>
-            <h3 className="text-lg font-semibold text-gray-900 tracking-tight">{document.title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{document.title}</h3>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCategoryStyle(document.status)}`}>
+                {document.status.replace('_', ' ').toUpperCase()}
+              </span>
+              {document.priority && (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityStyle(document.priority)}`}>
+                  {document.priority.toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
-          <p className="mt-2 text-sm text-gray-600 leading-relaxed">{document.description}</p>
           
-          <div className="mt-5 grid grid-cols-2 gap-5">
-            {document.payment.total_payment_amount && (
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{document.description}</p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {document.payment?.total_payment_amount && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <BanknotesIcon className="h-5 w-5 mr-2 text-gray-500" />
+                <BanknotesIcon className="h-4 w-4 mr-2 text-gray-500" />
                 <span className="font-medium">Rs {document.payment.total_payment_amount}</span>
               </div>
             )}
             
             {document.estimated_time && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <ClockIcon className="h-5 w-5 mr-2 text-gray-500" />
+                <ClockIcon className="h-4 w-4 mr-2 text-gray-500" />
                 <div className="flex flex-col">
-                  <span className="font-medium">
+                  <span className="font-medium text-xs">
                     {formatTime(document.estimated_time)}
                   </span>
-                  {document.estimated_time && (
-                    <span className="text-xs text-gray-500">
-                      {getRemainingTime(document.estimated_time)}
-                    </span>
-                  )}
+                  <span className="text-xs text-gray-500">
+                    {getRemainingTime(document.estimated_time)}
+                  </span>
                 </div>
               </div>
             )}
             
             {document.user && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <UserIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">{document.user.name}</span>
+                <UserIcon className="h-4 w-4 mr-2 text-gray-500" />
+                <span className="font-medium text-xs">{document.user.name}</span>
               </div>
             )}
             
             {document.completed_at && (
               <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <span className="font-medium">Completed: {new Date(document.completed_at).toLocaleDateString()}</span>
+                <CalendarIcon className="h-4 w-4 mr-2 text-gray-500" />
+                <span className="font-medium text-xs">
+                  {new Date(document.completed_at).toLocaleDateString()}
+                </span>
               </div>
             )}
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-wide ${getCategoryStyle(document.status)}`}>
-                {document.status.replace('_', ' ').toUpperCase()}
-              </div>
-              {document.document_mark?.is_new && document.document_mark?.user_id !== authService.getCurrentUserId() && (
-                <div className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+              {document.document_mark?.is_new && (
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                   NEW
-                </div>
+                </span>
+              )}
+              {document.document_mark?.has_new_message_for_admin && (
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  NEW MESSAGE
+                </span>
               )}
             </div>
             
-            <Button
-              variant="gradient"
-              color="blue"
-              size="sm"
-              className="py-1 px-2 text-[11px] font-medium"
-              onClick={() => {
-                // Fire-and-forget API calls (don't wait for responses)
-                if (document.document_mark?.is_new) {
-                  authService.markAsRead(document.id)
-                    .then(() => console.log('Document marked as read (new update cleared)'))
-                    .catch(error => console.error('Error marking document as read:', error));
-                }
-
-                if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
-                  authService.markAsReadForAdmin(document.id)
-                    .then(() => console.log('Messages marked as read (new message cleared)'))
-                    .catch(error => console.error('Error marking messages as read:', error));
-                }
-
-                // Navigate immediately - don't wait for API calls
-                navigate("/document_details", { state: { document } });
-              }}
-            >
-              View Details
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outlined"
+                color="blue"
+                size="sm"
+                className="p-2"
+                onClick={() => {
+                  if (document.document_mark?.is_new) {
+                    authService.markAsRead(document.id);
+                  }
+                  if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
+                    authService.markAsReadForAdmin(document.id);
+                  }
+                  navigate("/document_details", { state: { document } });
+                }}
+              >
+                <EyeIcon className="h-4 w-4" />
+              </Button>
+              
+              <div className="relative">
+                <Button
+                  variant="outlined"
+                  color="gray"
+                  size="sm"
+                  className="p-2"
+                >
+                  <EllipsisVerticalIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <DocumentIcon className="h-10 w-10 text-gray-400" />
       </div>
     </div>
   );
 
-  const fetchDocuments = async (page = 1, selectedStatus = "in_progress",code = 'NO',progress_status = 'all') => {
+  const renderDocumentList = (document) => (
+    <tr key={document.id} className="hover:bg-gray-50">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <input
+          type="checkbox"
+          checked={selectedDocuments.includes(document.id)}
+          onChange={() => handleDocumentSelect(document.id)}
+          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <span className="text-lg mr-3">{getCategoryIcon(document.category)}</span>
+          <div>
+            <div className="text-sm font-medium text-gray-900">{document.title}</div>
+            <div className="text-sm text-gray-500">{document.user?.name}</div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCategoryStyle(document.status)}`}>
+          {document.status.replace('_', ' ').toUpperCase()}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        Rs {document.payment?.total_payment_amount || 0}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {document.estimated_time ? formatTime(document.estimated_time) : '-'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {document.created_at ? new Date(document.created_at).toLocaleDateString() : '-'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outlined"
+            color="blue"
+            size="sm"
+            onClick={() => {
+              if (document.document_mark?.is_new) {
+                authService.markAsRead(document.id);
+              }
+              if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
+                authService.markAsReadForAdmin(document.id);
+              }
+              navigate("/document_details", { state: { document } });
+            }}
+          >
+            View
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+
+  const fetchDocuments = async (page = 1, selectedStatus = "in_progress", code = 'NO', progress_status = 'all') => {
     try {
       setLoading(true);
       const apiStatus = selectedStatus?.toLowerCase().replace(' ', '_');
-      const response = await authService.getDocuments(page, apiStatus, code,progress_status);
-      console.log(response.data.data);
+      const response = await authService.getDocuments(page, apiStatus, code, progress_status);
       
       const documentsByStatus = {
         'Pending': [],
@@ -243,10 +377,9 @@ export default function UserDocuments({ code, serviceId }) {
   };
 
   useEffect(() => {
-    // Reset to first page when code changes
     setCurrentPage(1);
     fetchDocuments(1, "in_progress", code, showStartedOnly);
-  }, [code, serviceId]); // Add serviceId to dependencies to ensure rerender
+  }, [code, serviceId]);
 
   useEffect(() => {
     fetchDocuments(currentPage, "in_progress", code, showStartedOnly);
@@ -275,6 +408,7 @@ export default function UserDocuments({ code, serviceId }) {
           <p className="text-sm text-gray-700">
             Showing page <span className="font-medium">{currentPage}</span> of{' '}
             <span className="font-medium">{pagination?.lastPage}</span>
+            {' '}({pagination?.total} total documents)
           </p>
         </div>
         <div>
@@ -300,104 +434,261 @@ export default function UserDocuments({ code, serviceId }) {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-10 tracking-tight">
-        {serviceName ? `${serviceName} Documents` : 'My Documents'}
-      </h1>
-      
-      <Tab.Group defaultIndex={2} onChange={(index) => {
-        setCurrentPage(1);
-        const selectedStatus = Object.keys(categories)[index];
-        console.log(selectedStatus);
-        fetchDocuments(1, selectedStatus, code);
-      }}>
-        <Tab.List className="flex space-x-1 rounded-2xl bg-gray-100/80 p-1.5">
-          {Object.keys(categories).map((category) => (
-            <Tab
-              key={category}
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-xl py-3 text-sm font-medium leading-5 transition-all duration-200',
-                  'ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white shadow-sm text-blue-700'
-                    : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-                )
-              }
-            >
-              {category}
-            </Tab>
-          ))}
-        </Tab.List>
-        
-        <Tab.Panels className="mt-8">
-          {Object.entries(categories).map(([category, documents], idx) => (
-            <Tab.Panel
-              key={idx}
-              className={classNames(
-                'rounded-xl bg-white p-3',
-                'ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2'
-              )}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {serviceName ? `${serviceName} Documents` : 'Document Management'}
+          </h1>
+          <p className="text-gray-600">
+            Manage and track all documents in your system
+          </p>
+        </div>
+
+
+
+        {/* Filters and Actions */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <select
+                value={showStartedOnly}
+                onChange={(e) => {
+                  setShowStartedOnly(e.target.value);
+                  fetchDocuments(1, 'in_progress', code, e.target.value);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Documents</option>
+                <option value="not_started">Not Started</option>
+                <option value="rejected">Rejected</option>
+                <option value="full_payment_made">Full Payment Made</option>
+              </select>
+              
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                >
+                  <Squares2X2Icon className="h-5 w-5 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                >
+                  <ListBulletIcon className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+              
+              <Button
+                variant="outlined"
+                color="blue"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <DocumentArrowDownIcon className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+          
+          {/* Bulk Actions */}
+          {selectedDocuments.length > 0 && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-900">
+                  {selectedDocuments.length} documents selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outlined"
+                    color="green"
+                    size="sm"
+                    onClick={() => handleBulkAction('approve')}
+                  >
+                    <CheckIcon className="h-4 w-4 mr-1" />
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="red"
+                    size="sm"
+                    onClick={() => handleBulkAction('reject')}
+                  >
+                    <XMarkIcon className="h-4 w-4 mr-1" />
+                    Reject
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="gray"
+                    size="sm"
+                    onClick={() => handleBulkAction('export')}
+                  >
+                    <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                    Export
+                  </Button>
                 </div>
-              ) : (
-                <>
-                  {category === 'In Progress' && (
-                    <div className="mb-6 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            placeholder="Search by document name..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={showStartedOnly}
-                            onChange={async (e)=> {
-                              setShowStartedOnly(e.target.value);
-                              fetchDocuments(1, category, code, e.target.value);
-                            }}
-                            className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-700"
-                          >
-                            <option value="all">All Documents</option>
-                            <option value="not_started">Not Started</option>
-                            <option value="rejected
-                            ">Rejected</option>
-                            <option value="full_payment_made">Full Payment Made</option>
-                          </select>
-                        </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Document Tabs */}
+        <div className="bg-white rounded-xl shadow-sm">
+          <Tab.Group defaultIndex={2} onChange={(index) => {
+            setCurrentPage(1);
+            const selectedStatus = Object.keys(categories)[index];
+            fetchDocuments(1, selectedStatus, code);
+          }}>
+            <Tab.List className="flex bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-xl border-b border-gray-200 p-1">
+              {Object.entries(categories).map(([category, documents]) => (
+                <Tab
+                  key={category}
+                  className={({ selected }) =>
+                    classNames(
+                      'group relative px-6 py-3 text-sm font-semibold transition-all duration-300 transform',
+                      'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                      'rounded-lg mx-1 shadow-sm',
+                      selected
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white scale-105 shadow-lg'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-white hover:shadow-md hover:-translate-y-0.5'
+                    )
+                  }
+                >
+                  {({ selected }) => (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          selected 
+                            ? 'bg-white shadow-sm' 
+                            : category === 'Pending' 
+                              ? 'bg-yellow-400' 
+                              : category === 'Cost Estimated' 
+                                ? 'bg-purple-400' 
+                                : category === 'In Progress' 
+                                  ? 'bg-blue-400' 
+                                  : 'bg-green-400'
+                        }`}></span>
+                        <span className="whitespace-nowrap">{category}</span>
                       </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                        selected 
+                          ? 'bg-white/20 text-white backdrop-blur-sm' 
+                          : 'bg-gray-200 text-gray-700 group-hover:bg-gray-300'
+                      }`}>
+                        {documents.length}
+                      </span>
                     </div>
                   )}
-                  
-                  <div className="space-y-4">
-                    {documents.length === 0 ? (
-                      <div className="text-center py-12">
-                        <DocumentIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No documents</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          No documents found in this category.
-                        </p>
-                      </div>
-                    ) : (
-                      (category === 'In Progress' ? documents : documents)
-                        .map((document) => renderDocumentCard(document))
-                    )}
-                  </div>
-                  {pagination && <PaginationControls />}
-                </>
-              )}
-            </Tab.Panel>
-          ))}
-        </Tab.Panels>
-      </Tab.Group>
+                </Tab>
+              ))}
+            </Tab.List>
+            
+            <Tab.Panels>
+              {Object.entries(categories).map(([category, documents], idx) => (
+                <Tab.Panel key={idx} className="p-6">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <>
+                      {documents.length === 0 ? (
+                        <div className="text-center py-12">
+                          <DocumentIcon className="mx-auto h-16 w-16 text-gray-400" />
+                          <h3 className="mt-4 text-lg font-medium text-gray-900">No documents found</h3>
+                          <p className="mt-2 text-sm text-gray-500">
+                            No documents match your current filters.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Select All Checkbox */}
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedDocuments.length === documents.length && documents.length > 0}
+                                onChange={() => handleSelectAll(documents)}
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <label className="ml-2 text-sm font-medium text-gray-700">
+                                Select all ({documents.length} documents)
+                              </label>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Showing {documents.length} of {pagination?.total || 0} documents
+                            </div>
+                          </div>
+
+                          {/* Document List */}
+                          {viewMode === 'grid' ? (
+                            <div className="space-y-4">
+                              {documents.map((document) => renderDocumentCard(document))}
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedDocuments.length === documents.length && documents.length > 0}
+                                        onChange={() => handleSelectAll(documents)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      />
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Document
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Amount
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Time
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Created
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Actions
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {documents.map((document) => renderDocumentList(document))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
+                      {pagination && documents.length > 0 && <PaginationControls />}
+                    </>
+                  )}
+                </Tab.Panel>
+              ))}
+            </Tab.Panels>
+          </Tab.Group>
+        </div>
+      </div>
     </div>
   );
 }

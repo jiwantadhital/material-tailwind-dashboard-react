@@ -365,13 +365,6 @@ const LandingPage = () => {
                 }} 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
               >All Services</a>
-              <a 
-                onClick={() => {
-                  navigate('/pricing');
-                  setIsMenuOpen(false);
-                }} 
-                className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
-              >Pricing</a>
               <a href="#customers" className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer">Testimonials</a>
               {isLoggedIn && (
                 <a
@@ -955,7 +948,7 @@ const LandingPage = () => {
             <div>
               <h4 className="font-semibold text-base mb-3 text-gray-900">Product</h4>
               <ul className="space-y-2">
-                {['Features', 'Pricing', 'Security', 'API'].map(item => (
+                {['Features', 'Security', 'API'].map(item => (
                   <li key={item}><a href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">{item}</a></li>
                 ))}
               </ul>

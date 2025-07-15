@@ -219,9 +219,7 @@ const ServiceForm = () => {
         <div className="flex items-center space-x-3">
           <div className="relative group cursor-pointer" onClick={() => window.location.href = '/'}>
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-70 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-            <svg className="relative w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
-            </svg>
+            <img src="/img/nlogo.png" alt="Sajilo Notary Logo" className="relative w-8 h-8 object-contain" />
           </div>
           <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600" onClick={() => window.location.href = '/'}>Sajilo Notary</span>
         </div>
@@ -423,9 +421,7 @@ const ServiceForm = () => {
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
               <div className="relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-70"></div>
-                <svg className="relative w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
-                </svg>
+                <img src="/img/nlogo.png" alt="Sajilo Notary Logo" className="relative w-8 h-8 object-contain" />
               </div>
               <span className="text-xl font-bold text-gray-900">Sajilo Notary</span>
             </div>

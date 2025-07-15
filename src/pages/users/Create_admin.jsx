@@ -9,7 +9,8 @@ import {
   Chip,
   Avatar,
   Select,
-  Option
+  Option,
+  Spinner
 } from "@material-tailwind/react";
 import { authService } from "../../services/apiService";
 import { Switch } from "@material-tailwind/react";
@@ -36,6 +37,7 @@ export default function Create_admin() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true);
   const [user, setUser] = useState(null);
   const [availableServices, setAvailableServices] = useState([]);
 
@@ -52,6 +54,7 @@ export default function Create_admin() {
       }
     } catch (error) {
       setAlertMessage(error.message || "Failed to update account status");
+      setAlertType("error");
       setShowAlert(true);
     } finally {
       setIsUpdatingStatus(false);
@@ -93,12 +96,19 @@ export default function Create_admin() {
   }, []);
 
   const fetchAdmins = async () => {
+    setIsLoadingAdmins(true);
     try {
       const response = await authService.getAllUsers('all');
       const adminUsers = response.data.users.filter(user => user.role === 'lawyer');
       setAdmins(adminUsers);
     } catch (error) {
       console.error("Failed to fetch admins:", error);
+      setAlertMessage("Failed to load admin list");
+      setAlertType("error");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+    } finally {
+      setIsLoadingAdmins(false);
     }
   };
 
@@ -276,220 +286,293 @@ export default function Create_admin() {
     });
   }, []);
 
-  if (!admins) {
-    return <div>Loading...</div>;
-  }
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, index) => (
+        <div key={index} className="animate-pulse">
+          <div className="flex items-center space-x-4 py-4">
+            <div className="rounded-full bg-gray-300 h-10 w-10"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+            </div>
+            <div className="h-6 bg-gray-300 rounded w-16"></div>
+            <div className="h-8 bg-gray-300 rounded w-16"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Alert Message */}
       {showAlert && (
-        <div className={`fixed top-4 right-4 z-50 ${alertType === "success" ? "bg-green-50 border-green-300 text-green-800" : "bg-red-50 border-red-300 text-red-800"} px-4 py-3 rounded-lg shadow-lg flex items-center`}>
-          <div className="mr-2">
+        <div className={`fixed top-4 right-4 z-50 ${alertType === "success" ? "bg-green-50 border-l-4 border-green-400 text-green-700" : "bg-red-50 border-l-4 border-red-400 text-red-700"} px-6 py-4 rounded-lg shadow-lg flex items-center max-w-md`}>
+          <div className="mr-3">
             {alertType === "success" ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             )}
           </div>
-          <Typography className="font-medium whitespace-pre-line">
-            {alertMessage}
-          </Typography>
+          <div className="flex-1">
+            <Typography className="font-medium whitespace-pre-line text-sm">
+              {alertMessage}
+            </Typography>
+          </div>
           <button 
             onClick={() => setShowAlert(false)} 
-            className={`ml-4 ${alertType === "success" ? "text-green-500 hover:text-green-700" : "text-red-500 hover:text-red-700"}`}
+            className={`ml-4 ${alertType === "success" ? "text-green-400 hover:text-green-600" : "text-red-400 hover:text-red-600"} transition-colors`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
         </div>
       )}
-      <div className="mt-12 mb-8 flex flex-col gap-12">
-        <Button 
-          onClick={toggleForm} 
-          color={isFormOpen ? "red" : "blue"} 
-          variant="gradient"
-          className="flex items-center justify-center gap-2 py-3"
-          fullWidth
-        >
-          {isFormOpen ? (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              Close Form
-            </>
-          ) : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Create New Admin
-            </>
-          )}
-        </Button>
 
-        {isFormOpen && (
-          <Card>
-            <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-              <Typography variant="h6" color="white">
-                Create Admin
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <Typography variant="h4" color="blue-gray" className="mb-2">
+                Admin Management
               </Typography>
+              <Typography color="gray" className="text-sm">
+                Create and manage admin accounts with assigned services
+              </Typography>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="bg-blue-50 px-3 py-1 rounded-full">
+                <Typography variant="small" color="blue" className="font-medium">
+                  {admins.length} Admin{admins.length !== 1 ? 's' : ''}
+                </Typography>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Create Admin Button */}
+        <div className="mb-8">
+          <Button 
+            onClick={toggleForm} 
+            color={isFormOpen ? "red" : "blue"} 
+            variant="gradient"
+            className="flex items-center justify-center gap-3 py-3 px-6 shadow-lg hover:shadow-xl transition-all duration-300"
+            size="lg"
+          >
+            {isFormOpen ? (
+              <>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Close Form
+              </>
+            ) : (
+              <>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create New Admin
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Create Admin Form */}
+        {isFormOpen && (
+          <Card className="mb-8 shadow-xl border-0">
+            <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
+              <div className="flex items-center gap-3">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <Typography variant="h6" color="white">
+                  Create New Admin
+                </Typography>
+              </div>
             </CardHeader>
-            <CardBody className="px-6 pt-0 pb-2">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Admin Name
-                  </Typography>
-                  <Input
-                    type="text"
-                    name="name"
-                    placeholder="John Doe"
-                    value={adminData.name}
-                    onChange={handleChange}
-                    required
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                    labelProps={{
-                      className: "before:content-none after:content-none",
-                    }}
-                  />
+            <CardBody className="px-8 pt-0 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Admin Name <span className="text-red-500">*</span>
+                    </Typography>
+                    <Input
+                      size="lg"
+                      type="text"
+                      name="name"
+                      placeholder="Enter full name"
+                      value={adminData.name}
+                      onChange={handleChange}
+                      required
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Phone Number <span className="text-red-500">*</span>
+                    </Typography>
+                    <Input
+                      size="lg"
+                      type="text"
+                      name="phone"
+                      placeholder="Enter phone number"
+                      value={adminData.phone}
+                      onChange={handleChange}
+                      required
+                      maxLength={10}
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Email Address <span className="text-red-500">*</span>
+                    </Typography>
+                    <Input
+                      size="lg"
+                      type="email"
+                      name="email"
+                      placeholder="Enter email address"
+                      value={adminData.email}
+                      onChange={handleChange}
+                      required
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Date of Birth <span className="text-red-500">*</span>
+                    </Typography>
+                    <Input
+                      size="lg"
+                      type="date"
+                      name="dob"
+                      value={adminData.dob}
+                      onChange={handleChange}
+                      required
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Gender <span className="text-red-500">*</span>
+                    </Typography>
+                    <select
+                      name="gender"
+                      value={adminData.gender}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-11 border border-blue-gray-200 rounded-lg px-3 focus:border-blue-500 focus:outline-none text-sm"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                      Password <span className="text-red-500">*</span>
+                    </Typography>
+                    <Input
+                      size="lg"
+                      type="password"
+                      name="password"
+                      placeholder="Enter password"
+                      value={adminData.password}
+                      onChange={handleChange}
+                      required
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Phone Number
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                    Address <span className="text-red-500">*</span>
                   </Typography>
                   <Input
-                    type="text"
-                    name="phone"
-                    placeholder="+1 234 567 8900"
-                    value={adminData.phone}
-                    onChange={handleChange}
-                    required
-              maxLength={10}
-
-                    // disabled={ adminData.phone !== ""}
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                    labelProps={{
-                      className: "before:content-none after:content-none",
-                    }}
-                  />
-                </div>
-
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Email Address
-                  </Typography>
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="john@example.com"
-                    value={adminData.email}
-                    onChange={handleChange}
-                    required
-                    // disabled={isFormOpen && adminData.email !== ""}
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                    labelProps={{
-                      className: "before:content-none after:content-none",
-                    }}
-                  />
-                </div>
-
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Date of Birth
-                  </Typography>
-                  <Input
-                    type="date"
-                    name="dob"
-                    value={adminData.dob}
-                    onChange={handleChange}
-                    required
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                    labelProps={{
-                      className: "before:content-none after:content-none",
-                    }}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Address
-                  </Typography>
-                  <Input
+                    size="lg"
                     type="text"
                     name="address"
-                    placeholder="123 Street Name, City, Country"
+                    placeholder="Enter complete address"
                     value={adminData.address}
                     onChange={handleChange}
                     required
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                    className="!border-t-blue-gray-200 focus:!border-t-blue-500"
                     labelProps={{
                       className: "before:content-none after:content-none",
                     }}
                   />
                 </div>
 
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Gender
-                  </Typography>
-                  <select
-                    name="gender"
-                    value={adminData.gender}
-                    onChange={handleChange}
-                    required
-                    className="w-full h-10 border border-blue-gray-200 rounded-lg px-3 focus:border-gray-900 focus:outline-none"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div className="col-span-2">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Services <span className="text-red-500">*</span> <span className="text-xs text-blue-500 ml-1">(Select multiple)</span>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                    Assign Services <span className="text-red-500">*</span>
+                    <span className="text-blue-500 ml-2 font-normal">(Select multiple services)</span>
                   </Typography>
                   <div className="relative">
                     <Select
+                      size="lg"
                       label="Select Services"
                       value={adminData.services || []}
                       onChange={(selectedValue) => {
-  console.log("Selected value:", selectedValue);
+                        console.log("Selected value:", selectedValue);
 
-  // Avoid duplication
-  setAdminData((prevData) => {
-    const currentServices = prevData.services || [];
+                        // Avoid duplication
+                        setAdminData((prevData) => {
+                          const currentServices = prevData.services || [];
 
-    // Toggle selection
-    const index = currentServices.indexOf(selectedValue);
-    let newServices;
+                          // Toggle selection
+                          const index = currentServices.indexOf(selectedValue);
+                          let newServices;
 
-    if (index > -1) {
-      // Deselect if already selected
-      newServices = currentServices.filter(s => s !== selectedValue);
-    } else {
-      // Add new selection
-      newServices = [...currentServices, selectedValue];
-    }
+                          if (index > -1) {
+                            // Deselect if already selected
+                            newServices = currentServices.filter(s => s !== selectedValue);
+                          } else {
+                            // Add new selection
+                            newServices = [...currentServices, selectedValue];
+                          }
 
-    return {
-      ...prevData,
-      services: newServices
-    };
-  });
-}}
-
+                          return {
+                            ...prevData,
+                            services: newServices
+                          };
+                        });
+                      }}
                       selected={(selectedValues) => {
                         return (
-                          <div className="flex items-center gap-2 text-blue-gray-500">
+                          <div className="flex items-center gap-2 text-blue-gray-700">
                             {(!selectedValues || selectedValues.length === 0) ? (
                               <span className="text-sm">Select services</span>
                             ) : (
@@ -501,7 +584,7 @@ export default function Create_admin() {
                         );
                       }}
                       multiple
-                      className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                      className="!border-t-blue-gray-200 focus:!border-t-blue-500"
                       containerProps={{ className: "min-w-full" }}
                       menuProps={{
                         className: "p-2 max-h-72 overflow-y-auto",
@@ -514,10 +597,11 @@ export default function Create_admin() {
                           <Option 
                             key={service.id} 
                             value={String(service.id)} 
-                            className="p-2 flex items-center gap-2"
+                            className="p-3 hover:bg-blue-50 transition-colors"
                           >
-                            <div className="flex items-center gap-2">
-                              <span>{service.name}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                              <span className="font-medium">{service.name}</span>
                             </div>
                           </Option>
                         ))
@@ -526,138 +610,110 @@ export default function Create_admin() {
                   </div>
                   
                   {adminData.services && adminData.services.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {adminData.services.map((serviceId) => {
-                        const service = availableServices.find(s => String(s.id) === String(serviceId));
-                        if (!service) return null;
-                        
-                        return (
-                          <Chip
-                            key={serviceId}
-                            value={service.name}
-                            variant="gradient"
-                            color="blue"
-                            size="sm"
-                            className="rounded-full py-1.5"
-                            onClose={() => {
-                              const updatedServices = adminData.services.filter(
-                                id => String(id) !== String(serviceId)
-                              );
-                              console.log("Removing service:", serviceId);
-                              console.log("Updated services:", updatedServices);
-                              
-                              setAdminData(prevData => ({
-                                ...prevData,
-                                services: updatedServices
-                              }));
-                            }}
-                          />
-                        );
-                      })}
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                        Selected Services:
+                      </Typography>
+                      <div className="flex flex-wrap gap-2">
+                        {adminData.services.map((serviceId) => {
+                          const service = availableServices.find(s => String(s.id) === String(serviceId));
+                          if (!service) return null;
+                          
+                          return (
+                            <Chip
+                              key={serviceId}
+                              value={service.name}
+                              variant="gradient"
+                              color="blue"
+                              size="sm"
+                              className="rounded-full py-1.5 px-3"
+                              onClose={() => {
+                                const updatedServices = adminData.services.filter(
+                                  id => String(id) !== String(serviceId)
+                                );
+                                setAdminData(prevData => ({
+                                  ...prevData,
+                                  services: updatedServices
+                                }));
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3">
+                        <Typography variant="small" color="gray" className="font-medium">
+                          {adminData.services.length} of {availableServices.length} services selected
+                        </Typography>
+                        <Button 
+                          color="red" 
+                          size="sm" 
+                          variant="text"
+                          className="px-3 py-1"
+                          onClick={() => {
+                            setAdminData(prev => ({ ...prev, services: [] }));
+                          }}
+                        >
+                          Clear All
+                        </Button>
+                      </div>
                     </div>
                   )}
-                  
-                  <div className="flex items-center mt-2">
-                    {adminData.services.length > 0 && (
-                      <Button 
-                        color="red" 
-                        size="sm" 
-                        variant="text"
-                        className="p-1 h-7"
-                        onClick={() => {
-                          console.log("Clearing all services");
-                          setAdminData(prev => ({ ...prev, services: [] }));
-                        }}
-                      >
-                        Clear All
-                      </Button>
-                    )}
-                    <div className="ml-auto flex items-center gap-2">
-                      <Button
-                        color="blue"
-                        size="sm"
-                        variant="text"
-                        className="p-1 h-7"
-                        onClick={() => {
-                          console.log("Current adminData:", adminData);
-                          console.log("Current services:", adminData.services);
-                          console.log("Available services:", availableServices);
-                        }}
-                      >
-                        Debug
-                      </Button>
-                      <Typography variant="small" color="gray">
-                        {adminData.services.length} of {availableServices.length} services selected
-                      </Typography>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Password
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
+                    Profile Image <span className="text-red-500">*</span>
                   </Typography>
                   <Input
-                    type="password"
-                    name="password"
-                    placeholder="Enter Password"
-                    value={adminData.password}
-                    onChange={handleChange}
-                    required
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                    labelProps={{
-                      className: "before:content-none after:content-none",
-                    }}
-                  />
-                </div>
-
-                <div className="col-span-2 md:col-span-1">
-                  <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Profile Image
-                  </Typography>
-                  <Input
+                    size="lg"
                     type="file"
                     name="photo"
                     onChange={handleChange}
                     accept="image/*"
                     required
-                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                    className="!border-t-blue-gray-200 focus:!border-t-blue-500"
                     labelProps={{
                       className: "before:content-none after:content-none",
                     }}
                   />
                   {imagePreview && (
-                    <div className="mt-2">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg"
-                      />
+                    <div className="mt-4 flex justify-center">
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-blue-gray-200 shadow-md"
+                        />
+                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="col-span-2">
+                <div className="pt-6 border-t border-blue-gray-100">
                   <Button 
                     type="submit" 
                     color="blue" 
                     variant="gradient"
-                    className="flex items-center justify-center gap-2 mt-4 py-3"
+                    className="flex items-center justify-center gap-3 py-3 px-8 shadow-lg hover:shadow-xl transition-all duration-300"
+                    size="lg"
                     fullWidth
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <Spinner className="h-5 w-5" />
                         Creating Admin...
                       </>
                     ) : (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         {adminData.id ? "Update Admin" : "Create Admin"}
                       </>
@@ -669,96 +725,174 @@ export default function Create_admin() {
           </Card>
         )}
 
-        <div className="mt-8">
-          <Typography variant="h6" color="gray">
-            Admin List
-          </Typography>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["Image", "Name", "Phone", "Email", "Status", ""].map((el) => (
-                    <th
-                      key={el}
-                      className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                    >
-                      <Typography
-                        variant="small"
-                        className="text-[11px] font-bold uppercase text-blue-gray-400"
-                      >
-                        {el}
-                      </Typography>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(admins) && admins.map((admin, index) => {
-                  const className = `py-3 px-5 ${
-                    index === admins.length - 1 ? "" : "border-b border-blue-gray-50"
-                  }`;
-
-                  return (
-                    <tr key={index}>
-                      <td className={className}>
-                        <Avatar
-                          src={admin.kyc?.photo_url || "/default-avatar.png"}
-                          alt={admin.kyc?.photo_url}
-                          size="sm"
-                          className="border border-blue-gray-50 bg-blue-gray-50/50"
-                        />
-                      </td>
-                      <td className={className}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-semibold"
+        {/* Admin List */}
+        <Card className="shadow-xl border-0">
+          <CardHeader variant="gradient" color="blue-gray" className="mb-8 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <Typography variant="h6" color="white">
+                  Admin List
+                </Typography>
+              </div>
+              <div className="bg-white/20 px-3 py-1 rounded-full">
+                <Typography variant="small" color="white" className="font-medium">
+                  Total: {admins.length}
+                </Typography>
+              </div>
+            </div>
+          </CardHeader>
+          <CardBody className="px-0 pt-0 pb-2">
+            {isLoadingAdmins ? (
+              <div className="px-8">
+                <LoadingSkeleton />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] table-auto">
+                  <thead>
+                    <tr className="border-b border-blue-gray-100">
+                      {["Profile", "Name", "Phone", "Email", "Status", "Actions"].map((el) => (
+                        <th
+                          key={el}
+                          className="py-4 px-6 text-left bg-blue-gray-50/50"
                         >
-                          {admin.name}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-normal text-blue-gray-500">
-                          {admin.phone}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-normal text-blue-gray-500">
-                          {admin.kyc?.email}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                      <Switch
-                      id={`status-${admin.id}`}
-                      label={`Account ${admin.status?.toLowerCase() === "active" ? "Active" : "Inactive"}`} 
-                      checked={admin.status?.toLowerCase() === "active"}
-                      onChange={(e) => handleStatusChange(e.target.checked, admin.id)}
-                      disabled={isUpdatingStatus}
-                      labelProps={{
-                        className: "text-sm font-normal text-blue-gray-500",
-                      }}
-                    />
-                      </td>
-                      <td className={className}>
-                        <Button
-                          variant="gradient"
-                          color="blue"
-                          size="sm"
-                          className="py-1 px-2 text-[11px] font-medium"
-                          onClick={() => handleEdit(admin)}
-                        >
-                          Edit
-                        </Button>
-                      </td>
-                     
+                          <Typography
+                            variant="small"
+                            className="text-xs font-bold uppercase text-blue-gray-600 tracking-wider"
+                          >
+                            {el}
+                          </Typography>
+                        </th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {Array.isArray(admins) && admins.length > 0 ? (
+                      admins.map((admin, index) => {
+                        const isLast = index === admins.length - 1;
+                        const className = `py-4 px-6 ${isLast ? "" : "border-b border-blue-gray-50"}`;
+
+                        return (
+                          <tr key={admin.id} className="hover:bg-blue-gray-50/50 transition-colors">
+                            <td className={className}>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  src={admin.kyc?.photo_url || "/default-avatar.png"}
+                                  alt={admin.name}
+                                  size="md"
+                                  className="border-2 border-blue-gray-50 shadow-md"
+                                />
+                              </div>
+                            </td>
+                            <td className={className}>
+                              <div>
+                                <Typography
+                                  variant="small"
+                                  color="blue-gray"
+                                  className="font-semibold"
+                                >
+                                  {admin.name}
+                                </Typography>
+                                <Typography
+                                  variant="small"
+                                  color="blue-gray"
+                                  className="font-normal opacity-70"
+                                >
+                                  ID: {admin.id}
+                                </Typography>
+                              </div>
+                            </td>
+                            <td className={className}>
+                              <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 text-blue-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <Typography className="text-sm font-medium text-blue-gray-600">
+                                  {admin.phone || "N/A"}
+                                </Typography>
+                              </div>
+                            </td>
+                            <td className={className}>
+                              <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 text-blue-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                                <Typography className="text-sm font-medium text-blue-gray-600">
+                                  {admin.kyc?.email || "N/A"}
+                                </Typography>
+                              </div>
+                            </td>
+                            <td className={className}>
+                              <div className="flex items-center gap-3">
+                                <Switch
+                                  id={`status-${admin.id}`}
+                                  checked={admin.status?.toLowerCase() === "active"}
+                                  onChange={(e) => handleStatusChange(e.target.checked, admin.id)}
+                                  disabled={isUpdatingStatus}
+                                  className="h-full w-full checked:bg-blue-500"
+                                  containerProps={{
+                                    className: "w-11 h-6",
+                                  }}
+                                  circleProps={{
+                                    className: "before:hidden left-0.5 border-none",
+                                  }}
+                                />
+                                <Typography
+                                  variant="small"
+                                  className={`font-medium ${
+                                    admin.status?.toLowerCase() === "active" 
+                                      ? "text-green-600" 
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {admin.status?.toLowerCase() === "active" ? "Active" : "Inactive"}
+                                </Typography>
+                              </div>
+                            </td>
+                            <td className={className}>
+                              <Button
+                                variant="gradient"
+                                color="blue"
+                                size="sm"
+                                className="flex items-center gap-2 py-2 px-4 shadow-md hover:shadow-lg transition-all duration-300"
+                                onClick={() => handleEdit(admin)}
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="py-12 text-center">
+                          <div className="flex flex-col items-center justify-center space-y-4">
+                            <svg className="h-16 w-16 text-blue-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <Typography variant="h6" color="blue-gray" className="font-medium">
+                              No admins found
+                            </Typography>
+                            <Typography color="gray" className="text-sm">
+                              Create your first admin to get started
+                            </Typography>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardBody>
-        </div>
+        </Card>
       </div>
-    </>
+    </div>
   );
 }
