@@ -166,9 +166,20 @@ export default function UserDocuments({ code, serviceId }) {
               size="sm"
               className="py-1 px-2 text-[11px] font-medium"
               onClick={() => {
-                if(document.document_mark.is_new === true){
-                  authService.markAsRead(document.id);
+                // Fire-and-forget API calls (don't wait for responses)
+                if (document.document_mark?.is_new) {
+                  authService.markAsRead(document.id)
+                    .then(() => console.log('Document marked as read (new update cleared)'))
+                    .catch(error => console.error('Error marking document as read:', error));
                 }
+
+                if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
+                  authService.markAsReadForAdmin(document.id)
+                    .then(() => console.log('Messages marked as read (new message cleared)'))
+                    .catch(error => console.error('Error marking messages as read:', error));
+                }
+
+                // Navigate immediately - don't wait for API calls
                 navigate("/document_details", { state: { document } });
               }}
             >

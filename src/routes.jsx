@@ -52,6 +52,7 @@ const getServicesFromLocalStorage = () => {
 // Generate dynamic service document routes
 const generateServiceDocumentRoutes = () => {
   const services = getServicesFromLocalStorage();
+  console.log('the s services',services);
   if (!Array.isArray(services) || services.length === 0) {
     return [];
   }

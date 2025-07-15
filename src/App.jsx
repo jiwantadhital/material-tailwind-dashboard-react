@@ -24,6 +24,7 @@ import DocumentDetail from "@/frontend/pages/DocumentDetail";
 import PaymentSuccess from "@/frontend/pages/PaymentSuccess";
 import PaymentFailure from "@/frontend/pages/PaymentFailure";
 import PaymentCancel from "@/frontend/pages/PaymentCancel";
+import PricingPage from "@/frontend/pages/Pricing";
 import { LawyerRevenue } from "@/pages/dashboard";
 
 function App() {
@@ -102,6 +103,7 @@ function App() {
       <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/service-form" element={<ServiceForm />} />
       <Route path="/profile" element={<UserProfile />} />
+      <Route path="/pricing" element={<PricingPage />} />
       <Route path="/reports/*" element={<Reports />} />
       <Route path="/reports/report_details/*" element={<ReportDetails />} />
       

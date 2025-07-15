@@ -28,12 +28,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
         className={`relative border-b border-white/10 py-4`}
       >
         <Link to="/" className="flex items-center justify-center gap-3">
-          <div className="relative group cursor-pointer">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-70 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-            <svg className="relative w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
-            </svg>
-          </div>
+          <img src="/img/nlogo.png" alt="Logo" className="h-10 w-10 object-contain" />
           <Typography
             variant="h5"
             color={sidenavType === "dark" ? "white" : "blue-gray"}
@@ -147,7 +142,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
 }
 
 Sidenav.defaultProps = {
-  brandImg: "/img/logo-ct.png",
+  brandImg: "/img/nlogo.png",
   brandName: "Notary Sathi",
 };
 

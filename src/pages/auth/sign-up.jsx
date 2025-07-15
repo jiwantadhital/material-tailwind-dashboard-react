@@ -501,11 +501,7 @@ export function SignUp() {
         </Link>
       </Typography>
       
-      <Typography variant="small" className="text-center text-blue-gray-500 font-medium mt-2">
-        <Link to="/home" replace className="text-blue-500 hover:text-blue-700 transition-colors">
-          Continue as Guest
-        </Link>
-      </Typography>
+     
     </form>
   );
 
@@ -593,7 +589,7 @@ export function SignUp() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex justify-center items-center px-4">
       <Card className="w-full max-w-[500px] p-8 shadow-xl">
         <div className="flex justify-center mb-6">
-          <img src="/img/logo-ct-dark.png" alt="Logo" className="h-12" />
+          <img src="/img/nlogo.png" alt="Logo" className="h-16" />
         </div>
         
         {currentStep === 'registration' ? (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Upload, X, FileText, Image as ImageIcon, Check } from 'lucide-react';
 import { useParams, useLocation } from 'react-router-dom';
 import { authService } from '../../services/apiService';
+import html2pdf from 'html2pdf.js';
 
 const SuccessDialog = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -39,6 +40,8 @@ const ServiceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [countries, setCountries] = useState([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [uploadType, setUploadType] = useState(null); // 'pdf' or 'images'
 
   useEffect(() => {
     // Get service ID from URL query parameter
@@ -80,36 +83,89 @@ const ServiceForm = () => {
     }));
   };
 
-  const handleFileChange = (e) => {
+  const convertImagesToPdf = async (imageFiles) => {
+    setIsConverting(true);
+    try {
+      const container = document.createElement('div');
+      container.style.width = '800px';
+      
+      const imageLoadPromises = imageFiles.map(file => {
+        return new Promise((resolve) => {
+          const img = document.createElement('img');
+          img.style.width = '100%';
+          img.style.marginBottom = '10px';
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            img.src = e.target.result;
+            img.onload = () => resolve(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const images = await Promise.all(imageLoadPromises);
+      images.forEach(img => container.appendChild(img));
+
+      const pdfOptions = {
+        margin: 10,
+        filename: 'converted_images.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      const pdfBlob = await html2pdf().set(pdfOptions).from(container).outputPdf('blob');
+      const pdfFile = new File([pdfBlob], 'converted_images.pdf', { type: 'application/pdf' });
+      return pdfFile;
+    } catch (error) {
+      console.error('Error converting images to PDF:', error);
+      throw error;
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const handlePdfUpload = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFileError('');
-    
-    // Validate file types
-    const invalidFiles = selectedFiles.filter(file => {
-      const isPDF = file.type === 'application/pdf';
-      const isImage = file.type.startsWith('image/');
-      return !(isPDF || isImage);
-    });
 
+    // Validate PDF files
+    const invalidFiles = selectedFiles.filter(file => file.type !== 'application/pdf');
     if (invalidFiles.length > 0) {
-      setFileError('Only PDF files and images are allowed');
+      setFileError('Please select only PDF files');
       return;
     }
 
-    setFiles(prev => [...prev, ...selectedFiles]);
+    setFiles(selectedFiles);
+    setUploadType('pdf');
   };
 
-  const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+  const handleImageUpload = async (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFileError('');
+
+    // Validate image files
+    const invalidFiles = selectedFiles.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      setFileError('Please select only image files');
+      return;
+    }
+
+    try {
+      const convertedPdf = await convertImagesToPdf(selectedFiles);
+      setFiles([convertedPdf]);
+      setUploadType('images');
+    } catch (error) {
+      console.error('Error processing images:', error);
+      setFileError('Error converting images to PDF. Please try again.');
+    }
   };
 
-  const convertImagesToSinglePDF = async (imageFiles) => {
-    // This is a placeholder for actual PDF conversion logic
-    // In a real implementation, you would use a PDF library
-    console.log('Converting images to PDF:', imageFiles);
-    
-    // Return a mock PDF file object
-    return new File(['mock pdf content'], 'combined_images.pdf', { type: 'application/pdf' });
+  const removeFiles = () => {
+    setFiles([]);
+    setUploadType(null);
+    setFileError('');
   };
 
   const handleSubmit = async (e) => {
@@ -123,25 +179,13 @@ const ServiceForm = () => {
     setIsSubmitting(true);
 
     try {
-      let finalFiles = [...files];
-      
-      // If there are multiple image files, convert them to a single PDF
-      const imageFiles = files.filter(file => file.type.startsWith('image/'));
-      if (imageFiles.length > 1) {
-        const combinedPDF = await convertImagesToSinglePDF(imageFiles);
-        
-        // Replace the image files with the combined PDF
-        const nonImageFiles = files.filter(file => !file.type.startsWith('image/'));
-        finalFiles = [...nonImageFiles, combinedPDF];
-      }
-
       // Prepare data for submission
       const requestData = {
         title: formData.title,
         description: formData.description,
         countryId: formData.country,
         serviceId: serviceId,
-        files: finalFiles.length === 1 ? finalFiles[0] : finalFiles
+        files: files.length === 1 ? files[0] : files
       };
 
       // Submit the form using the API service
@@ -246,50 +290,98 @@ const ServiceForm = () => {
                 ></textarea>
               </div>
               
-              {/* File Upload */}
+              {/* File Upload Section */}
               <div className="mb-6">
-                <label className="block text-gray-700 font-medium mb-2">Upload Documents</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
-                  <input
-                    type="file"
-                    id="fileUpload"
-                    onChange={handleFileChange}
-                    multiple
-                    accept=".pdf,image/*"
-                    className="hidden"
-                  />
-                  <label htmlFor="fileUpload" className="cursor-pointer">
-                    <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-700 mb-1">Drag and drop your files here or click to browse</p>
-                    <p className="text-sm text-gray-500">Accepts PDF files or images (JPG, PNG, etc.)</p>
-                  </label>
-                </div>
+                <label className="block text-gray-700 font-medium mb-4">Upload Documents</label>
+                
+                {!files.length && !isConverting && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PDF Upload Option */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="pdfUpload"
+                        onChange={handlePdfUpload}
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        disabled={!!uploadType && uploadType !== 'pdf'}
+                      />
+                      <label
+                        htmlFor="pdfUpload"
+                        className={`block border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          !uploadType || uploadType === 'pdf'
+                            ? 'border-blue-300 hover:border-blue-500 cursor-pointer'
+                            : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                        }`}
+                      >
+                        <FileText className="w-10 h-10 mx-auto mb-2 text-blue-500" />
+                        <p className="text-gray-700 font-medium">Upload PDF</p>
+                        <p className="text-sm text-gray-500 mt-1">Select a PDF file</p>
+                      </label>
+                    </div>
+
+                    {/* Image Upload Option */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="imageUpload"
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        disabled={!!uploadType && uploadType !== 'images'}
+                      />
+                      <label
+                        htmlFor="imageUpload"
+                        className={`block border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          !uploadType || uploadType === 'images'
+                            ? 'border-purple-300 hover:border-purple-500 cursor-pointer'
+                            : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                        }`}
+                      >
+                        <ImageIcon className="w-10 h-10 mx-auto mb-2 text-purple-500" />
+                        <p className="text-gray-700 font-medium">Create PDF from Images</p>
+                        <p className="text-sm text-gray-500 mt-1">Select multiple images</p>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Message */}
                 {fileError && (
                   <p className="mt-2 text-red-500 text-sm">{fileError}</p>
                 )}
-                
+
+                {/* Converting Status */}
+                {isConverting && (
+                  <div className="mt-4 text-center">
+                    <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Converting images to PDF...
+                    </div>
+                  </div>
+                )}
+
                 {/* File Preview */}
                 {files.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-gray-700 font-medium mb-2">Uploaded Files:</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-gray-700 font-medium">
+                        {uploadType === 'images' ? 'Converted PDF' : 'Uploaded PDF'}:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={removeFiles}
+                        className="text-sm text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        Remove {uploadType === 'images' ? 'converted PDF' : 'PDF'}
+                      </button>
+                    </div>
                     <div className="space-y-2">
                       {files.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-center">
-                            {file.type === 'application/pdf' ? (
-                              <FileText className="w-5 h-5 text-red-500 mr-2" />
-                            ) : (
-                              <ImageIcon className="w-5 h-5 text-blue-500 mr-2" />
-                            )}
-                            <span className="text-gray-700 truncate max-w-xs">{file.name}</span>
-                          </div>
-                          <button 
-                            type="button"
-                            onClick={() => removeFile(index)}
-                            className="text-gray-500 hover:text-red-600 transition-colors"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
+                        <div key={index} className="flex items-center bg-gray-50 p-3 rounded-lg">
+                          <FileText className="w-5 h-5 text-red-500 mr-2" />
+                          <span className="text-gray-700 truncate flex-1">{file.name}</span>
                         </div>
                       ))}
                     </div>
@@ -300,8 +392,12 @@ const ServiceForm = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-6 py-4 rounded-lg shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all flex items-center justify-center"
+                disabled={isSubmitting || files.length === 0}
+                className={`w-full font-medium px-6 py-4 rounded-lg shadow-lg transition-all flex items-center justify-center ${
+                  isSubmitting || files.length === 0
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/20 hover:shadow-blue-600/40'
+                }`}
               >
                 {isSubmitting ? (
                   <>

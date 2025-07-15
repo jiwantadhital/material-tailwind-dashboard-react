@@ -380,9 +380,7 @@ const UserProfile = () => {
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2" onClick={() => navigate('/')}>
-            <svg className="w-7 h-7 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 19h20L12 2zm0 3l7 14H5l7-14z"/>
-            </svg>
+            <img src="/img/nlogo.png" alt="Logo" className="h-10 w-10 object-contain" />
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Sajilo Notary</span>
           </div>
           

@@ -9,9 +9,7 @@ import {
   AlertCircle, 
   ChevronLeft, 
   ChevronRight, 
-  MessageCircle,
   FileImage,
-  Download,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -28,13 +26,28 @@ const DocumentStatusBadge = ({ status }) => {
     rejected: { bgColor: 'bg-red-100', textColor: 'text-red-800', icon: X, label: 'Rejected' },
     approved: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Approved' },
     under_review: { bgColor: 'bg-purple-100', textColor: 'text-purple-800', icon: AlertCircle, label: 'Under Review' },
+    awaiting_payment: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Awaiting Payment' },
+    needs_revision: { bgColor: 'bg-amber-100', textColor: 'text-amber-800', icon: AlertCircle, label: 'Needs Revision' },
+    document_processing: { bgColor: 'bg-blue-100', textColor: 'text-blue-800', icon: FileText, label: 'Document Processing' },
+    ready_for_pickup: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Ready for Pickup' },
+    on_hold: { bgColor: 'bg-gray-100', textColor: 'text-gray-800', icon: Clock, label: 'On Hold' },
+  };
+
+  // Helper function to convert status to user-friendly label
+  const formatStatusLabel = (status) => {
+    if (!status) return 'Unknown';
+    
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   };
 
   const config = statusConfig[status] || { 
     bgColor: 'bg-gray-100', 
     textColor: 'text-gray-800', 
     icon: AlertCircle, 
-    label: status ? status.replace('_', ' ').toUpperCase() : 'Unknown' 
+    label: formatStatusLabel(status)
   };
   const Icon = config.icon;
 
@@ -46,21 +59,40 @@ const DocumentStatusBadge = ({ status }) => {
   );
 };
 
-const PaymentStatusBadge = ({ status }) => {
+const PaymentStatusBadge = ({ paymentStatus }) => {
   const statusConfig = {
-    not_paid: { bgColor: 'bg-red-100', textColor: 'text-red-800', label: 'Not Paid' },
-    partially_paid: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', label: 'Partially Paid' },
-    full_paid: { bgColor: 'bg-green-100', textColor: 'text-green-800', label: 'Paid' },
+    not_paid: { bgColor: 'bg-red-100', textColor: 'text-red-800', icon: X, label: 'Not Paid' },
+    partially_paid: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Partially Paid' },
+    full_paid: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Fully Paid' },
   };
 
-  const config = statusConfig[status] || statusConfig.not_paid;
+  // Helper function to convert payment status to user-friendly label
+  const formatPaymentStatusLabel = (status) => {
+    if (!status) return 'Unknown';
+    
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const config = statusConfig[paymentStatus] || { 
+    bgColor: 'bg-gray-100', 
+    textColor: 'text-gray-800', 
+    icon: AlertCircle, 
+    label: formatPaymentStatusLabel(paymentStatus)
+  };
+  const Icon = config.icon;
 
   return (
-    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
+    <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
+      <Icon className="w-3 h-3 mr-1" />
       {config.label}
     </div>
   );
 };
+
+
 
 const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, hasNewMessages, onViewDocument }) => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -85,9 +117,7 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     }).format(date);
   };
 
@@ -154,6 +184,9 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                   Payment Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date Submitted
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -174,20 +207,18 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                           {document.title}
                           {/* New Update Badge */}
                           {document.document_mark?.is_new && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                               New Update
                             </span>
                           )}
                           {/* New Message Badge */}
                           {hasNewMessages[document.id] && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                               New Message
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500 truncate">
-                          {document.description}
-                        </div>
+                        
                         {document.estimated_time && (
                           <div className="text-xs text-blue-600 mt-1">
                             Est. completion: {formatDateTime(document.estimated_time)}
@@ -222,10 +253,16 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                     <DocumentStatusBadge status={document.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <PaymentStatusBadge status={document.payment?.payment_status} />
-                    {document.payment?.total_payment_amount && (
-                      <div className="text-xs text-gray-600 mt-1">
+                    <PaymentStatusBadge paymentStatus={document.payment?.payment_status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {document.payment?.total_payment_amount ? (
+                      <div className="text-sm font-medium text-gray-900">
                         NPR {parseFloat(document.payment.total_payment_amount).toLocaleString()}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">
+                        No payment
                       </div>
                     )}
                   </td>
@@ -233,33 +270,13 @@ const ServiceSection = ({ serviceName, serviceCode, serviceImage, documents, has
                     <div className="text-sm text-gray-900">{formatDate(document.created_at)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => onViewDocument(document.id)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
-                      >
-                        <FileText className="h-4 w-4 mr-1" />
-                        View
-                      </button>
-                      {document.file_url_full && (
-                        <a
-                          href={document.file_url_full}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-600 hover:text-green-900 flex items-center"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </a>
-                      )}
-                      <button
-                        onClick={() => onViewDocument(document.id)}
-                        className="text-indigo-600 hover:text-indigo-900 flex items-center"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        Message
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => onViewDocument(document.id)}
+                      className="text-blue-600 hover:text-blue-900 flex items-center justify-center px-3 py-1 rounded-md bg-blue-50 hover:bg-blue-100 transition-colors"
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -339,19 +356,65 @@ const UserDocuments = () => {
 
   const handleViewDocument = async (documentId) => {
     try {
-      // Mark document as read if it has new messages
-      if (hasNewMessages[documentId]) {
-        // await authService.markAsRead(documentId);
-        setHasNewMessages(prev => ({
-          ...prev,
-          [documentId]: false
-        }));
+      // Get the current document from the grouped documents
+      const currentDocument = Object.values(groupedDocuments)
+        .flatMap(group => group.documents)
+        .find(doc => doc.id === documentId);
+
+      if (!currentDocument) {
+        console.error('Document not found');
+        window.location.href = `/document/${documentId}`;
+        return;
       }
-      
-      // Navigate to document details page
+
+      // Update UI immediately (optimistic update)
+      setHasNewMessages(prev => ({
+        ...prev,
+        [documentId]: false
+      }));
+
+      // Update the grouped documents to remove the is_new flag
+      setGroupedDocuments(prevGrouped => {
+        const newGrouped = { ...prevGrouped };
+        Object.keys(newGrouped).forEach(serviceKey => {
+          newGrouped[serviceKey] = {
+            ...newGrouped[serviceKey],
+            documents: newGrouped[serviceKey].documents.map(doc => 
+              doc.id === documentId 
+                ? { 
+                    ...doc, 
+                    document_mark: { 
+                      ...doc.document_mark, 
+                      is_new: false,
+                      has_new_message_for_user: false
+                    }
+                  }
+                : doc
+            )
+          };
+        });
+        return newGrouped;
+      });
+
+      // Fire-and-forget API calls (don't wait for responses)
+      if (currentDocument.document_mark?.is_new) {
+        authService.markAsRead(documentId)
+          .then(() => console.log('Document marked as read (new update cleared)'))
+          .catch(error => console.error('Error marking document as read:', error));
+      }
+
+      if (hasNewMessages[documentId]) {
+        authService.markAsReadForAdmin(documentId)
+          .then(() => console.log('Messages marked as read (new message cleared)'))
+          .catch(error => console.error('Error marking messages as read:', error));
+      }
+
+      // Navigate immediately - don't wait for API calls
       window.location.href = `/document/${documentId}`;
     } catch (error) {
-      console.error('Error marking document as read:', error);
+      console.error('Error in handleViewDocument:', error);
+      // Navigate even if there's an error
+      window.location.href = `/document/${documentId}`;
     }
   };
 
@@ -389,7 +452,6 @@ const UserDocuments = () => {
           </Link>
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">Requested Documents</h1>
-            <p className="text-gray-600 mt-1">Organized by service type</p>
           </div>
           <div></div> {/* Spacer for centering */}
         </div>

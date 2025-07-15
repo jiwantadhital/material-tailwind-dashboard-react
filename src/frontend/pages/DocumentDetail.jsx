@@ -20,6 +20,85 @@ import {
 
 const API_BASE_URL = 'https://sajilonotary.xyz/';
 
+const DocumentStatusBadge = ({ status }) => {
+  const statusConfig = {
+    pending: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Pending' },
+    cost_estimated: { bgColor: 'bg-blue-100', textColor: 'text-blue-800', icon: FileText, label: 'Cost Estimated' },
+    payment_pending: { bgColor: 'bg-orange-100', textColor: 'text-orange-800', icon: Clock, label: 'Payment Pending' },
+    in_progress: { bgColor: 'bg-indigo-100', textColor: 'text-indigo-800', icon: FileText, label: 'In Progress' },
+    completed: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Completed' },
+    rejected: { bgColor: 'bg-red-100', textColor: 'text-red-800', icon: X, label: 'Rejected' },
+    approved: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Approved' },
+    under_review: { bgColor: 'bg-purple-100', textColor: 'text-purple-800', icon: Clock, label: 'Under Review' },
+    awaiting_payment: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Awaiting Payment' },
+    needs_revision: { bgColor: 'bg-amber-100', textColor: 'text-amber-800', icon: Clock, label: 'Needs Revision' },
+    document_processing: { bgColor: 'bg-blue-100', textColor: 'text-blue-800', icon: FileText, label: 'Document Processing' },
+    ready_for_pickup: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Ready for Pickup' },
+    on_hold: { bgColor: 'bg-gray-100', textColor: 'text-gray-800', icon: Clock, label: 'On Hold' },
+  };
+
+  // Helper function to convert status to user-friendly label
+  const formatStatusLabel = (status) => {
+    if (!status) return 'Unknown';
+    
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const config = statusConfig[status] || { 
+    bgColor: 'bg-gray-100', 
+    textColor: 'text-gray-800', 
+    icon: Clock, 
+    label: formatStatusLabel(status)
+  };
+  const Icon = config.icon;
+
+  return (
+    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bgColor} ${config.textColor}`}>
+      <Icon className="w-4 h-4 mr-1" />
+      {config.label}
+    </div>
+  );
+};
+
+const PaymentStatusBadge = ({ paymentStatus }) => {
+  const statusConfig = {
+    not_paid: { bgColor: 'bg-red-100', textColor: 'text-red-800', icon: X, label: 'Not Paid' },
+    partially_paid: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', icon: Clock, label: 'Partially Paid' },
+    full_paid: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Fully Paid' },
+    paid: { bgColor: 'bg-green-100', textColor: 'text-green-800', icon: Check, label: 'Paid' },
+  };
+
+  // Helper function to convert payment status to user-friendly label
+  const formatPaymentStatusLabel = (status) => {
+    if (!status) return 'Unknown';
+    
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const config = statusConfig[paymentStatus] || { 
+    bgColor: 'bg-gray-100', 
+    textColor: 'text-gray-800', 
+    icon: Clock, 
+    label: formatPaymentStatusLabel(paymentStatus)
+  };
+  const Icon = config.icon;
+
+  return (
+    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
+      <Icon className="w-3 h-3 mr-1" />
+      {config.label}
+    </div>
+  );
+};
+
+
+
 const DocumentDetail = () => {
   const { id } = useParams();
   const [document, setDocument] = useState(null);
@@ -52,6 +131,7 @@ const DocumentDetail = () => {
   const [availablePaymentInstruments, setAvailablePaymentInstruments] = useState([]);
   const [selectedPaymentInstrument, setSelectedPaymentInstrument] = useState(null);
   const [showPaymentSelection, setShowPaymentSelection] = useState(false);
+  const [activePaymentTab, setActivePaymentTab] = useState('wallets');
 
   const fetchMessages = async () => {
     try {
@@ -84,6 +164,20 @@ const DocumentDetail = () => {
         
         if (response.success) {
           setDocument(response.data);
+          
+          // Fire-and-forget API calls (don't wait for responses)
+          if (response.data.document_mark?.is_new) {
+            authService.markAsRead(id)
+              .then(() => console.log('Document marked as read (new update cleared)'))
+              .catch(error => console.error('Error marking document as read:', error));
+          }
+
+          if (response.data.document_mark?.has_new_message_for_user) {
+            authService.markAsReadForAdmin(id)
+              .then(() => console.log('Messages marked as read (new message cleared)'))
+              .catch(error => console.error('Error marking messages as read:', error));
+          }
+          
           // Fetch messages
           fetchMessages();
         } else {
@@ -199,6 +293,15 @@ const DocumentDetail = () => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    }).format(date);
+  };
+
+  const formatDateOnly = (dateString) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     }).format(date);
   };
 
@@ -735,26 +838,6 @@ const DocumentDetail = () => {
     );
   }
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
-      cost_estimated: { color: 'bg-green-100 text-green-800', icon: Check, label: 'Cost Estimated' },
-      rejected: { color: 'bg-red-100 text-red-800', icon: X, label: 'Rejected' },
-      in_progress: { color: 'bg-blue-100 text-blue-800', icon: FileText, label: 'In Progress' },
-      completed: { color: 'bg-purple-100 text-purple-800', icon: Check, label: 'Completed' }
-    };
-    
-    const config = statusMap[status] || statusMap.pending;
-    const Icon = config.icon;
-    
-    return (
-      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
-        <Icon className="w-4 h-4 mr-1" />
-        {config.label}
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100">
       {/* Navigation */}
@@ -793,15 +876,9 @@ const DocumentDetail = () => {
                 </p>
               </div>
               <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-                {getStatusBadge(document.status)}
+                <DocumentStatusBadge status={document.status} />
                 
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  document.payment?.payment_status === 'full_paid' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {document.payment?.payment_status}
-                </div>
+                <PaymentStatusBadge paymentStatus={document.payment?.payment_status} />
               </div>
             </div>
           </div>
@@ -820,12 +897,14 @@ const DocumentDetail = () => {
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Status</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{document.status}</dd>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        <DocumentStatusBadge status={document.status} />
+                      </dd>
                     </div>
                     {document.estimated_time && (
                       <div>
                         <dt className="text-sm font-medium text-gray-500">Estimated Completion</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{document.estimated_time}</dd>
+                        <dd className="mt-1 text-sm text-gray-900">{formatDateOnly(document.estimated_time)}</dd>
                       </div>
                     )}
                     {document.completed_at && (
@@ -847,13 +926,7 @@ const DocumentDetail = () => {
                       <div>
                         <dt className="text-sm font-medium text-gray-500">Payment Status</dt>
                         <dd className="mt-1 text-sm">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            document.payment.payment_status === 'paid' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {document.payment.payment_status}
-                          </span>
+                          <PaymentStatusBadge paymentStatus={document.payment.payment_status} />
                         </dd>
                       </div>
                       <div>
@@ -1427,7 +1500,7 @@ const DocumentDetail = () => {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             <div className="text-center">
               {paymentStep === 'processing' && (
                 <>
@@ -1441,49 +1514,106 @@ const DocumentDetail = () => {
 
               {paymentStep === 'selectPayment' && (
                 <>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
-                  <p className="text-sm text-gray-500 mb-6">
+                  <h3 className="text-xl font-medium text-gray-900 mb-4">Select Payment Method</h3>
+                  <p className="text-sm text-gray-500 mb-4">
                     Choose your preferred payment method from the options below:
                   </p>
-                  <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {availablePaymentInstruments.map((instrument, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handlePaymentInstrumentSelected(instrument)}
-                        disabled={paymentLoading}
-                        className="w-full p-3 text-left border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">
-                              {instrument.InstrumentName || instrument.instrumentName || 'Payment Method'}
-                            </p>
-                            <p className="text-sm text-blue-600 font-mono">
-                              {instrument.InstrumentCode || instrument.instrumentCode}
-                            </p>
-                            {instrument.Description && (
-                              <p className="text-xs text-gray-500 mt-1">{instrument.Description}</p>
-                            )}
-                          </div>
-                          <div className="ml-2">
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                  
+                  {/* Payment method counter */}
+                  <div className="flex items-center justify-between mb-4 px-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      {availablePaymentInstruments.length} payment methods available
+                    </span>
+                    {availablePaymentInstruments.length > 6 && (
+                      <span className="text-xs text-blue-600 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                        Scroll to see all
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      setPaymentStep('init');
-                      setShowPaymentSelection(false);
-                    }}
-                    className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Cancel
-                  </button>
+                  
+                  {/* 2-column grid layout with scroll indicators - reduced height */}
+                  <div className="relative flex-1 min-h-0">
+                    <div className="max-h-[45vh] overflow-y-auto border rounded-lg p-4 bg-gray-50 scroll-smooth" id="payment-methods-container">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePaymentInstruments.map((instrument, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handlePaymentInstrumentSelected(instrument)}
+                            disabled={paymentLoading}
+                            className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white shadow-sm"
+                          >
+                            <div className="flex items-center space-x-3">
+                              {/* Logo */}
+                              <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                                {instrument.LogoUrl && instrument.LogoUrl !== 'https://apisandbox.nepalpayment.com/UploadedImages/PaymentInstitution/' ? (
+                                  <img 
+                                    src={instrument.LogoUrl} 
+                                    alt={instrument.InstrumentName}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="text-sm text-gray-500 font-medium text-center">
+                                    {instrument.InstrumentName?.charAt(0) || 'P'}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Payment method info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-900 text-sm truncate">
+                                  {instrument.InstrumentName}
+                                </p>
+                                <p className="text-xs text-blue-600 font-mono">
+                                  {instrument.InstrumentCode}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {instrument.BankType}
+                                </p>
+                              </div>
+                              
+                              {/* Arrow */}
+                              <div className="flex-shrink-0">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Fade gradient at bottom to indicate scrollable content */}
+                    {availablePaymentInstruments.length > 6 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none rounded-b-lg"></div>
+                    )}
+                  </div>
+                  
+                  {/* Scroll hint for many payment methods - moved above button */}
+                  {availablePaymentInstruments.length > 8 && (
+                    <div className="text-center mt-3 mb-4">
+                      <p className="text-xs text-gray-500">
+                        💡 Tip: Use mouse wheel or scroll bar to see all {availablePaymentInstruments.length} payment options
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Fixed cancel button area */}
+                  <div className="text-center mt-4 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        setShowPaymentModal(false);
+                        setPaymentStep('init');
+                        setShowPaymentSelection(false);
+                      }}
+                      className="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </>
               )}
               

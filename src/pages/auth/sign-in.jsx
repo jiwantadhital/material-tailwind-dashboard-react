@@ -200,16 +200,16 @@ export function SignIn() {
     <div className="min-h-screen bg-blue-gray-50/50 flex justify-center items-center px-4">
       <Card className="w-full max-w-[500px] p-6 shadow-xl">
         <div className="flex justify-center mb-6">
-          <img src="/img/logo-ct-dark.png" alt="Logo" className="h-12" />
+          <img src="/img/nlogo.png" alt="Logo" className="h-16" />
         </div>
         
         {currentStep === 'signin' ? (
           <div className="text-center mb-8">
             <Typography variant="h3" color="blue-gray" className="font-bold">
-              Sign In
+              Welcome Back
             </Typography>
             <Typography variant="paragraph" color="blue-gray" className="text-blue-gray-500 mt-1">
-              Enter your credentials to access the dashboard
+              Sign in to your Sajilonotary account
             </Typography>
           </div>
         ) : (
@@ -315,7 +315,7 @@ export function SignIn() {
               containerProps={{ className: "mr-2" }}
             />
             <Typography variant="small" color="blue-gray">
-              Remember me for 30 days
+              Remember me
             </Typography>
           </div>
           

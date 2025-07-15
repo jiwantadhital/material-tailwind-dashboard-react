@@ -148,6 +148,16 @@ export default function Create_admin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if at least one service is selected
+    if (!adminData.services || adminData.services.length === 0) {
+      setAlertType("error");
+      setAlertMessage("Please select at least one service for the admin.");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       // Call the createAdmin function from authService with FormData
@@ -445,7 +455,7 @@ export default function Create_admin() {
 
                 <div className="col-span-2">
                   <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                    Services <span className="text-xs text-blue-500 ml-1">(Select multiple)</span>
+                    Services <span className="text-red-500">*</span> <span className="text-xs text-blue-500 ml-1">(Select multiple)</span>
                   </Typography>
                   <div className="relative">
                     <Select

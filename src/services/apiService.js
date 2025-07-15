@@ -56,17 +56,11 @@ export const authService = {
             headers: { Authorization: `Bearer ${token}` }
           });
 
-          const servicesResponse = await apiService.get('/api/get-all-services', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          
-          
-          // Save user and kyc data to localStorage
-          const { user, kyc_record } = initResponse.data.data;
+          // Use services from initResponse - they are already filtered based on user role
+          const { user, kyc_record, services } = initResponse.data.data;
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('kyc_record', JSON.stringify(kyc_record));
-          localStorage.setItem('services', JSON.stringify(servicesResponse.data));
+          localStorage.setItem('services', JSON.stringify({ data: services }));
           // Return combined data
           return {
             ...userData,
@@ -97,20 +91,16 @@ export const authService = {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        const servicesResponse = await apiService.get('/api/get-all-services', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        // Save user and kyc data to localStorage
-        const { user, kyc_record } = initResponse.data.data;
+        // Use services from initResponse - they are already filtered based on user role
+        const { user, kyc_record, services } = initResponse.data.data;
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('kyc_record', JSON.stringify(kyc_record));
-        localStorage.setItem('services', JSON.stringify(servicesResponse.data));
+        localStorage.setItem('services', JSON.stringify({ data: services }));
         
         return {
           user,
           kyc_record,
-          services: servicesResponse.data
+          services: { data: services }
         };
       } catch (error) {
         console.error('Complete login error:', error);
