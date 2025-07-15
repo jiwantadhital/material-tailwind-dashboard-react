@@ -383,20 +383,14 @@ const DocumentDetail = () => {
       });
       
       if (response.success) {
-        // Update document status in the UI
-        setDocument(prevDoc => ({
-          ...prevDoc,
-          status: 'approved'
-        }));
-        
         // Send a message about acceptance
         const messageData = new FormData();
         messageData.append('document_id', id);
         messageData.append('message', 'I have accepted the reviewed document.');
         await authService.sendMessage(messageData);
         
-        // Refresh messages
-        fetchMessages();
+        // Reload the page to reflect all changes
+        window.location.reload();
       } else {
         throw new Error(response.message || 'Failed to accept the document');
       }
@@ -425,24 +419,14 @@ const DocumentDetail = () => {
       );
       
       if (response.success) {
-        // Update document status in the UI
-        setDocument(prevDoc => ({
-          ...prevDoc,
-          status: 'rejected'
-        }));
-        
         // Send a message about rejection with reason
         const messageData = new FormData();
         messageData.append('document_id', id);
         messageData.append('message', `I have rejected the reviewed document. Reason: ${rejectionReason}`);
         await authService.sendMessage(messageData);
         
-        // Refresh messages
-        fetchMessages();
-        
-        // Close modal
-        setShowRejectModal(false);
-        setRejectionReason('');
+        // Reload the page to reflect all changes
+        window.location.reload();
       } else {
         throw new Error(response.message || 'Failed to reject the document');
       }
@@ -884,7 +868,7 @@ const DocumentDetail = () => {
           </div>
           
           {/* Document Content */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[800px]">
             {/* Left Column - Details */}
             <div className="md:col-span-2 space-y-6">
               <div>
@@ -1013,7 +997,7 @@ const DocumentDetail = () => {
                         <span className="text-sm text-gray-900">Original Document</span>
                       </div>
                       <a 
-                        href={`${API_BASE_URL}${document.file_url_full}`}
+                        href={`${document.file_url_full}`}
                         target="_blank"
                         rel="noopener noreferrer" 
                         className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -1053,7 +1037,7 @@ const DocumentDetail = () => {
                         )}
                       </div>
                       
-                      {document.recheck_file_url !== null && document.isAcceptedByUser !== true && (
+                      {document.recheck_file_url !== null && document.isAcceptedByUser === null && (
                         <div className="flex items-center space-x-2 pt-2 border-t border-gray-200">
                           <button 
                             onClick={handleAcceptFile}
@@ -1099,38 +1083,27 @@ const DocumentDetail = () => {
                           </button>
                         </div>
                       )}
-                      {document.recheck_file_url !== null && document.isAcceptedByUser === false &&  (
-                        <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-md">
-                          <p className="text-sm text-blue-800 mb-3">
-                            You have rejected the recheck file, {document.rejection_reason}.
+                      {document.recheck_file_url !== null && document.isAcceptedByUser === false && (
+                        <div className="mt-3 p-3 bg-orange-50 border border-orange-100 rounded-md">
+                          <p className="text-sm text-orange-800 mb-2">
+                            You have rejected the recheck file. Reason: {document.rejection_reason}
                           </p>
-                          <button 
-                            onClick={handlePayRemaining}
-                            disabled={paymentLoading}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {paymentLoading ? (
-                              <>
-                                <Loader className="h-4 w-4 mr-1 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              `Pay Now - Rs${parseFloat(document.payment.remaining_payment_amount).toFixed(2)}`
-                            )}
-                          </button>
+                          <p className="text-sm text-orange-700 font-medium">
+                            Please wait for another recheck file from our team.
+                          </p>
                         </div>
                       )}
                     </div>
                   )}
                   
-                  {document.final_file_zip_url && (
+                  {document.final_file_zip_url_full && (
                     <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 text-purple-500 mr-2" />
                         <span className="text-sm text-gray-900">Final Document</span>
                       </div>
                       <a 
-                        href={`${API_BASE_URL}${document.final_file_zip_url}`}
+                        href={`${document.final_file_zip_url_full}`}
                         target="_blank"
                         rel="noopener noreferrer" 
                         className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
@@ -1216,9 +1189,9 @@ const DocumentDetail = () => {
                   
                   {/* Messages List with transition */}
                   <div className={`transition-all duration-300 ease-in-out ${
-                    isChatOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+                    isChatOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
                   }`}>
-                    <div className="flex-grow overflow-y-auto p-4 space-y-6 max-h-[400px] bg-gradient-to-b from-gray-50 to-white">
+                    <div className="flex-grow overflow-y-auto p-4 space-y-6 max-h-[600px] bg-gradient-to-b from-gray-50 to-white">
                       {messagesLoading ? (
                         <div className="flex justify-center py-4">
                           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>

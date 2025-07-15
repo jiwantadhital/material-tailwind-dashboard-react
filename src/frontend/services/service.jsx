@@ -124,21 +124,33 @@ const ServiceDetailPage = () => {
           title: apiData.name,
           description: apiData.price_description,
           mainImage: `${apiData.image_url}`,
-          content: `<h2>About Our ${apiData.name} Services</h2><div>${apiData.price_description}</div>`,
+          content: apiData.how_it_works || `Professional ${apiData.name} services tailored to your needs.`,
           // Parse pricing from price_range
           pricing: apiData.price_range ? [
-            { name: `${apiData.name} Service`, price: apiData.price_range }
+            { name: `${apiData.name} Service`, price: `Rs. ${apiData.price_range}` }
           ] : [],
-          // Requirements as HTML content
-          requirements: apiData.requirements || '',
+          // Requirements as plain text
+          requirements: apiData.requirements || 'Requirements will be specified during consultation.',
           // Parse steps from how_it_works or use default
-          steps: apiData.how_it_works ? [
+          steps: [
             {
-              title: "How It Works",
-              description: apiData.how_it_works
+              title: "Submit Request",
+              description: "Fill out the service form with your details and requirements."
+            },
+            {
+              title: "Review & Quote",
+              description: "Our experts will review your request and provide a detailed quote."
+            },
+            {
+              title: "Payment & Processing",
+              description: "Once payment is confirmed, we'll begin processing your request."
+            },
+            {
+              title: "Delivery",
+              description: "Receive your completed documents securely and promptly."
             }
-          ] : [],
-          documents: ["Documents will be specified during the service request process"]
+          ],
+          code: apiData.code
         });
       }
     } catch (error) {
@@ -240,10 +252,6 @@ const ServiceDetailPage = () => {
                     <span>Get Started Now</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
-                  
-                  <button className="border border-gray-300 text-gray-700 hover:border-blue-300 hover:text-blue-600 font-semibold px-6 py-3 rounded-lg transition-colors bg-white">
-                    Learn More
-                  </button>
                 </div>
               </div>
               
@@ -272,39 +280,48 @@ const ServiceDetailPage = () => {
                   <div className="p-1.5 bg-blue-100 rounded-lg">
                     <FileText className="w-5 h-5 text-blue-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Service Details</h2>
+                  <h2 className="text-xl font-bold text-gray-900">How It Works</h2>
                 </div>
-                <div 
-                  dangerouslySetInnerHTML={{ __html: serviceData.content }} 
-                  className="text-gray-600 leading-relaxed prose prose-blue max-w-none text-sm" 
-                />
+                <p className="text-gray-600 leading-relaxed text-sm">
+                  {serviceData.content}
+                </p>
               </div>
 
-              {/* Documents Card */}
+              {/* Service Features Card */}
               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="p-1.5 bg-green-100 rounded-lg">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Documents We Handle</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Why Choose Our Service</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {serviceData.documents && serviceData.documents.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium text-sm">{item}</span>
-                    </div>
-                  ))}
+                  <div className="flex items-center space-x-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700 font-medium text-sm">Professional Service</span>
+                  </div>
+                  <div className="flex items-center space-x-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700 font-medium text-sm">Quick Processing</span>
+                  </div>
+                  <div className="flex items-center space-x-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700 font-medium text-sm">Secure & Confidential</span>
+                  </div>
+                  <div className="flex items-center space-x-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700 font-medium text-sm">Expert Support</span>
+                  </div>
                 </div>
               </div>
 
-              {/* How It Works Card */}
+              {/* Service Process Card */}
               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="p-1.5 bg-gray-100 rounded-lg">
                     <Clock className="w-5 h-5 text-gray-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">How It Works</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Service Process</h2>
                 </div>
                 <div className="space-y-4">
                   {serviceData.steps && serviceData.steps.map((step, index) => (
@@ -314,10 +331,9 @@ const ServiceDetailPage = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-base font-bold text-gray-800 mb-1">{step.title}</h3>
-                        <div 
-                          className="text-gray-600 leading-relaxed text-sm"
-                          dangerouslySetInnerHTML={{ __html: step.description }}
-                        />
+                        <p className="text-gray-600 leading-relaxed text-sm">
+                          {step.description}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -350,15 +366,12 @@ const ServiceDetailPage = () => {
                 <div className="mb-5">
                   <h4 className="text-base font-bold mb-3 text-gray-900 flex items-center space-x-2">
                     <Shield className="w-4 h-4 text-blue-500" />
-                    <span>Required Documents</span>
+                    <span>Requirements</span>
                   </h4>
                   <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    {serviceData.requirements && (
-                      <div 
-                        className="text-gray-600 text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: serviceData.requirements }}
-                      />
-                    )}
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {serviceData.requirements}
+                    </p>
                   </div>
                 </div>
 
