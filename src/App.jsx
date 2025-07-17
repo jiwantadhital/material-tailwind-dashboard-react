@@ -26,6 +26,7 @@ import PaymentFailure from "@/frontend/pages/PaymentFailure";
 import PaymentCancel from "@/frontend/pages/PaymentCancel";
 // import PricingPage from "@/frontend/pages/Pricing"; // Disabled - not in use
 import { LawyerRevenue } from "@/pages/dashboard";
+import { TermsAndConditions, PrivacyPolicy } from "@/pages/legal";
 
 function App() {
   const location = useLocation();
@@ -118,6 +119,10 @@ function App() {
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-failure" element={<PaymentFailure />} />
       <Route path="/payment-cancel" element={<PaymentCancel />} />
+      
+      {/* Legal Pages */}
+      <Route path="/terms" element={<TermsAndConditions />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
       
       {
         token != null && userRole !== "user" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :

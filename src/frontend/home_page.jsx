@@ -775,59 +775,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Simplified Developer Section */}
-      <section className="py-8 bg-gray-50 reveal">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-4 text-gray-900">
-                Development by passionate experts
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Our team of dedicated developers ensures the platform is secure, reliable, and intuitive, providing the best possible experience for our users.
-              </p>
-              <button 
-                onClick={() => navigate('/auth/sign-up')}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                Get started
-              </button>
-            </div>
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-md">
-              <h4 className="font-bold mb-4">Development Metrics</h4>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm text-gray-600">System Reliability</span>
-                    <span className="text-sm font-medium">99.9%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '99.9%'}}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm text-gray-600">Response Time</span>
-                    <span className="text-sm font-medium">280ms</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '85%'}}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm text-gray-600">Code Quality</span>
-                    <span className="text-sm font-medium">A+</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '95%'}}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+     
 
       {/* Call to Action Section */}
       <section id="cta" className="py-8 bg-blue-50 reveal">
@@ -858,13 +806,7 @@ const LandingPage = () => {
                     <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                       {!isLoggedIn ? (
                         <>
-                          <button 
-                            onClick={() => navigate('/auth/sign-up')}
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                          >
-                            {ctaContent.primary_button_text}
-                            <ArrowRight className="ml-2 w-4 h-4" />
-                          </button>
+                         
                           <button 
                             onClick={() => navigate('/auth/sign-in')}
                             className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm"

@@ -240,13 +240,7 @@ const ServiceDetailPage = () => {
                   </div>
                 </div>
 
-                <button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-lg transition-colors shadow-md flex items-center justify-center space-x-2"
-                  onClick={handleStartButtonClick}
-                >
-                  <span>Start Your Service</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+               
               </div>
             </div>
           </div>
