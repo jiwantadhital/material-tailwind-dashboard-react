@@ -218,13 +218,13 @@ const ServicesPage = () => {
             {services.map((service, index) => (
               <div 
                 key={index} 
-                className="bg-white p-6 rounded-xl border border-gray-200 hover:border-blue-500/20 transition-all duration-300 hover:shadow-xl shadow-lg relative overflow-hidden group cursor-pointer"
+                className="bg-white p-6 rounded-xl border border-gray-200 hover:border-blue-500/20 transition-all duration-300 hover:shadow-xl shadow-lg relative overflow-hidden group cursor-pointer flex flex-col"
                 onClick={() => navigate(`/services/${service.id}`)}
               >
                 {/* Card gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
-                <div className="relative z-10">
+                <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-gray-800">{service.title}</h3>
                     <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg group-hover:from-blue-100 group-hover:to-blue-200 transition-colors w-14 h-14 flex items-center justify-center">
@@ -239,7 +239,7 @@ const ServicesPage = () => {
                       )}
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4">
+                  <p className="text-gray-600 text-sm mb-4 flex-1">
                     {service.description}
                   </p>
                   <button 
@@ -247,7 +247,7 @@ const ServicesPage = () => {
                       e.stopPropagation();
                       navigate(`/services/${service.id}`);
                     }} 
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2.5 rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2.5 rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 mt-auto"
                   >
                     Apply Now
                   </button>
