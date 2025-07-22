@@ -520,6 +520,7 @@ export const authService = {
       },
 
       getservicebyId: async (serviceId) => {
+        // Use public endpoint for frontend service details (no authentication required)
         const response = await apiService.get(`/api/get-service-by-id/${serviceId}`);
         return response.data;
       },

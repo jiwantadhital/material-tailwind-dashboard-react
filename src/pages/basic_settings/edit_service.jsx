@@ -21,6 +21,9 @@ import {
 import { styled } from '@mui/material/styles';
 import { toast } from 'react-toastify';
 import { authService } from '../../services/apiService';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { Textarea } from "@material-tailwind/react";
 
 // Styled components for enhanced visual appeal
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -109,6 +112,29 @@ const ImagePreviewContainer = styled(Paper)(({ theme }) => ({
   maxWidth: 320,
 }));
 
+const StyledQuillEditor = styled('div')(({ theme, error }) => ({
+  '& .ql-container': {
+    borderRadius: '0 0 10px 10px',
+    border: `1px solid ${error ? theme.palette.error.main : theme.palette.divider}`,
+    borderTop: 'none',
+    minHeight: '200px',
+    fontSize: '14px',
+  },
+  '& .ql-toolbar': {
+    borderRadius: '10px 10px 0 0',
+    border: `1px solid ${error ? theme.palette.error.main : theme.palette.divider}`,
+    borderBottom: 'none',
+  },
+  '& .ql-editor': {
+    minHeight: '200px',
+    padding: '12px 16px',
+  },
+  '& .ql-editor.ql-blank::before': {
+    color: theme.palette.text.secondary,
+    fontStyle: 'italic',
+  },
+}));
+
 // Simple check icon component
 const CheckIcon = () => (
   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -132,6 +158,31 @@ const DeleteIcon = () => (
   </svg>
 );
 
+// Quill editor configuration
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    ['link', 'blockquote'],
+    ['clean']
+  ],
+  clipboard: {
+    matchVisual: false,
+  },
+};
+
+const quillFormats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet',
+  'color', 'background',
+  'align',
+  'link', 'blockquote'
+];
+
 const EditService = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -141,9 +192,8 @@ const EditService = () => {
     title: '',
     code: '',
     priceRange: '',
-    pricingDescription: '',
-    howItWorks: '',
-    requirements: '',
+    shortDescription: '',
+    description: '',
     image: null,
     imagePreview: null,
     isActive: true,
@@ -162,14 +212,17 @@ const EditService = () => {
       authService.getservicebyId(id)
         .then(response => {
           const data = response.data;
+          
+          // When loading service data
+          const cleanDescription = data.description || '';
+          
           // Map backend field names to frontend field names
           setService({
             title: data.name || '',
             code: data.code || '',
             priceRange: data.price_range || '',
-            pricingDescription: data.price_description || '',
-            howItWorks: data.how_it_works || '',
-            requirements: data.requirements || '',
+            shortDescription: data.short_description || '',
+            description: cleanDescription,
             imagePreview: data.image_url || null,
             image: null,
             isActive: data.is_active === 1 || data.is_active === true,
@@ -221,7 +274,8 @@ const EditService = () => {
     if (!service.title.trim()) newErrors.title = 'Title is required';
     if (!service.code.trim()) newErrors.code = 'Code is required';
     if (!service.priceRange.trim()) newErrors.priceRange = 'Price range is required';
-    if (!service.howItWorks.trim()) newErrors.howItWorks = 'How it works is required';
+    if (!service.shortDescription.trim()) newErrors.shortDescription = 'Short description is required';
+    if (!service.description.trim()) newErrors.description = 'Description is required';
     if (!isEditMode && !service.image) newErrors.image = 'Image is required';
     
     setErrors(newErrors);
@@ -239,13 +293,14 @@ const EditService = () => {
       // Create FormData to handle file upload
       const formData = new FormData();
       
+      // When saving service data
+      formData.append('description', service.description);
+      
       // Map frontend field names to backend field names
       formData.append('name', service.title);
       formData.append('code', service.code);
       formData.append('price_range', service.priceRange);
-      formData.append('price_description', service.pricingDescription);
-      formData.append('how_it_works', service.howItWorks);
-      formData.append('requirements', service.requirements);
+      formData.append('short_description', service.shortDescription);
       formData.append('is_active', service.isActive ? 1 : 0);
       formData.append('is_featured', service.isTopRated ? 1 : 0);
       formData.append('percentage_of_price', service.percentageOfPrice);
@@ -430,20 +485,6 @@ const EditService = () => {
                     }}
                   />
                 </Grid>
-                
-                <Grid item xs={12}>
-                  <StyledInput
-                    fullWidth
-                    label="Pricing Description"
-                    name="pricingDescription"
-                    value={service.pricingDescription}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                    placeholder="Explain pricing factors and what impacts the final price..."
-                  />
-                </Grid>
               </Grid>
             </Box>
             
@@ -455,32 +496,47 @@ const EditService = () => {
                 <Grid item xs={12}>
                   <StyledInput
                     fullWidth
-                    label="How It Works"
-                    name="howItWorks"
-                    value={service.howItWorks}
+                    label="Short Description"
+                    name="shortDescription"
+                    value={service.shortDescription}
                     onChange={handleInputChange}
                     multiline
-                    rows={4}
-                    error={!!errors.howItWorks}
-                    helperText={errors.howItWorks}
+                    rows={3}
+                    error={!!errors.shortDescription}
+                    helperText={errors.shortDescription || "Brief description of the service (max 255 characters)"}
                     required
                     variant="outlined"
-                    placeholder="Describe the service process from start to finish..."
+                    placeholder="Brief overview of what this service offers..."
+                    inputProps={{ maxLength: 255 }}
                   />
                 </Grid>
                 
                 <Grid item xs={12}>
-                  <StyledInput
-                    fullWidth
-                    label="Requirements"
-                    name="requirements"
-                    value={service.requirements}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                    placeholder="List what clients need to provide or prepare..."
-                  />
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                      Full Description (Raw HTML)
+                    </Typography>
+                    <Textarea
+                      name="description"
+                      value={service.description}
+                      onChange={handleInputChange}
+                      placeholder="Enter HTML content for this service"
+                      required
+                      rows={8}
+                      className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                      labelProps={{
+                        className: "before:content-none after:content-none",
+                      }}
+                    />
+                    {errors.description && (
+                      <FormHelperText error sx={{ mt: 1, fontSize: '0.9rem' }}>
+                        {errors.description}
+                      </FormHelperText>
+                    )}
+                    <FormHelperText sx={{ mt: 1, fontSize: '0.9rem', color: 'text.secondary' }}>
+                      You can use HTML tags for formatting (e.g., <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;a&gt;</code>, etc.)
+                    </FormHelperText>
+                  </Box>
                 </Grid>
               </Grid>
             </Box>

@@ -68,7 +68,7 @@ const ServicesPage = () => {
             id: service.id,
             icon: getServiceIcon(service.code),
             title: service.name,
-            description: service.price_description || service.description || 'Professional service',
+            description: service.short_description || service.description || 'Professional service',
             category: getServiceCategory(service.code),
             slug: service.code,
             code: service.code,
@@ -76,8 +76,8 @@ const ServicesPage = () => {
             is_featured: service.is_featured,
             price_range: service.price_range,
             image_url: service.image_url,
-            how_it_works: service.how_it_works,
-            requirements: service.requirements,
+            short_description: service.short_description,
+            full_description: service.description,
             percentage_of_price: service.percentage_of_price
           }));
           

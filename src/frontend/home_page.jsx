@@ -258,7 +258,7 @@ const LandingPage = () => {
         id: service.id,
         icon: getServiceIcon(service.code),
         title: service.name,
-        description: service.price_description,
+                        description: service.short_description,
         slug: service.code,
         code: service.code,
         price_range: service.price_range,

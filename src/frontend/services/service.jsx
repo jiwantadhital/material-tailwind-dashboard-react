@@ -3,6 +3,15 @@ import { ArrowLeft, FileText, Home, ChevronRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/apiService';
 
+// Utility function to extract <body> content from HTML string
+function extractBodyContent(htmlString) {
+  if (!htmlString) return '<p>No description available.</p>';
+  // If it's just a snippet, return as is
+  if (!htmlString.includes('<body')) return htmlString;
+  const match = htmlString.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  return match && match[1].trim() ? match[1] : '<p>No description available.</p>';
+}
+
 const ServiceDetailPage = () => {
   const { serviceId } = useParams();
   const navigate = useNavigate();
@@ -77,7 +86,14 @@ const ServiceDetailPage = () => {
       const response = await authService.getservicebyId(serviceId);
       
       if (response.success && response.data) {
-        setServiceData(response.data);
+        console.log('Service data received:', response.data);
+        console.log('Description content:', response.data.description);
+        
+        // Use the raw HTML content for description (no cleaning)
+        setServiceData({
+          ...response.data,
+          description: response.data.description || ''
+        });
       }
     } catch (error) {
       console.error('Error fetching service data:', error);
@@ -151,11 +167,11 @@ const ServiceDetailPage = () => {
                   <span className="font-medium">Back to Homepage</span>
                 </button>
                 
-                <h1 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900 leading-tight">
+                <h1 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900 leading-tight text-left">
                   {serviceData.name}
                 </h1>
                 <p className="text-gray-600 text-base leading-relaxed mb-6 max-w-2xl">
-                  {serviceData.price_description}
+                  {serviceData.short_description}
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -188,29 +204,25 @@ const ServiceDetailPage = () => {
         <section className="container mx-auto px-4 pb-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              {/* How It Works Section */}
-              {serviceData.how_it_works && (
+              {/* Service Description Section */}
+              {serviceData.description && (
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                   <div className="flex items-center space-x-2 mb-4">
                     <div className="p-1.5 bg-blue-100 rounded-lg">
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">How It Works</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Service Details</h2>
                   </div>
-                  <p className="text-gray-600 leading-relaxed text-sm">
-                    {serviceData.how_it_works}
-                  </p>
-                </div>
-              )}
-
-              {/* Requirements Section */}
-              {serviceData.requirements && (
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-bold mb-3 text-gray-900">Requirements</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {serviceData.requirements}
-                    </p>
+                  <div className="prose prose-sm max-w-none">
+                    {(() => {
+                      console.log('Raw description:', serviceData.description);
+                      return (
+                        <div
+                          className="text-gray-600 leading-relaxed text-sm [&>*]:mb-4 [&>*:last-child]:mb-0 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>p]:text-gray-600 [&>a]:text-blue-600 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-gray-300 [&>blockquote]:pl-4 [&>blockquote]:italic"
+                          dangerouslySetInnerHTML={{ __html: serviceData.description }}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               )}
