@@ -587,13 +587,6 @@ const UserDocuments = () => {
           <div className="text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Requested Documents</h1>
           </div>
-          <Link 
-            to="/all-services"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-fit"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Upload Document
-          </Link>
         </div>
         
         {totalDocuments === 0 ? (
@@ -601,12 +594,6 @@ const UserDocuments = () => {
             <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-medium text-gray-800 mb-2">No documents found</h2>
             <p className="text-gray-600 mb-6">You haven't uploaded any documents yet.</p>
-            <Link 
-              to="/all-services"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Upload New Document
-            </Link>
           </div>
         ) : (
           <>
@@ -704,12 +691,6 @@ const UserDocuments = () => {
         
         {totalDocuments > 0 && (
           <div className="mt-8 text-center">
-            <Link 
-              to="/all-services"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Upload New Document
-            </Link>
           </div>
         )}
       </div>

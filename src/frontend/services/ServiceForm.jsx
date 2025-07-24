@@ -269,8 +269,10 @@ const ServiceForm = () => {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter a title for your request"
+                  maxLength={230}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
+                <div className={`text-sm mt-1 text-right ${formData.title.length >= 230 ? 'text-red-500' : 'text-gray-500'}`}>{formData.title.length}/230</div>
               </div>
               
               {/* Description */}

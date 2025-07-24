@@ -138,7 +138,8 @@ export function ForgotPassword() {
       const resetData = {
         phone: formData.phone,
         otp: formData.otp,
-        password: formData.password
+        password: formData.password,
+        password_confirmation: formData.password_confirmation
       };
 
       const response = await authService.resetPasswordWithOTP(resetData);
@@ -155,7 +156,25 @@ export function ForgotPassword() {
         throw new Error(response.message || 'Failed to reset password');
       }
     } catch (err) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+      console.error('Password reset error:', err);
+      
+      // Handle validation errors specifically
+      if (err.error && typeof err.error === 'object') {
+        const validationErrors = err.error;
+        const errorMessages = [];
+        
+        Object.keys(validationErrors).forEach(field => {
+          if (Array.isArray(validationErrors[field])) {
+            validationErrors[field].forEach(message => {
+              errorMessages.push(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`);
+            });
+          }
+        });
+        
+        setError(errorMessages.join('\n') || 'Validation failed');
+      } else {
+        setError(err.message || 'Failed to reset password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

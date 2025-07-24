@@ -13,12 +13,7 @@ import {
   ChevronRightIcon,
   DocumentArrowDownIcon,
   EyeIcon,
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
-  EllipsisVerticalIcon,
-  CheckIcon,
-  XMarkIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 
 function classNames(...classes) {
@@ -35,10 +30,17 @@ export default function UserDocuments({ code, serviceId }) {
   const [showStartedOnly, setShowStartedOnly] = useState('all');
   const [serviceName, setServiceName] = useState('');
   const [selectedDocuments, setSelectedDocuments] = useState([]);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedIndex, setSelectedIndex] = useState(2);
+  const [pageSize, setPageSize] = useState(5);
+  const [documentCounts, setDocumentCounts] = useState({
+    pending: 0,
+    cost_estimated: 0,
+    in_progress: 0,
+    completed: 0
+  });
 
   const [categories, setCategories] = useState({
     'Pending': [],
@@ -135,142 +137,27 @@ export default function UserDocuments({ code, serviceId }) {
     );
   };
 
-  const handleBulkAction = async (action) => {
-    if (selectedDocuments.length === 0) return;
-    
-    // Implement bulk actions based on the action type
+  const handlePageSizeChange = (newPageSize) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const fetchDocumentCounts = async () => {
     try {
-      setLoading(true);
-      // Add your bulk action API calls here
-      console.log(`Performing ${action} on documents:`, selectedDocuments);
-      setSelectedDocuments([]);
+      const response = await authService.getDocumentCountsByStatus(code);
+      if (response.success) {
+        setDocumentCounts(response.data);
+      }
     } catch (error) {
-      console.error('Error performing bulk action:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching document counts:', error);
     }
   };
 
 
 
-  const renderDocumentCard = (document) => (
-    <div key={document.id} className="bg-white rounded-xl shadow-sm p-6 mb-4 hover:shadow-md transition-all duration-200 border border-gray-100">
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 pt-1">
-          <input
-            type="checkbox"
-            checked={selectedDocuments.includes(document.id)}
-            onChange={() => handleDocumentSelect(document.id)}
-            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-2xl">{getCategoryIcon(document.category)}</span>
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{document.title}</h3>
-            <div className="flex items-center gap-2 ml-auto">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCategoryStyle(document.status)}`}>
-                {document.status.replace('_', ' ').toUpperCase()}
-              </span>
-              {document.priority && (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityStyle(document.priority)}`}>
-                  {document.priority.toUpperCase()}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{document.description}</p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            {document.payment?.total_payment_amount && (
-              <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <BanknotesIcon className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="font-medium">Rs {document.payment.total_payment_amount}</span>
-              </div>
-            )}
-            
-            {document.estimated_time && (
-              <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <ClockIcon className="h-4 w-4 mr-2 text-gray-500" />
-                <div className="flex flex-col">
-                  <span className="font-medium text-xs">
-                    {formatTime(document.estimated_time)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {getRemainingTime(document.estimated_time)}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {document.user && (
-              <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <UserIcon className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="font-medium text-xs">{document.user.name}</span>
-              </div>
-            )}
-            
-            {document.completed_at && (
-              <div className="flex items-center text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                <CalendarIcon className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="font-medium text-xs">
-                  {new Date(document.completed_at).toLocaleDateString()}
-                </span>
-              </div>
-            )}
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {document.document_mark?.is_new && (
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  NEW
-                </span>
-              )}
-              {document.document_mark?.has_new_message_for_admin && (
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                  NEW MESSAGE
-                </span>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outlined"
-                color="blue"
-                size="sm"
-                className="p-2"
-                onClick={() => {
-                  if (document.document_mark?.is_new) {
-                    authService.markAsRead(document.id);
-                  }
-                  if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
-                    authService.markAsReadForAdmin(document.id);
-                  }
-                  navigate("/document_details", { state: { document } });
-                }}
-              >
-                <EyeIcon className="h-4 w-4" />
-              </Button>
-              
-              <div className="relative">
-                <Button
-                  variant="outlined"
-                  color="gray"
-                  size="sm"
-                  className="p-2"
-                >
-                  <EllipsisVerticalIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+
+
 
   const renderDocumentList = (document) => (
     <tr key={document.id} className="hover:bg-gray-50">
@@ -328,25 +215,29 @@ export default function UserDocuments({ code, serviceId }) {
     </tr>
   );
 
-  const fetchDocuments = async (page = 1, selectedStatus = "in_progress", code = 'NO', progress_status = 'all') => {
+  const fetchDocuments = async (page = 1, selectedStatus = "in_progress", code = 'NO', progress_status = 'all', size = 5) => {
     try {
       setLoading(true);
       const apiStatus = selectedStatus?.toLowerCase().replace(' ', '_');
-      const response = await authService.getDocuments(page, apiStatus, code, progress_status);
+      const response = await authService.getDocuments(page, apiStatus, code, progress_status, size);
       
-      const documentsByStatus = {
-        'Pending': [],
-        'Cost Estimated': [],
-        'In Progress': [],
-        'Completed': []
-      };
+      console.log('API Response:', response); // Debug log
+      
+      // Check if response has the expected structure
+      if (!response.data || !response.data.data) {
+        console.error('Invalid response structure:', response);
+        setError('Invalid data format received');
+        return;
+      }
 
       const documents = response.data.data;
+      
+      // Set pagination data
       setPagination({
-        currentPage: response.data.data.current_page,
-        lastPage: response.data.data.last_page,
-        total: response.data.data.total,
-        links: response.data.data.links
+        currentPage: response.data.current_page || 1,
+        lastPage: response.data.last_page || 1,
+        total: response.data.total || 0,
+        links: response.data.links || []
       });
       
       if (!Array.isArray(documents)) {
@@ -355,16 +246,19 @@ export default function UserDocuments({ code, serviceId }) {
         return;
       }
       
-      documents.forEach(doc => {
-        const status = doc.status
-          .split('_')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-          
-        if (documentsByStatus[status]) {
-          documentsByStatus[status].push(doc);
-        }
-      });
+      // For now, let's just show the documents for the current status
+      // instead of trying to categorize them
+      const statusKey = selectedStatus === 'in_progress' ? 'In Progress' : 
+                       selectedStatus === 'pending' ? 'Pending' :
+                       selectedStatus === 'cost_estimated' ? 'Cost Estimated' :
+                       selectedStatus === 'completed' ? 'Completed' : 'In Progress';
+      
+      const documentsByStatus = {
+        'Pending': selectedStatus === 'pending' ? documents : [],
+        'Cost Estimated': selectedStatus === 'cost_estimated' ? documents : [],
+        'In Progress': selectedStatus === 'in_progress' ? documents : [],
+        'Completed': selectedStatus === 'completed' ? documents : []
+      };
 
       setCategories(documentsByStatus);
       setError(null);
@@ -374,16 +268,23 @@ export default function UserDocuments({ code, serviceId }) {
     } finally {
       setLoading(false);
     }
+    
+    // Refresh document counts after fetching documents
+    fetchDocumentCounts();
   };
 
   useEffect(() => {
     setCurrentPage(1);
-    fetchDocuments(1, "in_progress", code, showStartedOnly);
+    fetchDocuments(1, "in_progress", code, showStartedOnly, pageSize);
+    fetchDocumentCounts(); // Fetch document counts on mount and when code changes
   }, [code, serviceId]);
 
   useEffect(() => {
-    fetchDocuments(currentPage, "in_progress", code, showStartedOnly);
-  }, [currentPage]);
+    const statusMap = ['pending', 'cost_estimated', 'in_progress', 'completed'];
+    const currentStatus = statusMap[selectedIndex] || 'in_progress';
+    fetchDocuments(currentPage, currentStatus, code, showStartedOnly, pageSize);
+    // Note: fetchDocumentCounts is already called within fetchDocuments
+  }, [currentPage, selectedIndex, pageSize]);
 
   const PaginationControls = () => (
     <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
@@ -437,13 +338,10 @@ export default function UserDocuments({ code, serviceId }) {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-gray-900">
             {serviceName ? `${serviceName} Documents` : 'Document Management'}
           </h1>
-          <p className="text-gray-600">
-            Manage and track all documents in your system
-          </p>
         </div>
 
 
@@ -462,230 +360,201 @@ export default function UserDocuments({ code, serviceId }) {
               />
             </div>
             
-            <div className="flex items-center gap-4">
+            {/* Page Size Selector - Always visible */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Show:</label>
               <select
-                value={showStartedOnly}
-                onChange={(e) => {
-                  setShowStartedOnly(e.target.value);
-                  fetchDocuments(1, 'in_progress', code, e.target.value);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
-                <option value="all">All Documents</option>
-                <option value="not_started">Not Started</option>
-                <option value="rejected">Rejected</option>
-                <option value="full_payment_made">Full Payment Made</option>
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
               </select>
-              
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-                >
-                  <Squares2X2Icon className="h-5 w-5 text-gray-600" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
-                >
-                  <ListBulletIcon className="h-5 w-5 text-gray-600" />
-                </button>
-              </div>
-              
-              <Button
-                variant="outlined"
-                color="blue"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <DocumentArrowDownIcon className="h-4 w-4" />
-                Export
-              </Button>
             </div>
+
+            {/* Only show additional filters when "In Progress" tab is selected */}
+            {selectedIndex === 2 && (
+              <div className="flex items-center gap-4">
+                <select
+                  value={showStartedOnly}
+                  onChange={(e) => {
+                    setShowStartedOnly(e.target.value);
+                    fetchDocuments(1, 'in_progress', code, e.target.value, pageSize);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Documents</option>
+                  <option value="not_started">Not Started</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="full_payment_made">Full Payment Made</option>
+                </select>
+                
+                <Button
+                  variant="outlined"
+                  color="blue"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  Export
+                </Button>
+              </div>
+            )}
           </div>
           
-          {/* Bulk Actions */}
-          {selectedDocuments.length > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-900">
-                  {selectedDocuments.length} documents selected
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outlined"
-                    color="green"
-                    size="sm"
-                    onClick={() => handleBulkAction('approve')}
-                  >
-                    <CheckIcon className="h-4 w-4 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="red"
-                    size="sm"
-                    onClick={() => handleBulkAction('reject')}
-                  >
-                    <XMarkIcon className="h-4 w-4 mr-1" />
-                    Reject
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="gray"
-                    size="sm"
-                    onClick={() => handleBulkAction('export')}
-                  >
-                    <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                    Export
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+
         </div>
 
         {/* Document Tabs */}
         <div className="bg-white rounded-xl shadow-sm">
           <Tab.Group defaultIndex={2} onChange={(index) => {
             setCurrentPage(1);
-            const selectedStatus = Object.keys(categories)[index];
-            fetchDocuments(1, selectedStatus, code);
+            setSelectedIndex(index);
+            const statusMap = ['pending', 'cost_estimated', 'in_progress', 'completed'];
+            const selectedStatus = statusMap[index] || 'in_progress';
+            fetchDocuments(1, selectedStatus, code, showStartedOnly, pageSize);
           }}>
-            <Tab.List className="flex bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-xl border-b border-gray-200 p-1">
-              {Object.entries(categories).map(([category, documents]) => (
-                <Tab
-                  key={category}
-                  className={({ selected }) =>
-                    classNames(
-                      'group relative px-6 py-3 text-sm font-semibold transition-all duration-300 transform',
-                      'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                      'rounded-lg mx-1 shadow-sm',
-                      selected
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white scale-105 shadow-lg'
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-white hover:shadow-md hover:-translate-y-0.5'
-                    )
-                  }
-                >
-                  {({ selected }) => (
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          selected 
-                            ? 'bg-white shadow-sm' 
-                            : category === 'Pending' 
-                              ? 'bg-yellow-400' 
-                              : category === 'Cost Estimated' 
-                                ? 'bg-purple-400' 
-                                : category === 'In Progress' 
-                                  ? 'bg-blue-400' 
-                                  : 'bg-green-400'
-                        }`}></span>
-                        <span className="whitespace-nowrap">{category}</span>
-                      </div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-300 ${
-                        selected 
-                          ? 'bg-white/20 text-white backdrop-blur-sm' 
-                          : 'bg-gray-200 text-gray-700 group-hover:bg-gray-300'
-                      }`}>
-                        {documents.length}
-                      </span>
-                    </div>
-                  )}
-                </Tab>
-              ))}
-            </Tab.List>
-            
-            <Tab.Panels>
-              {Object.entries(categories).map(([category, documents], idx) => (
-                <Tab.Panel key={idx} className="p-6">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <>
-                      {documents.length === 0 ? (
-                        <div className="text-center py-12">
-                          <DocumentIcon className="mx-auto h-16 w-16 text-gray-400" />
-                          <h3 className="mt-4 text-lg font-medium text-gray-900">No documents found</h3>
-                          <p className="mt-2 text-sm text-gray-500">
-                            No documents match your current filters.
-                          </p>
+            {({ selectedIndex }) => (
+              <>
+                <Tab.List className="flex bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-xl border-b border-gray-200 p-1">
+                  {Object.entries(categories).map(([category, documents]) => (
+                    <Tab
+                      key={category}
+                      className={({ selected }) =>
+                        classNames(
+                          'group relative px-6 py-3 text-sm font-semibold transition-all duration-300 transform',
+                          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                          'rounded-lg mx-1 shadow-sm',
+                          selected
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white scale-105 shadow-lg'
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-white hover:shadow-md hover:-translate-y-0.5'
+                        )
+                      }
+                    >
+                      {({ selected }) => (
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                              selected 
+                                ? 'bg-white shadow-sm' 
+                                : category === 'Pending' 
+                                  ? 'bg-yellow-400' 
+                                  : category === 'Cost Estimated' 
+                                    ? 'bg-purple-400' 
+                                    : category === 'In Progress' 
+                                      ? 'bg-blue-400' 
+                                      : 'bg-green-400'
+                            }`}></span>
+                            <span className="whitespace-nowrap">{category}</span>
+                          </div>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                            selected 
+                              ? 'bg-white/20 text-white backdrop-blur-sm' 
+                              : 'bg-gray-200 text-gray-700 group-hover:bg-gray-300'
+                          }`}>
+                            {(() => {
+                              const statusKey = category === 'Pending' ? 'pending' : 
+                                               category === 'Cost Estimated' ? 'cost_estimated' : 
+                                               category === 'In Progress' ? 'in_progress' : 
+                                               category === 'Completed' ? 'completed' : 'in_progress';
+                              return selected ? (pagination?.total || documentCounts[statusKey]) : documentCounts[statusKey];
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                    </Tab>
+                  ))}
+                </Tab.List>
+                
+                <Tab.Panels>
+                  {Object.entries(categories).map(([category, documents], idx) => (
+                    <Tab.Panel key={idx} className="p-6">
+                      {loading ? (
+                        <div className="flex items-center justify-center py-12">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                         </div>
                       ) : (
                         <>
-                          {/* Select All Checkbox */}
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={selectedDocuments.length === documents.length && documents.length > 0}
-                                onChange={() => handleSelectAll(documents)}
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <label className="ml-2 text-sm font-medium text-gray-700">
-                                Select all ({documents.length} documents)
-                              </label>
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Showing {documents.length} of {pagination?.total || 0} documents
-                            </div>
-                          </div>
-
-                          {/* Document List */}
-                          {viewMode === 'grid' ? (
-                            <div className="space-y-4">
-                              {documents.map((document) => renderDocumentCard(document))}
+                          {documents.length === 0 ? (
+                            <div className="text-center py-12">
+                              <DocumentIcon className="mx-auto h-16 w-16 text-gray-400" />
+                              <h3 className="mt-4 text-lg font-medium text-gray-900">No documents found</h3>
+                              <p className="mt-2 text-sm text-gray-500">
+                                No documents match your current filters.
+                              </p>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto">
-                              <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                  <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedDocuments.length === documents.length && documents.length > 0}
-                                        onChange={() => handleSelectAll(documents)}
-                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                      />
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Document
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Amount
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Time
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Created
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Actions
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                  {documents.map((document) => renderDocumentList(document))}
-                                </tbody>
-                              </table>
+                            <>
+                              {/* Select All Checkbox */}
+                              <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedDocuments.length === documents.length && documents.length > 0}
+                                    onChange={() => handleSelectAll(documents)}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                  <label className="ml-2 text-sm font-medium text-gray-700">
+                                    Select all ({documents.length} documents)
+                                  </label>
+                                </div>
+                                                            <div className="text-sm text-gray-500">
+                              Showing {documents.length} of {pagination?.total || 0} documents (Page {pagination?.currentPage || 1} of {pagination?.lastPage || 1})
                             </div>
+                              </div>
+
+                              {/* Document List - Always show list view */}
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                  <thead className="bg-gray-50">
+                                    <tr>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedDocuments.length === documents.length && documents.length > 0}
+                                          onChange={() => handleSelectAll(documents)}
+                                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Document
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Amount
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Time
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Created
+                                      </th>
+                                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white divide-y divide-gray-200">
+                                    {documents.map((document) => renderDocumentList(document))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </>
                           )}
+                          
+                          {pagination && pagination.total > 0 && <PaginationControls />}
                         </>
                       )}
-                      
-                      {pagination && documents.length > 0 && <PaginationControls />}
-                    </>
-                  )}
-                </Tab.Panel>
-              ))}
-            </Tab.Panels>
+                    </Tab.Panel>
+                  ))}
+                </Tab.Panels>
+              </>
+            )}
           </Tab.Group>
         </div>
       </div>

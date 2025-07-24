@@ -27,6 +27,7 @@ import PaymentCancel from "@/frontend/pages/PaymentCancel";
 // import PricingPage from "@/frontend/pages/Pricing"; // Disabled - not in use
 import { LawyerRevenue } from "@/pages/dashboard";
 import { TermsAndConditions, PrivacyPolicy } from "@/pages/legal";
+import Chatbot from "@/components/Chatbot";
 
 function App() {
   const location = useLocation();
@@ -87,6 +88,7 @@ function App() {
   return (
     <>
     <ToastContainer />
+    <Chatbot />
     <Routes>
       {token != null ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/home" element={<HomePage />} />}
       <Route path="/notifications" element={<Notifications />} />

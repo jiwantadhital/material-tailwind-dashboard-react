@@ -170,11 +170,20 @@ export default function Create_admin() {
     
     setIsSubmitting(true);
     try {
-      // Call the createAdmin function from authService with FormData
-       const response = await authService.createAdmin(adminData);
+      let response;
+      
+      // Check if we're updating an existing admin or creating a new one
+      if (adminData.id) {
+        // Update existing admin
+        response = await authService.updateAdmin(adminData, adminData.id);
+      } else {
+        // Create new admin
+        response = await authService.createAdmin(adminData);
+      }
+      
       if(response.success){
         setAlertType("success");
-        setAlertMessage("Admin created successfully!");
+        setAlertMessage(adminData.id ? "Admin updated successfully!" : "Admin created successfully!");
         setShowAlert(true);
         fetchAdmins();
         setIsFormOpen(false);
@@ -203,7 +212,7 @@ export default function Create_admin() {
       
       setAlertType("error");
       
-      let errorMessage = "Failed to create admin";
+      let errorMessage = adminData.id ? "Failed to update admin" : "Failed to create admin";
       
       // Check different possible error structures
       if (error.error && typeof error.error === 'object') {
@@ -261,6 +270,7 @@ export default function Create_admin() {
   const handleEdit = (admin) => {
     setIsFormOpen(true);
     setAdminData({
+      id: admin.id, // Add the admin ID for update operation
       name: admin.name,
       email: admin.kyc?.email,
       phone: admin.phone,
@@ -273,7 +283,6 @@ export default function Create_admin() {
       services: admin.services ? admin.services.map(id => String(id)) : []
     });
     setImagePreview(admin.kyc?.photo_url);
-    setIsFormOpen(true);
   };
 
   useEffect(() => {
@@ -395,7 +404,7 @@ export default function Create_admin() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <Typography variant="h6" color="white">
-                  Create New Admin
+                  {adminData.id ? "Edit Admin" : "Create New Admin"}
                 </Typography>
               </div>
             </CardHeader>
@@ -498,16 +507,17 @@ export default function Create_admin() {
 
                   <div>
                     <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
-                      Password <span className="text-red-500">*</span>
+                      Password {!adminData.id && <span className="text-red-500">*</span>}
+                      {adminData.id && <span className="text-blue-500 text-xs">(Leave blank to keep current password)</span>}
                     </Typography>
                     <Input
                       size="lg"
                       type="password"
                       name="password"
-                      placeholder="Enter password"
+                      placeholder={adminData.id ? "Enter new password (optional)" : "Enter password"}
                       value={adminData.password}
                       onChange={handleChange}
-                      required
+                      required={!adminData.id}
                       className="!border-t-blue-gray-200 focus:!border-t-blue-500"
                       labelProps={{
                         className: "before:content-none after:content-none",
@@ -663,7 +673,8 @@ export default function Create_admin() {
 
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-3 font-semibold">
-                    Profile Image <span className="text-red-500">*</span>
+                    Profile Image {!adminData.id && <span className="text-red-500">*</span>}
+                    {adminData.id && <span className="text-blue-500 text-xs">(Leave unchanged to keep current image)</span>}
                   </Typography>
                   <Input
                     size="lg"
@@ -671,7 +682,7 @@ export default function Create_admin() {
                     name="photo"
                     onChange={handleChange}
                     accept="image/*"
-                    required
+                    required={!adminData.id}
                     className="!border-t-blue-gray-200 focus:!border-t-blue-500"
                     labelProps={{
                       className: "before:content-none after:content-none",

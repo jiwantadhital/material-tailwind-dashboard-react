@@ -69,6 +69,74 @@ const UserProfile = () => {
     return () => clearInterval(interval);
   }, [otpTimer]);
 
+  // Add CSS for better date input handling on Windows
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      input[type="date"] {
+        position: relative;
+        cursor: pointer;
+      }
+      
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(0.5);
+        transition: filter 0.2s ease;
+      }
+      
+      input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        filter: invert(0.3);
+      }
+      
+      input[type="date"]::-webkit-inner-spin-button,
+      input[type="date"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      
+      input[type="date"]::-webkit-datetime-edit {
+        padding: 0;
+      }
+      
+      input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+        padding: 0;
+      }
+      
+      input[type="date"]::-webkit-datetime-edit-text {
+        padding: 0 2px;
+      }
+      
+      input[type="date"]::-webkit-datetime-edit-month-field,
+      input[type="date"]::-webkit-datetime-edit-day-field,
+      input[type="date"]::-webkit-datetime-edit-year-field {
+        padding: 0 2px;
+      }
+      
+      /* Firefox specific styles */
+      input[type="date"]::-moz-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(0.5);
+        transition: filter 0.2s ease;
+      }
+      
+      input[type="date"]::-moz-calendar-picker-indicator:hover {
+        filter: invert(0.3);
+      }
+      
+      /* Windows specific improvements */
+      @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+        input[type="date"] {
+          padding-right: 30px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const fetchUserData = async () => {
     setIsLoading(true);
     
@@ -605,8 +673,14 @@ const UserProfile = () => {
                           name="dob" 
                           value={editData.dob} 
                           onChange={handleEditChange}
-                          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition cursor-pointer"
+                          style={{
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#CBD5E0 #F7FAFC'
+                          }}
+                          max={new Date().toISOString().split('T')[0]}
                           required={!kycData}
+                          title="Select your date of birth"
                         />
                       </div>
                       <div>

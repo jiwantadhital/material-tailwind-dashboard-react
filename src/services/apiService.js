@@ -153,6 +153,40 @@ export const authService = {
       });
       return response.data;
     },
+
+    //update admin
+    updateAdmin: async (data, adminId) => {
+      console.log("updating admin with data:", data);
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      
+      // Only append photo if it's a file (not a URL)
+      if (data.photo instanceof File) {
+        formData.append('photo', data.photo);
+      }
+      
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('phone', data.phone);
+      formData.append('dob', data.dob);
+      formData.append('address', data.address);
+      formData.append('gender', data.gender);
+      
+      // Only append password if it's provided
+      if (data.password) {
+        formData.append('password', data.password);
+        formData.append('password_confirmation', data.password);
+      }
+      
+      data.services.forEach(serviceId => {
+        formData.append('service_id[]', serviceId);
+      });
+      
+      const response = await apiService.post(`/api/update-admin/${adminId}`, formData, {
+        headers: { Authorization: `Bearer ${token}` ,'Content-Type': 'multipart/form-data'},
+      });
+      return response.data;
+    },
     
     getAllUsers: async (filter) => {
       const token = localStorage.getItem('token');
@@ -261,15 +295,29 @@ export const authService = {
 
 
       //get documents
-      getDocuments: async (page = 1, status = "pending", code, progress_status) => {
+      getDocuments: async (page = 1, status = "pending", code, progress_status, pageSize = 5) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}&code=${code}&progress_status=${progress_status}`, {
+            const response = await apiService.get(`/api/get-documents-list?page=${page}&status=${status}&code=${code}&progress_status=${progress_status}&per_page=${pageSize}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
         } catch (error) {
             console.error("Error fetching documents:", error);
+            throw error; // Rethrow the error for further handling
+        }
+    },
+
+      //get document counts by status
+      getDocumentCountsByStatus: async (code = 'all') => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await apiService.get(`/api/get-document-counts-by-status?code=${code}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching document counts:", error);
             throw error; // Rethrow the error for further handling
         }
     },
@@ -904,6 +952,19 @@ export const authService = {
         const response = await apiService.put('/mobile-info-menu', data, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        return response.data;
+      },
+
+      // Chatbot APIs
+      generateChatbotResponse: async (message) => {
+        const response = await apiService.post('/api/chatbot/generate-response', {
+          message: message
+        });
+        return response.data;
+      },
+
+      getChatbotKnowledgeBase: async () => {
+        const response = await apiService.get('/api/chatbot/knowledge-base');
         return response.data;
       },
 
