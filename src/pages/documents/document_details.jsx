@@ -117,15 +117,21 @@ const DocumentDetails = () => {
   // Calculate total price when document type quantities change
   useEffect(() => {
     if (document && document.related_doc_types) {
-      let total = 0;
+      let displayTotal = 0; // For admin display (actual_price)
+      let backendTotal = 0; // For backend (user_price)
+      
       Object.entries(documentTypeQuantities).forEach(([typeId, quantity]) => {
         const docType = document.related_doc_types.find(type => type.id === parseInt(typeId));
         if (docType && quantity > 0) {
-          total += parseFloat(docType.user_price) * quantity;
+          // Use actual_price for admin display
+          displayTotal += parseFloat(docType.actual_price) * quantity;
+          // Use user_price for backend calculation
+          backendTotal += parseFloat(docType.user_price) * quantity;
         }
       });
-      setTotalPrice(total);
-      setCost(total.toString());
+      
+      setTotalPrice(displayTotal); // Show actual_price total to admin
+      setCost(backendTotal.toString()); // Send user_price total to backend
     }
   }, [documentTypeQuantities, document]);
 
@@ -226,7 +232,7 @@ const DocumentDetails = () => {
         .map(([typeId, quantity]) => typeId);
       
       await authService.paymentForDocument(documentId, {
-        total_payment_amount: totalPrice.toString(),
+        total_payment_amount: cost,
         estimated_time: formattedDate,
         clearAccepted: true,
         status: 'cost_estimated',
@@ -516,7 +522,7 @@ const DocumentDetails = () => {
             {/* Back to Dashboard Button */}
             <div className="mb-4">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/dashboard/home')}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -655,7 +661,7 @@ const DocumentDetails = () => {
                       <div key={docType.id} className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
                         <div>
                           <p className="font-medium text-gray-900">{docType.name}</p>
-                          <p className="text-sm text-gray-500">Price: Rs {docType.user_price}</p>
+                          <p className="text-sm text-gray-500">Price: Rs {docType.actual_price}</p>
                         </div>
                         <div className="flex items-center">
                           <button 
@@ -934,33 +940,18 @@ const DocumentDetails = () => {
                 <p className="mt-1 text-gray-900">{document.description}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Total Cost</h3>
-                <p className="mt-1 text-gray-900 capitalize">Rs {document.payment.total_payment_amount}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Total Paid</h3>
-                <p className="mt-1 text-gray-900 capitalize">Rs {(() => {
-                  try {
-                    const remaining = parseInt(document.payment.remaining_payment_amount) || 0;
-                    const total = parseInt(document.payment.total_payment_amount) || 0;
-                    return document.payment.remaining_payment_amount === null ? 0 : total - (remaining);
-                  } catch (error) {
-                    console.error('Error calculating total paid:', error);
-                    return 0;
-                  }
-                })()}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Remaining Payment</h3>
-                <p className="mt-1 text-gray-900 capitalize">Rs {(() => {
-                  try {
-                    const remaining = parseInt(document.payment.remaining_payment_amount) || 0;
-                    return remaining;
-                  } catch (error) {
-                    console.error('Error calculating remaining payment:', error);
-                    return 0;
-                  }
-                })()}</p>
+                <h3 className="text-sm font-medium text-gray-500">Payment Status</h3>
+                <p className={`mt-1 font-medium capitalize ${
+                  document.payment.payment_status === 'not_paid' ? 'text-red-600' :
+                  document.payment.payment_status === 'partially_paid' ? 'text-yellow-600' :
+                  document.payment.payment_status === 'full_paid' ? 'text-green-600' :
+                  'text-gray-600'
+                }`}>
+                  {document.payment.payment_status === 'not_paid' ? 'Not Paid' :
+                   document.payment.payment_status === 'partially_paid' ? 'Partially Paid' :
+                   document.payment.payment_status === 'full_paid' ? 'Full Paid' :
+                   document.payment.payment_status}
+                </p>
               </div>
               {document.estimated_time && (
                 <div>

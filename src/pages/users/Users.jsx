@@ -12,6 +12,9 @@ import {
   TabsBody,
   Tab,
   TabPanel,
+  IconButton,
+  Select,
+  Option,
 } from "@material-tailwind/react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../../services/apiService";
@@ -21,6 +24,19 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 15,
+    total: 0,
+    from: 0,
+    to: 0,
+    has_more_pages: false,
+  });
 
   const TABS = [
     { label: "All Users", value: "all" },
@@ -30,13 +46,13 @@ export default function Users() {
   ];
 
   useEffect(() => {
-    fetchUsers('all');
+    fetchUsers('all', 1);
   }, []);
 
-  const fetchUsers = async (status) => {
+  const fetchUsers = async (status, page = 1) => {
     try {
       setIsLoading(true);
-      const response = await authService.getAllUsers(status);''
+      const response = await authService.getAllUsers(status, page, perPage);
       const getAllUsers = response.data.users
         .filter(user => user.role === 'user')
         .map((user) => ({
@@ -44,14 +60,33 @@ export default function Users() {
           kycStatus: user.kyc ? user.kyc.kyc_status : "Not Submitted",
         }));
       setUsers(getAllUsers);
+      setPagination(response.data.pagination);
+      setCurrentPage(page);
     } catch (error) {
       console.error("Failed to fetch users:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleViewDetails = (user) => {
-    navigate("/user_details", { state: { user } });  };
+    navigate("/user_details", { state: { user } });
+  };
+
+  const handlePageChange = (page) => {
+    fetchUsers(activeTab, page);
+  };
+
+  const handlePerPageChange = (newPerPage) => {
+    setPerPage(newPerPage);
+    fetchUsers(activeTab, 1); // Reset to first page when changing per page
+  };
+
+  const handleTabChange = async (value) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page when changing tabs
+    await fetchUsers(value, 1);
+  };
   
 
   const UsersTable = ({ users }) => (
@@ -124,13 +159,130 @@ export default function Users() {
     </table>
   );
 
+  // Pagination component
+  const Pagination = () => {
+    const totalPages = pagination.last_page;
+    const currentPageNum = pagination.current_page;
+    
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPageNum <= 3) {
+          for (let i = 1; i <= 4; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        } else if (currentPageNum >= totalPages - 2) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = totalPages - 3; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(1);
+          pages.push('...');
+          for (let i = currentPageNum - 1; i <= currentPageNum + 1; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex items-center justify-between px-6 py-4 border-t border-blue-gray-50">
+        <div className="flex items-center gap-4">
+          <Typography variant="small" color="blue-gray" className="font-normal">
+            Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+          </Typography>
+          
+          <div className="flex items-center gap-2">
+            <Typography variant="small" color="blue-gray" className="font-normal">
+              Items per page:
+            </Typography>
+            <Select
+              value={perPage.toString()}
+              onChange={(value) => handlePerPageChange(parseInt(value))}
+              className="w-20"
+            >
+              <Option value="10">10</Option>
+              <Option value="15">15</Option>
+              <Option value="25">25</Option>
+              <Option value="50">50</Option>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <IconButton
+            variant="outlined"
+            size="sm"
+            onClick={() => handlePageChange(currentPageNum - 1)}
+            disabled={currentPageNum === 1}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </IconButton>
+          
+          {getPageNumbers().map((page, index) => (
+            <React.Fragment key={index}>
+              {page === '...' ? (
+                <Typography variant="small" color="blue-gray" className="px-2">
+                  ...
+                </Typography>
+              ) : (
+                <IconButton
+                  variant={page === currentPageNum ? "filled" : "outlined"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className={page === currentPageNum ? "bg-blue-500 text-white" : ""}
+                >
+                  {page}
+                </IconButton>
+              )}
+            </React.Fragment>
+          ))}
+          
+          <IconButton
+            variant="outlined"
+            size="sm"
+            onClick={() => handlePageChange(currentPageNum + 1)}
+            disabled={currentPageNum === totalPages}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </IconButton>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            Users Table
-          </Typography>
+          <div className="flex items-center justify-between">
+            <Typography variant="h6" color="white">
+              Users Table
+            </Typography>
+            <div className="bg-white/20 px-3 py-1 rounded-full">
+              <Typography variant="small" color="white" className="font-medium">
+                Total: {pagination.total || users.length}
+              </Typography>
+            </div>
+          </div>
         </CardHeader>
         <CardBody className="px-0 pt-0 pb-2">
           <Tabs value={activeTab} className="px-4">
@@ -139,10 +291,7 @@ export default function Users() {
                 <Tab 
                   key={value} 
                   value={value}
-                                  onClick={async () => {
-                                    await setActiveTab(value)
-                                    fetchUsers(value)
-                                  }}
+                  onClick={() => handleTabChange(value)}
                 >
                   {label}
                 </Tab>
@@ -154,9 +303,12 @@ export default function Users() {
                   <Typography>Loading users...</Typography>
                 </div>
               ) : (
-                <div className="overflow-x-scroll">
-                  <UsersTable users={users} />
-                </div>
+                <>
+                  <div className="overflow-x-scroll">
+                    <UsersTable users={users} />
+                  </div>
+                  {pagination.total > 0 && <Pagination />}
+                </>
               )}
             </TabsBody>
           </Tabs>

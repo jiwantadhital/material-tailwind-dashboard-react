@@ -6,7 +6,7 @@ import {
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 import { Navbar, Footer } from "@/widgets/layout";
-import routes from "@/routes";
+import { getFilteredRoutes } from "@/routes";
 
 export function Auth() {
   const navbarRoutes = [
@@ -32,6 +32,10 @@ export function Auth() {
     },
   ];
 const token = localStorage.getItem('token');
+  
+  // Get filtered routes based on current user role
+  const routes = getFilteredRoutes();
+  
   return (
     <div className="relative min-h-screen w-full">
       <Routes>

@@ -10,7 +10,8 @@ import {
   Avatar,
   Select,
   Option,
-  Spinner
+  Spinner,
+  IconButton
 } from "@material-tailwind/react";
 import { authService } from "../../services/apiService";
 import { Switch } from "@material-tailwind/react";
@@ -40,6 +41,19 @@ export default function Create_admin() {
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(true);
   const [user, setUser] = useState(null);
   const [availableServices, setAvailableServices] = useState([]);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 15,
+    total: 0,
+    from: 0,
+    to: 0,
+    has_more_pages: false,
+  });
 
   const handleStatusChange = async (checked, adminId) => {
     setIsUpdatingStatus(true);
@@ -95,15 +109,16 @@ export default function Create_admin() {
     fetchAdmins();
   }, []);
 
-  const fetchAdmins = async () => {
+  const fetchAdmins = async (page = 1) => {
     setIsLoadingAdmins(true);
     try {
-      const response = await authService.getAllUsers('all');
-      const adminUsers = response.data.users.filter(user => user.role === 'lawyer');
-      setAdmins(adminUsers);
+      const response = await authService.getAllLawyers(page, perPage);
+      setAdmins(response.data.lawyers);
+      setPagination(response.data.pagination);
+      setCurrentPage(page);
     } catch (error) {
-      console.error("Failed to fetch admins:", error);
-      setAlertMessage("Failed to load admin list");
+      console.error("Failed to fetch lawyers:", error);
+      setAlertMessage("Failed to load lawyer list");
       setAlertType("error");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
@@ -280,9 +295,18 @@ export default function Create_admin() {
       gender: admin.kyc?.gender,
       password: "",
       password_confirmation: "",
-      services: admin.services ? admin.services.map(id => String(id)) : []
+      services: admin.services ? admin.services.map(service => String(service.id)) : []
     });
     setImagePreview(admin.kyc?.photo_url);
+  };
+
+  const handlePageChange = (page) => {
+    fetchAdmins(page);
+  };
+
+  const handlePerPageChange = (newPerPage) => {
+    setPerPage(newPerPage);
+    fetchAdmins(1); // Reset to first page when changing per page
   };
 
   useEffect(() => {
@@ -313,6 +337,116 @@ export default function Create_admin() {
       ))}
     </div>
   );
+
+  // Pagination component
+  const Pagination = () => {
+    const totalPages = pagination.last_page;
+    const currentPageNum = pagination.current_page;
+    
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPageNum <= 3) {
+          for (let i = 1; i <= 4; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        } else if (currentPageNum >= totalPages - 2) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = totalPages - 3; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(1);
+          pages.push('...');
+          for (let i = currentPageNum - 1; i <= currentPageNum + 1; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex items-center justify-between px-6 py-4 border-t border-blue-gray-50">
+        <div className="flex items-center gap-4">
+          <Typography variant="small" color="blue-gray" className="font-normal">
+            Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+          </Typography>
+          
+          <div className="flex items-center gap-2">
+            <Typography variant="small" color="blue-gray" className="font-normal">
+              Items per page:
+            </Typography>
+            <Select
+              value={perPage.toString()}
+              onChange={(value) => handlePerPageChange(parseInt(value))}
+              className="w-20"
+            >
+              <Option value="10">10</Option>
+              <Option value="15">15</Option>
+              <Option value="25">25</Option>
+              <Option value="50">50</Option>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <IconButton
+            variant="outlined"
+            size="sm"
+            onClick={() => handlePageChange(currentPageNum - 1)}
+            disabled={currentPageNum === 1}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </IconButton>
+          
+          {getPageNumbers().map((page, index) => (
+            <React.Fragment key={index}>
+              {page === '...' ? (
+                <Typography variant="small" color="blue-gray" className="px-2">
+                  ...
+                </Typography>
+              ) : (
+                <IconButton
+                  variant={page === currentPageNum ? "filled" : "outlined"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className={page === currentPageNum ? "bg-blue-500 text-white" : ""}
+                >
+                  {page}
+                </IconButton>
+              )}
+            </React.Fragment>
+          ))}
+          
+          <IconButton
+            variant="outlined"
+            size="sm"
+            onClick={() => handlePageChange(currentPageNum + 1)}
+            disabled={currentPageNum === totalPages}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </IconButton>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -750,7 +884,7 @@ export default function Create_admin() {
               </div>
               <div className="bg-white/20 px-3 py-1 rounded-full">
                 <Typography variant="small" color="white" className="font-medium">
-                  Total: {admins.length}
+                  Total: {pagination.total || admins.length}
                 </Typography>
               </div>
             </div>
@@ -761,11 +895,12 @@ export default function Create_admin() {
                 <LoadingSkeleton />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] table-auto">
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] table-auto">
                   <thead>
                     <tr className="border-b border-blue-gray-100">
-                      {["Profile", "Name", "Phone", "Email", "Status", "Actions"].map((el) => (
+                      {["Profile", "Name", "Phone", "Email", "Services", "Status", "Actions"].map((el) => (
                         <th
                           key={el}
                           className="py-4 px-6 text-left bg-blue-gray-50/50"
@@ -837,6 +972,26 @@ export default function Create_admin() {
                               </div>
                             </td>
                             <td className={className}>
+                              <div className="flex flex-wrap gap-1">
+                                {admin.services && admin.services.length > 0 ? (
+                                  admin.services.map((service, serviceIndex) => (
+                                    <Chip
+                                      key={service.id || serviceIndex}
+                                      value={service.name}
+                                      size="sm"
+                                      variant="outlined"
+                                      color="blue"
+                                      className="text-xs"
+                                    />
+                                  ))
+                                ) : (
+                                  <Typography className="text-sm text-blue-gray-400 italic">
+                                    No services assigned
+                                  </Typography>
+                                )}
+                              </div>
+                            </td>
+                            <td className={className}>
                               <div className="flex items-center gap-3">
                                 <Switch
                                   id={`status-${admin.id}`}
@@ -882,7 +1037,7 @@ export default function Create_admin() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan="6" className="py-12 text-center">
+                        <td colSpan="7" className="py-12 text-center">
                           <div className="flex flex-col items-center justify-center space-y-4">
                             <svg className="h-16 w-16 text-blue-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -900,6 +1055,8 @@ export default function Create_admin() {
                   </tbody>
                 </table>
               </div>
+              {pagination.total > 0 && <Pagination />}
+                </>
             )}
           </CardBody>
         </Card>

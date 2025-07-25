@@ -9,8 +9,9 @@ import {
   BriefcaseIcon,
   DocumentIcon,
   DocumentTextIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
-import { Home,Users,Profile, Tables, Notifications, Create_admin } from "@/pages/dashboard";
+import { Home, LawyerDashboard, DashboardWrapper, Users,Profile, Tables, Notifications, Create_admin, DocumentSearch } from "@/pages/dashboard";
 import { SignIn, SignUp, ForgotPassword } from "@/pages/auth";
 import {  NotaryDocuments, SopDocuments, PropertyDocuments } from "@/pages/documents";
 import { Countries, Services } from "@/pages/basic_settings";
@@ -21,16 +22,14 @@ import { UserDocuments } from "@/pages/documents";
 import { ServiceType } from "@/pages/basic_settings";
 import { HeroSection, FeaturesSection, TestimonialsSection, CallToActionSection } from "@/pages/homepage";
 import { LawyerRevenue } from "@/pages/dashboard";
+
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
-const token = localStorage.getItem('token');
 
 // Function to handle logout
 const handleLogout = () => {
-  // Remove all localStorage data
   localStorage.clear();
-  // Redirect to the sign-in page
   window.location.href = "/auth/sign-in";
 };
 
@@ -52,14 +51,11 @@ const getServicesFromLocalStorage = () => {
 // Generate dynamic service document routes
 const generateServiceDocumentRoutes = () => {
   const services = getServicesFromLocalStorage();
-  console.log('the s services',services);
   if (!Array.isArray(services) || services.length === 0) {
     return [];
   }
   
-  // Generate a route for each service with a wrapper component to force remounting
   return services.map(service => {
-    // Create a wrapper component with the service ID in closure to ensure remounting
     const ServiceDocumentWrapper = () => <UserDocuments code={service.code} serviceId={service.id} />;
     
     return {
@@ -73,20 +69,21 @@ const generateServiceDocumentRoutes = () => {
 };
 
 export const routes = [
-  
+  // Main Dashboard Routes
   {
+    title: "Dashboard",
     layout: "dashboard",
     pages: [
       {
         icon: <HomeIcon {...icon} />,
-        name: "dashboard",
+        name: "Dashboard",
         path: "/home",
-        element: <Home />,
-        allowedRoles: ["admin", "lawyer",]
+        element: <DashboardWrapper />,
+        allowedRoles: ["admin", "lawyer"],
       },
       {
         icon: <UserCircleIcon {...icon} />,
-        name: "users",
+        name: "Users",
         path: "/users",
         element: <Users />,
         allowedRoles: ["admin"]
@@ -98,13 +95,35 @@ export const routes = [
         element: <Create_admin />,
         allowedRoles: ["admin"]
       },
+      {
+        icon: <DocumentIcon {...icon} />,
+        name: "Document Search",
+        path: "/document-search",
+        element: <DocumentSearch />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Profile",
+        path: "/profile",
+        element: <Profile />,
+        allowedRoles: ["admin", "lawyer"]
+      },
     ],
   },
+
+  // Documents Routes
+  {
+    title: "Documents",
+    layout: "documents",
+    pages: generateServiceDocumentRoutes(),
+  },
+
+  // Basic Settings Routes
   {
     title: "Basic Settings",
     layout: "basicSettings",
     pages: [
-     
       {
         icon: <GlobeAltIcon {...icon} />,
         name: "Countries",
@@ -126,23 +145,10 @@ export const routes = [
         element: <ServiceType />,
         allowedRoles: ["admin"]
       },
-      //Mobile Management
-    {
-      icon: <UserCircleIcon {...icon} />,
-      name: "Carousel",
-      path: "/mobile/carousel",
-      element: <Carousel />,
-      allowedRoles: ["admin"]
-    },
-    {
-      icon: <BriefcaseIcon {...icon} />,
-      name: "Info Menu",
-      path: "/mobile/info-menu",
-      element: <InfoMenu />,
-      allowedRoles: ["admin"]
-    },
     ],
   },
+
+  // Homepage Management Routes
   {
     title: "Homepage Management",
     layout: "basicSettings",
@@ -177,11 +183,34 @@ export const routes = [
       },
     ],
   },
+
+  // Mobile Management Routes
   {
-    title: "Problem Reports",
+    title: "Mobile Management",
+    layout: "mobile",
+    pages: [
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Carousel",
+        path: "/mobile/carousel",
+        element: <Carousel />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <BriefcaseIcon {...icon} />,
+        name: "Info Menu",
+        path: "/mobile/info-menu",
+        element: <InfoMenu />,
+        allowedRoles: ["admin"]
+      },
+    ],
+  },
+
+  // Reports Routes
+  {
+    title: "Reports",
     layout: "reports",
     pages: [
-     
       {
         icon: <GlobeAltIcon {...icon} />,
         name: "Report List",
@@ -198,66 +227,92 @@ export const routes = [
       }
     ],
   },
-  {
-    title: "Documents",
-    layout: "documents",
-    pages: generateServiceDocumentRoutes(),
-  },
-  
 
-  
+  // Auth Routes
   {
-    title: "auth pages",
+    title: "Authentication",
     layout: "auth",
     pages: [
-      
-     token == null ? {
-        icon: <ServerStackIcon {...icon} />,
-        name: "sign in",
-        path: "/sign-in",
-        element: <SignIn />,
-      } : {
-        icon: <ServerStackIcon {...icon} />,
-        name: "Logout",
-        path: "/sign-in",
-        element: <SignIn />,
-        onClick: handleLogout,
-      },
-      
-      token == null ? {
-        icon: <ServerStackIcon {...icon} />,
-        name: "sign up",
-        path: "/sign-up",
-        element: <SignUp />,
-      } : null,
-      
       {
         icon: <ServerStackIcon {...icon} />,
-        name: "forgot password",
+        name: "Sign In",
+        path: "/sign-in",
+        element: <SignIn />,
+      },
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "Sign Up",
+        path: "/sign-up",
+        element: <SignUp />,
+      },
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "Forgot Password",
         path: "/forgot-password",
         element: <ForgotPassword />,
       },
-
-    ].filter(Boolean),
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "Logout",
+        path: "/logout",
+        element: <SignIn />, // This won't be rendered, just for the route
+        onClick: handleLogout,
+      },
+    ],
   },
 ];
 
-const user = JSON.parse(localStorage.getItem('user')) || { role: null };
-const userRole = user.role;
+// Function to get filtered routes based on user role
+export const getFilteredRoutes = () => {
+  const user = localStorage.getItem('user');
+  const userRole = user ? JSON.parse(user).role : null;
+  const token = localStorage.getItem('token');
 
-export const filteredRoutes = routes.map(routeGroup => {
-  const filteredPages = routeGroup.pages.filter(page => {
-    // Skip pages that are explicitly marked to not show in navigation
-    if (page.showInNav === false) return false;
-    // Continue with existing role-based filtering
-    if (!page.allowedRoles) return true;
-    return page.allowedRoles.includes(userRole);
+  return routes.map(routeGroup => {
+    const filteredPages = routeGroup.pages.filter(page => {
+      // Skip pages that are explicitly marked to not show in navigation
+      if (page.showInNav === false) return false;
+      
+      // For auth pages, show different options based on login status
+      if (routeGroup.title === "Authentication") {
+        if (page.name === "Sign In" && token) {
+          return false; // Hide sign in if logged in
+        }
+        if (page.name === "Sign Up" && token) {
+          return false; // Hide sign up if logged in
+        }
+        if (page.name === "Forgot Password" && token) {
+          return false; // Hide forgot password if logged in
+        }
+        if (page.name === "Logout" && !token) {
+          return false; // Hide logout if not logged in
+        }
+      }
+      
+      // Continue with existing role-based filtering
+      if (!page.allowedRoles) return true;
+      return page.allowedRoles.includes(userRole);
+    });
+
+    return {
+      ...routeGroup,
+      pages: filteredPages
+    };
+  }).filter(routeGroup => {
+    // For lawyers, only show relevant route groups
+    if (userRole === "lawyer") {
+      return routeGroup.pages.length > 0 && (
+        routeGroup.title === "Dashboard" || 
+        routeGroup.title === "Documents" ||
+        routeGroup.title === "Authentication"
+      );
+    }
+    // For admins, show all route groups that have pages
+    return routeGroup.pages.length > 0;
   });
+};
 
-  return {
-    ...routeGroup,
-    pages: filteredPages
-  };
-}).filter(routeGroup => routeGroup.pages.length > 0);
+// For backward compatibility, export the original routes
+export const filteredRoutes = getFilteredRoutes();
 
 export default filteredRoutes;

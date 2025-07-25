@@ -8,12 +8,15 @@ import {
   Configurator,
   Footer,
 } from "@/widgets/layout";
-import routes from "@/routes";
+import { getFilteredRoutes } from "@/routes";
 import { useMaterialTailwindController, setOpenConfigurator } from "@/context";
 
 export function Reports() {
   const [controller, dispatch] = useMaterialTailwindController();
   const { sidenavType } = controller;
+  
+  // Get filtered routes based on current user role
+  const routes = getFilteredRoutes();
 
   return (
     <div className="min-h-screen bg-blue-gray-50/50">

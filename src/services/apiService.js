@@ -188,7 +188,7 @@ export const authService = {
       return response.data;
     },
     
-    getAllUsers: async (filter) => {
+    getAllUsers: async (filter, page = 1, perPage = 15) => {
       const token = localStorage.getItem('token');
       console.log("this is token",token);
       if (!token) {
@@ -200,10 +200,38 @@ export const authService = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          params: {
+            page,
+            per_page: perPage
+          }
         });
         return response.data;
       } catch (error) {
         console.error('Get users error:', error);
+        throw error;
+      }
+    },
+
+    //get all lawyers with their services
+    getAllLawyers: async (page = 1, perPage = 15) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required to fetch lawyers');
+      }
+
+      try {
+        const response = await apiService.get(`/api/get-lawyers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            page,
+            per_page: perPage
+          }
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Get lawyers error:', error);
         throw error;
       }
     },
@@ -326,6 +354,17 @@ export const authService = {
       getDocumentById: async (documentId) => {
         const token = localStorage.getItem('token');
         const response = await apiService.get(`/api/get-document-by-id/${documentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      //search document by reference number
+      searchDocumentByReferenceNumber: async (referenceNumber) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/search-document-by-reference', {
+          reference_number: referenceNumber
+        }, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

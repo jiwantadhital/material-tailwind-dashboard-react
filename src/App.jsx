@@ -90,9 +90,9 @@ function App() {
     <ToastContainer />
     <Chatbot />
     <Routes>
-      {token != null ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/home" element={<HomePage />} />}
+      {token != null && userRole !== "lawyer" ? <Route path="/dashboard/*" element={<Dashboard />} /> : <Route path="/home" element={<HomePage />} />}
       <Route path="/notifications" element={<Notifications />} />
-      {token === null ? <Route path="/auth/*" element={<Auth />} /> : userRole === "user" ? <Route path="/home" element={<HomePage />} /> : <Route path="/dashboard/*" element={<Dashboard />} />}
+      {token === null ? <Route path="/auth/*" element={<Auth />} /> : userRole === "user" ? <Route path="/home" element={<HomePage />} /> : userRole === "lawyer" ? <Route path="/lawyer/*" element={<Dashboard />} /> : <Route path="/dashboard/*" element={<Dashboard />} />}
       <Route path="/user_details/*" element={<User_details />} />
       <Route path="/users/*" element={<Users />} />
       <Route path="/mobile/*" element={<Mobile />} />
@@ -113,6 +113,9 @@ function App() {
       {/* Lawyer Revenue Page - Admin Only */}
       {userRole === "admin" && <Route path="/lawyer-revenue" element={<LawyerRevenue />} />}
       
+      {/* Lawyer-specific routes */}
+      {userRole === "lawyer" && <Route path="/lawyer/*" element={<Dashboard />} />}
+      
       {/* User Document Routes */}
       <Route path="/documents" element={<UserDocuments />} />
       <Route path="/document/:id" element={<DocumentDetail />} />
@@ -127,7 +130,8 @@ function App() {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       
       {
-        token != null && userRole !== "user" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :
+        token != null && userRole === "admin" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :
+        token != null && userRole === "lawyer" ? <Route path="*" element= {<Navigate to="/lawyer/home" replace />} /> :
         token != null && userRole === "user" ? <Route path="*" element= {<Navigate to="/home" replace />} /> :
         <Route path="*" element= {<Navigate to="/home" replace />} />
       }

@@ -10,6 +10,7 @@ import {
 import {
   Cog6ToothIcon,
   Bars3Icon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 import {
   useMaterialTailwindController,
@@ -24,6 +25,12 @@ export function DashboardNavbar() {
   const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
+
+  // Function to handle logout
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/auth/sign-in";
+  };
 
   return (
     <Navbar
@@ -81,6 +88,16 @@ export function DashboardNavbar() {
             onClick={() => setOpenConfigurator(dispatch, true)}
           >
             <Cog6ToothIcon className="h-5 w-5 text-blue-gray-500" />
+          </IconButton>
+          
+          <IconButton
+            variant="text"
+            color="blue-gray"
+            className="relative bg-red-500/10 hover:bg-red-500/20 transition-colors rounded-full h-10 w-10 flex items-center justify-center shadow-md"
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
           </IconButton>
           
           <div className="flex items-center gap-2 rounded-full py-1 pr-2 pl-1">

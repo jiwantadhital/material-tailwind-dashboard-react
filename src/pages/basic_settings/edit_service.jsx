@@ -322,7 +322,7 @@ const EditService = () => {
       
       setSaved(true);
       setTimeout(() => {
-        navigate('/services'); // Redirect to services list
+        navigate('/basicSettings/services'); // Redirect to services list
       }, 1500);
     } catch (error) {
       console.error('Error:', error);
