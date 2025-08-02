@@ -10,6 +10,10 @@ import {
   DocumentIcon,
   DocumentTextIcon,
   UserGroupIcon,
+  PhoneIcon,
+  StarIcon,
+  UsersIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
 import { Home, LawyerDashboard, DashboardWrapper, Users,Profile, Tables, Notifications, Create_admin, DocumentSearch } from "@/pages/dashboard";
 import { SignIn, SignUp, ForgotPassword } from "@/pages/auth";
@@ -20,7 +24,12 @@ import { Carousel, InfoMenu } from "@/pages/mobile";
 import { RejectedDocuments } from "@/pages/documents";
 import { UserDocuments } from "@/pages/documents";
 import { ServiceType } from "@/pages/basic_settings";
-import { HeroSection, FeaturesSection, TestimonialsSection, CallToActionSection } from "@/pages/homepage";
+import { HeroSection, FeaturesSection, TestimonialsSection } from "@/pages/homepage";
+import AboutUsSection from "@/pages/homepage/about-us-section";
+import ContactInfo from "@/pages/homepage/contact-info";
+import CoreValuesSection from "@/pages/homepage/core-values-section";
+import TeamMembersSection from "@/pages/homepage/team-members-section";
+import ContactFormSubmissions from "@/pages/homepage/contact-form-submissions";
 import { LawyerRevenue } from "@/pages/dashboard";
 
 const icon = {
@@ -174,11 +183,48 @@ export const routes = [
         element: <TestimonialsSection />,
         allowedRoles: ["admin"]
       },
+
+    ],
+  },
+
+  // About Us Management Routes
+  {
+    title: "About Us Management",
+    layout: "basicSettings",
+    pages: [
       {
-        icon: <DocumentTextIcon {...icon} />,
-        name: "Call to Action",
-        path: "/call-to-action-section",
-        element: <CallToActionSection />,
+        icon: <HomeIcon {...icon} />,
+        name: "About Us Section",
+        path: "/about-us-section",
+        element: <AboutUsSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <PhoneIcon {...icon} />,
+        name: "Contact Info",
+        path: "/contact-info",
+        element: <ContactInfo />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <StarIcon {...icon} />,
+        name: "Core Values",
+        path: "/core-values",
+        element: <CoreValuesSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <UsersIcon {...icon} />,
+        name: "Team Members",
+        path: "/team-members",
+        element: <TeamMembersSection />,
+        allowedRoles: ["admin"]
+      },
+      {
+        icon: <ChatBubbleLeftRightIcon {...icon} />,
+        name: "Contact Form Submissions",
+        path: "/contact-form-submissions",
+        element: <ContactFormSubmissions />,
         allowedRoles: ["admin"]
       },
     ],

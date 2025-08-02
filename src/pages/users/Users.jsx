@@ -200,35 +200,50 @@ export default function Users() {
     };
 
     return (
-      <div className="flex items-center justify-between px-6 py-4 border-t border-blue-gray-50">
-        <div className="flex items-center gap-4">
-          <Typography variant="small" color="blue-gray" className="font-normal">
-            Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-t border-blue-gray-50 bg-gray-50/50">
+        {/* Results Info and Items Per Page */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <Typography variant="small" color="blue-gray" className="font-medium">
+            Showing <span className="font-semibold text-blue-gray-800">{pagination.from || 0}</span> to{" "}
+            <span className="font-semibold text-blue-gray-800">{pagination.to || 0}</span> of{" "}
+            <span className="font-semibold text-blue-gray-800">{pagination.total || 0}</span> results
           </Typography>
           
-          <div className="flex items-center gap-2">
-            <Typography variant="small" color="blue-gray" className="font-normal">
+          {/* Items Per Page - Much Better Design */}
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-blue-gray-200 shadow-sm">
+            <Typography variant="small" color="blue-gray" className="font-medium whitespace-nowrap">
               Items per page:
             </Typography>
             <Select
               value={perPage.toString()}
               onChange={(value) => handlePerPageChange(parseInt(value))}
-              className="w-20"
+              className="min-w-[80px] !border-blue-gray-200 focus:!border-blue-500"
+              containerProps={{
+                className: "min-w-[80px]"
+              }}
+              labelProps={{
+                className: "hidden"
+              }}
+              menuProps={{
+                className: "bg-white border border-blue-gray-200 shadow-lg"
+              }}
             >
-              <Option value="10">10</Option>
-              <Option value="15">15</Option>
-              <Option value="25">25</Option>
-              <Option value="50">50</Option>
+              <Option value="10" className="hover:bg-blue-50 focus:bg-blue-50">10</Option>
+              <Option value="15" className="hover:bg-blue-50 focus:bg-blue-50">15</Option>
+              <Option value="25" className="hover:bg-blue-50 focus:bg-blue-50">25</Option>
+              <Option value="50" className="hover:bg-blue-50 focus:bg-blue-50">50</Option>
             </Select>
           </div>
         </div>
         
+        {/* Pagination Controls */}
         <div className="flex items-center gap-2">
           <IconButton
             variant="outlined"
             size="sm"
             onClick={() => handlePageChange(currentPageNum - 1)}
             disabled={currentPageNum === 1}
+            className="border-blue-gray-200 text-blue-gray-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -238,7 +253,7 @@ export default function Users() {
           {getPageNumbers().map((page, index) => (
             <React.Fragment key={index}>
               {page === '...' ? (
-                <Typography variant="small" color="blue-gray" className="px-2">
+                <Typography variant="small" color="blue-gray" className="px-2 py-1">
                   ...
                 </Typography>
               ) : (
@@ -246,7 +261,11 @@ export default function Users() {
                   variant={page === currentPageNum ? "filled" : "outlined"}
                   size="sm"
                   onClick={() => handlePageChange(page)}
-                  className={page === currentPageNum ? "bg-blue-500 text-white" : ""}
+                  className={
+                    page === currentPageNum 
+                      ? "bg-blue-500 text-white border-blue-500 shadow-md" 
+                      : "border-blue-gray-200 text-blue-gray-600 hover:bg-blue-50"
+                  }
                 >
                   {page}
                 </IconButton>
@@ -259,6 +278,7 @@ export default function Users() {
             size="sm"
             onClick={() => handlePageChange(currentPageNum + 1)}
             disabled={currentPageNum === totalPages}
+            className="border-blue-gray-200 text-blue-gray-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

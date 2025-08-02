@@ -282,6 +282,10 @@ const LandingPage = () => {
             onClick={() => navigate('/all-services')} 
             className="text-gray-600 hover:text-blue-600 transition-colors text-sm cursor-pointer"
           >Our Services</a>
+          <a 
+            onClick={() => navigate('/about')} 
+            className="text-gray-600 hover:text-blue-600 transition-colors text-sm cursor-pointer"
+          >About Us</a>
         
           {isLoggedIn && (
             <a 
@@ -366,6 +370,13 @@ const LandingPage = () => {
                 }} 
                 className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
               >All Services</a>
+              <a 
+                onClick={() => {
+                  navigate('/about');
+                  setIsMenuOpen(false);
+                }} 
+                className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer"
+              >About Us</a>
               <a href="#customers" className="text-gray-600 hover:text-blue-600 transition-colors py-2 text-sm cursor-pointer">Testimonials</a>
               {isLoggedIn && (
                 <a
@@ -778,101 +789,7 @@ const LandingPage = () => {
 
      
 
-      {/* Contact Us Section */}
-      <section id="contact" className="py-16 bg-gradient-to-br from-blue-50 via-white to-purple-50 reveal relative overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-blue-200 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-200 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-indigo-100 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-6 text-gray-900">
-              Get In Touch
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Have questions about our services? We're here to help you with all your document authentication needs.
-            </p>
-          </div>
-          
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Phone Contact */}
-              <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-gray-900">Call Us</h3>
-                  <div className="space-y-2">
-                    <p className="text-gray-600 text-lg font-medium">+1 (555) 123-4567</p>
-                    <p className="text-gray-600 text-lg font-medium">+1 (555) 987-6543</p>
-                    <p className="text-gray-500 text-sm">Available 24/7 for urgent matters</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Email Contact */}
-              <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-gray-900">Email Us</h3>
-                  <div className="space-y-2">
-                    <p className="text-gray-600 text-lg font-medium">info@sajilonotary.com</p>
-                    <p className="text-gray-600 text-lg font-medium">support@sajilonotary.com</p>
-                    <p className="text-gray-500 text-sm">We'll respond within 24 hours</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Address Contact */}
-              <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-gray-900">Visit Us</h3>
-                  <div className="space-y-2">
-                    <p className="text-gray-600 text-lg font-medium">123 Business Street</p>
-                    <p className="text-gray-600 text-lg font-medium">Suite 100, City, State 12345</p>
-                    <p className="text-gray-500 text-sm">By appointment only</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Additional Info */}
-            <div className="mt-12 text-center">
-              <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Need Immediate Assistance?</h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  For urgent document authentication needs, our team is available around the clock. 
-                  Don't hesitate to reach out - we're here to help you get your documents processed quickly and securely.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    Call Now
-                  </button>
-                  <button className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-medium transition-all duration-300">
-                    Send Email
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Call to Action Section - Commented for future use */}
       {/* <section id="cta" className="py-8 bg-blue-50 reveal">

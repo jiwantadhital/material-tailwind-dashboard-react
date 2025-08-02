@@ -312,6 +312,18 @@ export const authService = {
         return response.data;
       },
 
+      //upload general image
+      uploadImage: async (formData) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/upload-image', formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      },
+
       //get carousel images
       getCarouselImages: async () => {
         const token = localStorage.getItem('token');
@@ -856,17 +868,144 @@ export const authService = {
         return response.data;
       },
 
-      // Call to Action Section
-      getCallToActionSection: async () => {
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const response = await apiService.get('/api/homepage/call-to-action-sections', { headers });
+
+
+      // About Us Management APIs
+      
+      // About Us Section
+      getAboutUsData: async () => {
+        const response = await apiService.get('/api/about-us/data');
         return response.data;
       },
 
-      updateCallToActionSection: async (data) => {
+      getAboutUsSection: async () => {
+        const response = await apiService.get('/api/about-us/section');
+        return response.data;
+      },
+
+      updateAboutUsSection: async (data) => {
         const token = localStorage.getItem('token');
-        const response = await apiService.post('/api/homepage/call-to-action-section', data, {
+        const response = await apiService.post('/api/about-us/section', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Contact Info
+      getContactInfo: async () => {
+        const response = await apiService.get('/api/about-us/contact-info');
+        return response.data;
+      },
+
+      updateContactInfo: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/about-us/contact-info', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Team Members
+      getTeamMembers: async () => {
+        const response = await apiService.get('/api/about-us/team-members');
+        return response.data;
+      },
+
+      createTeamMember: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/about-us/team-members', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateTeamMember: async (id, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/about-us/team-members/${id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteTeamMember: async (id) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/about-us/team-members/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Core Values
+      getCoreValues: async () => {
+        const response = await apiService.get('/api/about-us/core-values');
+        return response.data;
+      },
+
+      createCoreValue: async (data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.post('/api/about-us/core-values', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateCoreValue: async (id, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/about-us/core-values/${id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteCoreValue: async (id) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/about-us/core-values/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      // Contact Form
+      submitContactForm: async (data) => {
+        const response = await apiService.post('/api/about-us/contact-form', data);
+        return response.data;
+      },
+
+      getContactFormSubmissions: async () => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.get('/api/about-us/contact-form-submissions', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateContactFormSubmission: async (id, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/about-us/contact-form-submissions/${id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteContactFormSubmission: async (id) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/about-us/contact-form-submissions/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      updateTeamMember: async (teamMemberId, data) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.put(`/api/about-us/team-members/${teamMemberId}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data;
+      },
+
+      deleteTeamMember: async (teamMemberId) => {
+        const token = localStorage.getItem('token');
+        const response = await apiService.delete(`/api/about-us/team-members/${teamMemberId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
@@ -977,10 +1116,10 @@ export const authService = {
         return response.data;
       },
 
-      // Mobile Info Menu Methods
+      // Mobile Info Menu Methods (for admin panel)
       getMobileInfoMenu: async () => {
         const token = localStorage.getItem('token');
-        const response = await apiService.get('/mobile-info-menu', {
+        const response = await apiService.get('/api/mobile-info-menu', {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
@@ -988,7 +1127,7 @@ export const authService = {
 
       updateMobileInfoMenu: async (data) => {
         const token = localStorage.getItem('token');
-        const response = await apiService.put('/mobile-info-menu', data, {
+        const response = await apiService.put('/api/mobile-info-menu', data, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;

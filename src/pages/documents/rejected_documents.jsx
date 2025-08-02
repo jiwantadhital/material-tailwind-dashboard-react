@@ -1,23 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { XCircleIcon, DocumentTextIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { authService } from '../../services/apiService';
+import { useNavigate } from 'react-router-dom';
 
 const RejectedDocuments = () => {
+  const navigate = useNavigate();
   const [rejectedDocs, setRejectedDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeService, setActiveService] = useState('all');
+  const [services, setServices] = useState([]);
   
   useEffect(() => {
+    fetchServices();
     fetchRejectedDocuments();
   }, [activeService]);
+
+  const fetchServices = async () => {
+    try {
+      // First try to get services from localStorage
+      const storedServices = localStorage.getItem('services');
+      if (storedServices) {
+        const parsedServices = JSON.parse(storedServices);
+        const servicesArray = parsedServices.data || [];
+        const activeServices = servicesArray.filter(service => service.is_active);
+        setServices(activeServices);
+      } else {
+        // Fetch from API if not in localStorage
+        const response = await authService.getAllServicesPublic();
+        if (response.success && response.data) {
+          const activeServices = response.data.filter(service => service.is_active);
+          setServices(activeServices);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setServices([]);
+    }
+  };
   
   const fetchRejectedDocuments = async () => {
     try {
       setLoading(true);
-      // Code parameter can be used to filter by service type if your API supports it
+      // Fetch documents with status 'rejection_pending_admin' for admin review
       const code = activeService !== 'all' ? activeService : 'all';
-      const response = await authService.getDocuments(1, "rejected", code, "all");
+      const response = await authService.getDocuments(1, "rejection_pending_admin", code, "all");
       setRejectedDocs(response.data.data);
     } catch (err) {
       console.error("Error fetching rejected documents:", err);
@@ -27,17 +54,57 @@ const RejectedDocuments = () => {
     }
   };
 
+  // Admin actions
+  const handleApprove = async (docId) => {
+    try {
+      setLoading(true);
+      await authService.rejectDocumentWithReason({ document_id: docId, admin_rejection_reason: "Rejected by admin" });
+      fetchRejectedDocuments();
+    } catch (err) {
+      setError("Failed to approve rejection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisagree = async (docId) => {
+    try {
+      setLoading(true);
+      await authService.adminDisagreeRejection({ document_id: docId });
+      fetchRejectedDocuments();
+    } catch (err) {
+      setError("Failed to disagree with rejection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewDocument = (document) => {
+    // Mark as read if needed
+    if (document.document_mark?.is_new) {
+      authService.markAsRead(document.id);
+    }
+    if (document.document_mark?.has_new_message_for_admin || document.document_mark?.has_new_message_for_user) {
+      authService.markAsReadForAdmin(document.id);
+    }
+    // Navigate to document details
+    navigate("/document_details", { state: { document } });
+  };
+
   // Function to get document icon based on type
   const getDocumentIcon = (type) => {
     return <DocumentTextIcon className="h-8 w-8 text-gray-400" />;
   };
 
-  // Tab options
-  const services = [
-    { name: 'All Services', value: 'all' },
-    { name: 'Notary', value: 'NO' },
-    { name: 'SOP', value: 'SOP' }
-  ];
+  // Create dynamic services list
+  const getServicesOptions = () => {
+    const defaultServices = [{ name: 'All Services', value: 'all' }];
+    const dynamicServices = services.map(service => ({
+      name: service.name,
+      value: service.code
+    }));
+    return [...defaultServices, ...dynamicServices];
+  };
 
   // Show loading state
   if (loading) {
@@ -79,7 +146,7 @@ const RejectedDocuments = () => {
             value={activeService}
             onChange={(e) => setActiveService(e.target.value)}
           >
-            {services.map((service) => (
+            {getServicesOptions().map((service) => (
               <option key={service.value} value={service.value}>
                 {service.name}
               </option>
@@ -88,7 +155,7 @@ const RejectedDocuments = () => {
         </div>
         <div className="hidden sm:block">
           <nav className="flex space-x-4 border-b border-gray-200 pb-2" aria-label="Service tabs">
-            {services.map((service) => (
+            {getServicesOptions().map((service) => (
               <button
                 key={service.value}
                 onClick={() => setActiveService(service.value)}
@@ -116,7 +183,7 @@ const RejectedDocuments = () => {
           <p className="mt-1 text-sm text-gray-500">
             {activeService === 'all' 
               ? 'There are no rejected documents to display at this time.' 
-              : `There are no rejected ${activeService} documents to display at this time.`}
+              : `There are no rejected ${services.find(s => s.code === activeService)?.name || activeService} documents to display at this time.`}
           </p>
         </div>
       ) : (
@@ -130,7 +197,14 @@ const RejectedDocuments = () => {
                   </div>
                   <div className="ml-4 flex-1">
                     <div className="flex justify-between">
-                      <h3 className="text-lg font-semibold text-indigo-600">{doc.title || doc.code}</h3>
+                      <div>
+                        <h3 className="text-lg font-semibold text-indigo-600">{doc.title || doc.code}</h3>
+                        {doc.reference_number && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            <span className="font-medium">Ref:</span> {doc.reference_number}
+                          </p>
+                        )}
+                      </div>
                       <span className="text-sm text-gray-500">{new Date(doc.created_at).toLocaleDateString()}</span>
                     </div>
                     <div className="mt-2 flex items-start">
@@ -141,14 +215,23 @@ const RejectedDocuments = () => {
                       <button
                         type="button"
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        onClick={() => handleViewDocument(doc)}
                       >
                         View Document
                       </button>
                       <button
                         type="button"
                         className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        onClick={() => handleApprove(doc.id)}
                       >
                         Approve Rejection
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        onClick={() => handleDisagree(doc.id)}
+                      >
+                        Disagree
                       </button>
                     </div>
                   </div>

@@ -24,6 +24,7 @@ import DocumentDetail from "@/frontend/pages/DocumentDetail";
 import PaymentSuccess from "@/frontend/pages/PaymentSuccess";
 import PaymentFailure from "@/frontend/pages/PaymentFailure";
 import PaymentCancel from "@/frontend/pages/PaymentCancel";
+import AboutUs from "@/frontend/pages/AboutUs";
 // import PricingPage from "@/frontend/pages/Pricing"; // Disabled - not in use
 import { LawyerRevenue } from "@/pages/dashboard";
 import { TermsAndConditions, PrivacyPolicy } from "@/pages/legal";
@@ -128,6 +129,9 @@ function App() {
       {/* Legal Pages */}
       <Route path="/terms" element={<TermsAndConditions />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
+      
+      {/* About Us Page */}
+      <Route path="/about" element={<AboutUs />} />
       
       {
         token != null && userRole === "admin" ? <Route path="*" element= {<Navigate to="/dashboard/home" replace />} /> :

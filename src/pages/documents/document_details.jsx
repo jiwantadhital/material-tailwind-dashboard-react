@@ -84,6 +84,11 @@ const DocumentDetails = () => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const navigate = useNavigate();
+  
+  // Custom price functionality
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
+  const [customPrice, setCustomPrice] = useState('');
+  const [customPriceDisplay, setCustomPriceDisplay] = useState('');
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -117,23 +122,31 @@ const DocumentDetails = () => {
   // Calculate total price when document type quantities change
   useEffect(() => {
     if (document && document.related_doc_types) {
-      let displayTotal = 0; // For admin display (actual_price)
-      let backendTotal = 0; // For backend (user_price)
-      
-      Object.entries(documentTypeQuantities).forEach(([typeId, quantity]) => {
-        const docType = document.related_doc_types.find(type => type.id === parseInt(typeId));
-        if (docType && quantity > 0) {
-          // Use actual_price for admin display
-          displayTotal += parseFloat(docType.actual_price) * quantity;
-          // Use user_price for backend calculation
-          backendTotal += parseFloat(docType.user_price) * quantity;
-        }
-      });
-      
-      setTotalPrice(displayTotal); // Show actual_price total to admin
-      setCost(backendTotal.toString()); // Send user_price total to backend
+      if (useCustomPrice) {
+        // Use custom price when enabled
+        const customPriceValue = parseFloat(customPrice) || 0;
+        setTotalPrice(customPriceValue);
+        setCost(customPriceValue.toString());
+      } else {
+        // Use automatic calculation based on document types
+        let displayTotal = 0; // For admin display (actual_price)
+        let backendTotal = 0; // For backend (user_price)
+        
+        Object.entries(documentTypeQuantities).forEach(([typeId, quantity]) => {
+          const docType = document.related_doc_types.find(type => type.id === parseInt(typeId));
+          if (docType && quantity > 0) {
+            // Use actual_price for admin display
+            displayTotal += parseFloat(docType.actual_price) * quantity;
+            // Use user_price for backend calculation
+            backendTotal += parseFloat(docType.user_price) * quantity;
+          }
+        });
+        
+        setTotalPrice(displayTotal); // Show actual_price total to admin
+        setCost(backendTotal.toString()); // Send user_price total to backend
+      }
     }
-  }, [documentTypeQuantities, document]);
+  }, [documentTypeQuantities, document, useCustomPrice, customPrice]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -220,25 +233,58 @@ const DocumentDetails = () => {
   };
 
   const handlePaymentForDocument = async () => {
+    // Validation
+    if (useCustomPrice && (!customPrice || parseFloat(customPrice) <= 0)) {
+      setAlert({
+        show: true,
+        message: 'Please enter a valid custom price',
+        type: 'error'
+      });
+      return;
+    }
+    
+    if (!useCustomPrice) {
+      // Check if any document types are selected
+      const hasSelectedTypes = Object.values(documentTypeQuantities).some(quantity => quantity > 0);
+      if (!hasSelectedTypes) {
+        setAlert({
+          show: true,
+          message: 'Please select at least one document type and quantity',
+          type: 'error'
+        });
+        return;
+      }
+    }
+    
     setUpdating(true);
     try {
       // Format the date to MySQL datetime format (YYYY-MM-DD HH:mm:ss)
       const estimatedDate = new Date(estimatedDateTime);
       const formattedDate = format(estimatedDate, 'yyyy-MM-dd HH:mm:ss');
       
-      // Extract doc_type_id values where quantity > 0
-      const docTypeIds = Object.entries(documentTypeQuantities)
-        .filter(([typeId, quantity]) => quantity > 0)
-        .map(([typeId, quantity]) => typeId);
-      
-      await authService.paymentForDocument(documentId, {
+      // Prepare the request payload based on pricing mode
+      const requestPayload = {
         total_payment_amount: cost,
         estimated_time: formattedDate,
         clearAccepted: true,
         status: 'cost_estimated',
-        document_type_quantities: documentTypeQuantities,
-        doc_type_id: docTypeIds
-      });
+        use_custom_price: useCustomPrice
+      };
+      
+      if (useCustomPrice) {
+        // When using custom price, don't send document type quantities
+        requestPayload.custom_price = customPrice;
+      } else {
+        // When using automatic pricing, send document type quantities
+        const docTypeIds = Object.entries(documentTypeQuantities)
+          .filter(([typeId, quantity]) => quantity > 0)
+          .map(([typeId, quantity]) => typeId);
+        
+        requestPayload.document_type_quantities = documentTypeQuantities;
+        requestPayload.doc_type_id = docTypeIds;
+      }
+      
+      await authService.paymentForDocument(documentId, requestPayload);
       
       // Refresh document data
       const response = await authService.getDocumentById(documentId);
@@ -268,6 +314,10 @@ const DocumentDetails = () => {
     setCost(document.cost || '');
     // Convert hours back to days when canceling
     setEstimatedDateTime(document.estimated_time ? format(new Date(document.estimated_time), 'yyyy-MM-ddTHH:mm') : '');
+    // Reset custom price state
+    setUseCustomPrice(false);
+    setCustomPrice('');
+    setCustomPriceDisplay('');
   };
 
   const handleSendMessage = async () => {
@@ -655,6 +705,68 @@ const DocumentDetails = () => {
               
               {document.status === 'pending' && (
                 <div className="space-y-8">
+                  {/* Pricing Mode Selection */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Pricing Mode</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <label className={`flex items-center p-3 rounded-lg border-2 transition-all ${
+                          !useCustomPrice 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-200 bg-gray-50'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="pricingMode"
+                            checked={!useCustomPrice}
+                            onChange={() => setUseCustomPrice(false)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                          />
+                          <span className="ml-2 text-sm font-medium text-gray-700">Automatic (Service Type Pricing)</span>
+                        </label>
+                        <label className={`flex items-center p-3 rounded-lg border-2 transition-all ${
+                          useCustomPrice 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'border-gray-200 bg-gray-50'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="pricingMode"
+                            checked={useCustomPrice}
+                            onChange={() => setUseCustomPrice(true)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                          />
+                          <span className="ml-2 text-sm font-medium text-gray-700">Custom Price</span>
+                        </label>
+                      </div>
+                      
+                      {useCustomPrice && (
+                        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Custom Price (Rs.)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={customPrice}
+                            onChange={(e) => {
+                              setCustomPrice(e.target.value);
+                              setCustomPriceDisplay(e.target.value);
+                            }}
+                            placeholder="Enter custom price"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <p className="text-sm text-yellow-700 mt-2">
+                            This custom price will override the service type calculations.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Document Types Section - Only show when not using custom price */}
+                  {!useCustomPrice && (
                   <div>
                     <h3 className="block text-sm font-medium text-gray-700 mb-4">Select Document Types and Quantities</h3>
                     {document.related_doc_types && document.related_doc_types.map((docType) => (
@@ -695,6 +807,29 @@ const DocumentDetails = () => {
                     <div className="mt-4 p-4 bg-blue-50 rounded-lg flex justify-between items-center">
                       <span className="font-medium text-blue-800">Total Price:</span>
                       <span className="text-lg font-bold text-blue-800">Rs {totalPrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  )}
+
+                  {/* Pricing Summary */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-gray-700">Pricing Mode:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        useCustomPrice 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {useCustomPrice ? 'Custom Price' : 'Automatic (Service Types)'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-700">Total Amount:</span>
+                      <span className={`text-lg font-bold ${
+                        useCustomPrice ? 'text-green-800' : 'text-blue-800'
+                      }`}>
+                        Rs {useCustomPrice ? (customPrice || '0.00') : totalPrice.toFixed(2)}
+                      </span>
                     </div>
                   </div>
 

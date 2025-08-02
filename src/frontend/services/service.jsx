@@ -3,6 +3,14 @@ import { ArrowLeft, FileText, Home, ChevronRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/apiService';
 
+// Utility function to decode HTML entities
+function decodeHtmlEntities(html) {
+  if (!html) return '';
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = html;
+  return textarea.value;
+}
+
 // Utility function to extract <body> content from HTML string
 function extractBodyContent(htmlString) {
   if (!htmlString) return '<p>No description available.</p>';
@@ -19,6 +27,51 @@ const ServiceDetailPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Add CSS for ReactQuill color classes
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .ql-editor .ql-color-red { color: #e60000; }
+      .ql-editor .ql-color-orange { color: #ff9900; }
+      .ql-editor .ql-color-yellow { color: #ffff00; }
+      .ql-editor .ql-color-green { color: #008a00; }
+      .ql-editor .ql-color-blue { color: #0066cc; }
+      .ql-editor .ql-color-purple { color: #9933ff; }
+      .ql-editor .ql-color-white { color: #ffffff; }
+      .ql-editor .ql-bg-red { background-color: #facccc; }
+      .ql-editor .ql-bg-orange { background-color: #ffebcc; }
+      .ql-editor .ql-bg-yellow { background-color: #ffffcc; }
+      .ql-editor .ql-bg-green { background-color: #cce8cc; }
+      .ql-editor .ql-bg-blue { background-color: #cce0f5; }
+      .ql-editor .ql-bg-purple { background-color: #ebd6ff; }
+      .ql-editor .ql-bg-gray { background-color: #bbbbbb; }
+      .ql-editor .ql-bg-white { background-color: #ffffff; }
+      
+      /* Additional color classes for ReactQuill */
+      [style*="color: rgb(230, 0, 0)"] { color: #e60000 !important; }
+      [style*="color: rgb(255, 153, 0)"] { color: #ff9900 !important; }
+      [style*="color: rgb(255, 255, 0)"] { color: #ffff00 !important; }
+      [style*="color: rgb(0, 138, 0)"] { color: #008a00 !important; }
+      [style*="color: rgb(0, 102, 204)"] { color: #0066cc !important; }
+      [style*="color: rgb(153, 51, 255)"] { color: #9933ff !important; }
+      [style*="color: rgb(255, 255, 255)"] { color: #ffffff !important; }
+      
+      [style*="background-color: rgb(250, 204, 204)"] { background-color: #facccc !important; }
+      [style*="background-color: rgb(255, 235, 204)"] { background-color: #ffebcc !important; }
+      [style*="background-color: rgb(255, 255, 204)"] { background-color: #ffffcc !important; }
+      [style*="background-color: rgb(204, 232, 204)"] { background-color: #cce8cc !important; }
+      [style*="background-color: rgb(204, 224, 245)"] { background-color: #cce0f5 !important; }
+      [style*="background-color: rgb(235, 214, 255)"] { background-color: #ebd6ff !important; }
+      [style*="background-color: rgb(187, 187, 187)"] { background-color: #bbbbbb !important; }
+      [style*="background-color: rgb(255, 255, 255)"] { background-color: #ffffff !important; }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   useEffect(() => {
     const id = serviceId || 'default';
@@ -89,10 +142,17 @@ const ServiceDetailPage = () => {
         console.log('Service data received:', response.data);
         console.log('Description content:', response.data.description);
         
-        // Use the raw HTML content for description (no cleaning)
+        // Process the description to ensure proper HTML rendering
+        let processedDescription = response.data.description || '';
+        
+        // Decode any HTML entities that might be present
+        processedDescription = decodeHtmlEntities(processedDescription);
+        
+        console.log('Processed description:', processedDescription);
+        
         setServiceData({
           ...response.data,
-          description: response.data.description || ''
+          description: processedDescription
         });
       }
     } catch (error) {
@@ -216,12 +276,25 @@ const ServiceDetailPage = () => {
                   <div className="prose prose-sm max-w-none">
                     {(() => {
                       console.log('Raw description:', serviceData.description);
-                      return (
-                        <div
-                          className="text-gray-600 leading-relaxed text-sm [&>*]:mb-4 [&>*:last-child]:mb-0 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>p]:text-gray-600 [&>a]:text-blue-600 [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-gray-300 [&>blockquote]:pl-4 [&>blockquote]:italic"
-                          dangerouslySetInnerHTML={{ __html: serviceData.description }}
-                        />
-                      );
+                      
+                      // Check if the content contains HTML tags
+                      const hasHtmlTags = /<[^>]*>/g.test(serviceData.description);
+                      
+                      if (hasHtmlTags) {
+                        return (
+                          <div
+                            className="text-gray-600 leading-relaxed text-sm [&>*]:mb-4 [&>*:last-child]:mb-0 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg [&>h4]:text-base [&>h5]:text-sm [&>h6]:text-xs [&>h1]:font-bold [&>h2]:font-bold [&>h3]:font-bold [&>h4]:font-bold [&>h5]:font-bold [&>h6]:font-bold [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>p]:text-gray-600 [&>a]:text-blue-600 [&>a]:underline [&>a]:hover:text-blue-800 [&>blockquote]:border-l-4 [&>blockquote]:border-blue-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:bg-blue-50 [&>blockquote]:py-2 [&>blockquote]:rounded-r [&>strong]:font-semibold [&>em]:italic [&>u]:underline [&>s]:line-through [&>code]:bg-gray-100 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>code]:font-mono [&>code]:text-sm [&>pre]:bg-gray-100 [&>pre]:p-4 [&>pre]:rounded [&>pre]:overflow-x-auto [&>pre]:font-mono [&>pre]:text-sm [&>li]:mb-1 [&>li>strong]:font-semibold [&>li>em]:italic"
+                            dangerouslySetInnerHTML={{ __html: serviceData.description }}
+                          />
+                        );
+                      } else {
+                        // If no HTML tags, display as plain text with line breaks
+                        return (
+                          <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
+                            {serviceData.description}
+                          </div>
+                        );
+                      }
                     })()}
                   </div>
                 </div>

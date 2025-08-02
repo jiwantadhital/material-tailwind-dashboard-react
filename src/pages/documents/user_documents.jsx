@@ -179,6 +179,9 @@ export default function UserDocuments({ code, serviceId }) {
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm font-medium text-gray-900">{document.reference_number}</div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCategoryStyle(document.status)}`}>
           {document.status.replace('_', ' ').toUpperCase()}
         </span>
@@ -521,6 +524,9 @@ export default function UserDocuments({ code, serviceId }) {
                                       </th>
                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Document
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Reference Number
                                       </th>
                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status

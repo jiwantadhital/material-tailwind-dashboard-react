@@ -42,6 +42,22 @@ const ServiceForm = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [uploadType, setUploadType] = useState(null); // 'pdf' or 'images'
+  const [fileSizeError, setFileSizeError] = useState(false);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Helper function to check if file size is too large (above 9.9MB)
+  const isFileTooLarge = (file) => {
+    const maxSize = 9.9 * 1024 * 1024; // 9.9MB in bytes
+    return file.size > maxSize;
+  };
 
   useEffect(() => {
     // Get service ID from URL query parameter
@@ -129,12 +145,19 @@ const ServiceForm = () => {
   const handlePdfUpload = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFileError('');
+    setFileSizeError(false);
 
     // Validate PDF files
     const invalidFiles = selectedFiles.filter(file => file.type !== 'application/pdf');
     if (invalidFiles.length > 0) {
       setFileError('Please select only PDF files');
       return;
+    }
+
+    // Check file sizes
+    const oversizedFiles = selectedFiles.filter(file => isFileTooLarge(file));
+    if (oversizedFiles.length > 0) {
+      setFileSizeError(true);
     }
 
     setFiles(selectedFiles);
@@ -144,6 +167,7 @@ const ServiceForm = () => {
   const handleImageUpload = async (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFileError('');
+    setFileSizeError(false);
 
     // Validate image files
     const invalidFiles = selectedFiles.filter(file => !file.type.startsWith('image/'));
@@ -154,6 +178,12 @@ const ServiceForm = () => {
 
     try {
       const convertedPdf = await convertImagesToPdf(selectedFiles);
+      
+      // Check if converted PDF is too large
+      if (isFileTooLarge(convertedPdf)) {
+        setFileSizeError(true);
+      }
+      
       setFiles([convertedPdf]);
       setUploadType('images');
     } catch (error) {
@@ -166,6 +196,7 @@ const ServiceForm = () => {
     setFiles([]);
     setUploadType(null);
     setFileError('');
+    setFileSizeError(false);
   };
 
   const handleSubmit = async (e) => {
@@ -292,7 +323,14 @@ const ServiceForm = () => {
               
               {/* File Upload Section */}
               <div className="mb-6">
-                <label className="block text-gray-700 font-medium mb-4">Upload Documents</label>
+                <label className="block text-gray-700 font-medium mb-2">Upload Documents</label>
+                
+                {/* File Size Warning */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>File Size Limit:</strong> Maximum file size is 9.9MB. If your converted PDF exceeds this limit, please try uploading fewer images or compress your images first.
+                  </p>
+                </div>
                 
                 {!files.length && !isConverting && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -352,6 +390,11 @@ const ServiceForm = () => {
                   <p className="mt-2 text-red-500 text-sm">{fileError}</p>
                 )}
 
+                {/* File Size Error Message */}
+                {fileSizeError && (
+                  <p className="mt-2 text-red-500 text-sm">One or more files are too large (max 9.9MB). Please select smaller files.</p>
+                )}
+
                 {/* Converting Status */}
                 {isConverting && (
                   <div className="mt-4 text-center">
@@ -379,9 +422,26 @@ const ServiceForm = () => {
                     </div>
                     <div className="space-y-2">
                       {files.map((file, index) => (
-                        <div key={index} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                          <FileText className="w-5 h-5 text-red-500 mr-2" />
+                        <div key={index} className={`flex items-center p-3 rounded-lg ${
+                          isFileTooLarge(file) 
+                            ? 'bg-red-50 border border-red-200' 
+                            : 'bg-gray-50'
+                        }`}>
+                          <FileText className={`w-5 h-5 mr-2 ${
+                            isFileTooLarge(file) ? 'text-red-500' : 'text-red-500'
+                          }`} />
                           <span className="text-gray-700 truncate flex-1">{file.name}</span>
+                          <span className={`text-sm ml-2 ${
+                            isFileTooLarge(file) ? 'text-red-600 font-medium' : 'text-gray-500'
+                          }`}>
+                            ({formatFileSize(file.size)})
+                          </span>
+                          {isFileTooLarge(file) && (
+                            <span className="text-sm text-red-600 font-medium ml-2 flex items-center">
+                              <X className="w-4 h-4 mr-1" />
+                              Too large
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -392,9 +452,9 @@ const ServiceForm = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting || files.length === 0}
+                disabled={isSubmitting || files.length === 0 || fileSizeError}
                 className={`w-full font-medium px-6 py-4 rounded-lg shadow-lg transition-all flex items-center justify-center ${
-                  isSubmitting || files.length === 0
+                  isSubmitting || files.length === 0 || fileSizeError
                     ? 'bg-gray-300 cursor-not-allowed'
                     : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-blue-600/20 hover:shadow-blue-600/40'
                 }`}
@@ -403,6 +463,11 @@ const ServiceForm = () => {
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                     Submitting...
+                  </>
+                ) : fileSizeError ? (
+                  <>
+                    <X className="w-5 h-5 mr-2" />
+                    File Too Large (Max 9.9MB)
                   </>
                 ) : (
                   <>

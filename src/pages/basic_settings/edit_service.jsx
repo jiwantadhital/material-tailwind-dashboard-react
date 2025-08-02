@@ -23,7 +23,6 @@ import { toast } from 'react-toastify';
 import { authService } from '../../services/apiService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { Textarea } from "@material-tailwind/react";
 
 // Styled components for enhanced visual appeal
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -117,21 +116,158 @@ const StyledQuillEditor = styled('div')(({ theme, error }) => ({
     borderRadius: '0 0 10px 10px',
     border: `1px solid ${error ? theme.palette.error.main : theme.palette.divider}`,
     borderTop: 'none',
-    minHeight: '200px',
+    minHeight: '300px',
+    maxHeight: '500px',
+    overflowY: 'auto',
     fontSize: '14px',
+    fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.palette.background.paper,
   },
   '& .ql-toolbar': {
     borderRadius: '10px 10px 0 0',
     border: `1px solid ${error ? theme.palette.error.main : theme.palette.divider}`,
     borderBottom: 'none',
+    backgroundColor: theme.palette.background.default,
+    padding: '8px 12px',
   },
   '& .ql-editor': {
-    minHeight: '200px',
+    minHeight: '300px',
+    maxHeight: '450px',
+    overflowY: 'auto',
     padding: '12px 16px',
+    lineHeight: '1.6',
+    color: theme.palette.text.primary,
   },
   '& .ql-editor.ql-blank::before': {
     color: theme.palette.text.secondary,
     fontStyle: 'italic',
+  },
+  '& .ql-editor:focus': {
+    outline: 'none',
+  },
+  '& .ql-container.ql-snow': {
+    '&:focus-within': {
+      borderColor: theme.palette.primary.main,
+      boxShadow: `0 0 0 2px rgba(25, 118, 210, 0.2)`,
+    },
+  },
+  // Toolbar button styling
+  '& .ql-toolbar .ql-formats': {
+    marginRight: '12px',
+  },
+  '& .ql-toolbar button': {
+    padding: '4px',
+    borderRadius: '4px',
+    border: 'none',
+    color: theme.palette.text.primary,
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+      color: theme.palette.text.primary,
+    },
+    '&.ql-active': {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+    },
+  },
+  '& .ql-toolbar .ql-picker': {
+    color: theme.palette.text.primary,
+  },
+  '& .ql-toolbar .ql-picker-options': {
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: '8px',
+    boxShadow: theme.shadows[4],
+  },
+  '& .ql-toolbar .ql-picker-item': {
+    color: theme.palette.text.primary,
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
+  },
+  // Color picker styling
+  '& .ql-color .ql-picker-options, & .ql-background .ql-picker-options': {
+    padding: '8px',
+    width: '200px',
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: '8px',
+    boxShadow: theme.shadows[4],
+  },
+  '& .ql-color .ql-picker-item, & .ql-background .ql-picker-item': {
+    borderRadius: '3px',
+    margin: '2px',
+    width: '20px',
+    height: '20px',
+    border: `1px solid ${theme.palette.divider}`,
+    cursor: 'pointer',
+    '&:hover': {
+      border: `2px solid ${theme.palette.primary.main}`,
+    },
+  },
+  // Color button styling
+  '& .ql-color .ql-picker-label, & .ql-background .ql-picker-label': {
+    position: 'relative',
+    display: 'inline-block',
+    width: '20px',
+    height: '20px',
+    borderRadius: '3px',
+    border: `1px solid ${theme.palette.divider}`,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '16px',
+      height: '16px',
+      borderRadius: '2px',
+    },
+  },
+  '& .ql-color .ql-picker-label::before': {
+    backgroundColor: 'currentColor',
+  },
+  '& .ql-background .ql-picker-label::before': {
+    backgroundColor: 'currentColor',
+  },
+  // Content styling
+  '& .ql-editor h1': {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    color: theme.palette.text.primary,
+  },
+  '& .ql-editor h2': {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    marginBottom: '0.75rem',
+    color: theme.palette.text.primary,
+  },
+  '& .ql-editor h3': {
+    fontSize: '1.25rem',
+    fontWeight: 'bold',
+    marginBottom: '0.5rem',
+    color: theme.palette.text.primary,
+  },
+  '& .ql-editor p': {
+    marginBottom: '1rem',
+  },
+  '& .ql-editor ul, & .ql-editor ol': {
+    marginBottom: '1rem',
+    paddingLeft: '2rem',
+  },
+  '& .ql-editor blockquote': {
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
+    paddingLeft: '1rem',
+    margin: '1rem 0',
+    fontStyle: 'italic',
+    color: theme.palette.text.secondary,
+  },
+  '& .ql-editor a': {
+    color: theme.palette.primary.main,
+    textDecoration: 'underline',
+    '&:hover': {
+      color: theme.palette.primary.dark,
+    },
   },
 }));
 
@@ -158,15 +294,20 @@ const DeleteIcon = () => (
   </svg>
 );
 
-// Quill editor configuration
+// ReactQuill configuration with colors and enhanced features
 const quillModules = {
   toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
+    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+    [{ 'font': [] }],
+    [{ 'size': ['small', false, 'large', 'huge'] }],
     ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'color': [] }, { 'background': [] }],
+    [{ 'color': ['#000000', '#e60000', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', '#ffffff', '#facccc', '#ffebcc', '#ffffcc', '#cce8cc', '#cce0f5', '#ebd6ff', '#bbbbbb', '#f06666', '#ffc266', '#ffff66', '#66b966', '#66a3e0', '#c285ff', '#888888', '#a10000', '#b26b00', '#b2b200', '#006100', '#0047b2', '#6b24b2', '#444444', '#5c0000', '#663d00', '#666600', '#003700', '#002966', '#3d1466'] }, { 'background': ['#000000', '#e60000', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', '#ffffff', '#facccc', '#ffebcc', '#ffffcc', '#cce8cc', '#cce0f5', '#ebd6ff', '#bbbbbb', '#f06666', '#ffc266', '#ffff66', '#66b966', '#66a3e0', '#c285ff', '#888888', '#a10000', '#b26b00', '#b2b200', '#006100', '#0047b2', '#6b24b2', '#444444', '#5c0000', '#663d00', '#666600', '#003700', '#002966', '#3d1466'] }],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+    [{ 'direction': 'rtl' }],
     [{ 'align': [] }],
-    ['link', 'blockquote'],
+    ['link', 'image', 'video'],
+    ['blockquote', 'code-block'],
     ['clean']
   ],
   clipboard: {
@@ -175,12 +316,14 @@ const quillModules = {
 };
 
 const quillFormats = [
-  'header',
-  'bold', 'italic', 'underline', 'strike',
-  'list', 'bullet',
+  'header', 'font', 'size',
+  'bold', 'italic', 'underline', 'strike', 
   'color', 'background',
-  'align',
-  'link', 'blockquote'
+  'script',
+  'list', 'bullet', 'indent',
+  'direction', 'align',
+  'link', 'image', 'video',
+  'blockquote', 'code-block'
 ];
 
 const EditService = () => {
@@ -275,7 +418,11 @@ const EditService = () => {
     if (!service.code.trim()) newErrors.code = 'Code is required';
     if (!service.priceRange.trim()) newErrors.priceRange = 'Price range is required';
     if (!service.shortDescription.trim()) newErrors.shortDescription = 'Short description is required';
-    if (!service.description.trim()) newErrors.description = 'Description is required';
+    
+    // Check if description is empty or only contains HTML tags
+    const descriptionText = service.description.replace(/<[^>]*>/g, '').trim();
+    if (!descriptionText) newErrors.description = 'Description is required';
+    
     if (!isEditMode && !service.image) newErrors.image = 'Image is required';
     
     setErrors(newErrors);
@@ -514,27 +661,31 @@ const EditService = () => {
                 <Grid item xs={12}>
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
-                      Full Description (Raw HTML)
+                      Full Description
                     </Typography>
-                    <Textarea
-                      name="description"
-                      value={service.description}
-                      onChange={handleInputChange}
-                      placeholder="Enter HTML content for this service"
-                      required
-                      rows={8}
-                      className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                      labelProps={{
-                        className: "before:content-none after:content-none",
-                      }}
-                    />
+                    <StyledQuillEditor error={!!errors.description}>
+                      <ReactQuill
+                        theme="snow"
+                        value={service.description}
+                        onChange={(content) => {
+                          setService(prev => ({ ...prev, description: content }));
+                        }}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        placeholder="Enter detailed description of your service..."
+                        style={{
+                          height: '300px'
+                        }}
+                      />
+                    </StyledQuillEditor>
                     {errors.description && (
                       <FormHelperText error sx={{ mt: 1, fontSize: '0.9rem' }}>
                         {errors.description}
                       </FormHelperText>
                     )}
                     <FormHelperText sx={{ mt: 1, fontSize: '0.9rem', color: 'text.secondary' }}>
-                      You can use HTML tags for formatting (e.g., <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;a&gt;</code>, etc.)
+                      Use the rich text editor with full formatting options: headings, fonts, colors, text & background colors, 
+                      alignment, lists, links, images, videos, blockquotes, and code blocks.
                     </FormHelperText>
                   </Box>
                 </Grid>
